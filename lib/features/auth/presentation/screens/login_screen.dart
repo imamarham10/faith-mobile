@@ -99,13 +99,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Gap(48),
+                Center(
+                  child: Image.asset(
+                    'assets/brand/siraat_logo.png',
+                    width: 72,
+                    height: 72,
+                  ),
+                ),
+                const Gap(20),
                 Text('Welcome back', style: theme.textTheme.displaySmall),
                 const Gap(8),
                 Text(
                   'Sign in to continue your practice.',
                   style: theme.textTheme.bodyMedium,
                 ),
-                const Gap(40),
+                const Gap(32),
                 TextFormField(
                   controller: _emailController,
                   focusNode: _emailFocus,

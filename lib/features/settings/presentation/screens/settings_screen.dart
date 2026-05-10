@@ -9,6 +9,7 @@ import '../../../../core/preferences/notification_preferences.dart';
 import '../../../../core/preferences/theme_mode.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
 
 /// `/settings` — preferences for the app. Sections, top to bottom:
@@ -141,10 +142,51 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: AppSpacing.xl),
+            const Divider(height: 1),
+            ListTile(
+              leading: Icon(Icons.logout_rounded, color: cs.error),
+              title: Text(
+                'Sign out',
+                style: theme.textTheme.bodyLarge?.copyWith(color: cs.error),
+              ),
+              onTap: () => _confirmSignOut(context, ref),
+            ),
+            const SizedBox(height: AppSpacing.xl),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
+    final ok = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog.adaptive(
+        title: const Text('Sign out?'),
+        content: const Text(
+          'You\'ll need to sign in again to access your bookmarks, '
+          'prayer logs, and dhikr counters.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await HapticFeedback.mediumImpact();
+    // Cancel any scheduled prayer-time alarms — they reference user-specific
+    // state and shouldn't fire after the user signs out.
+    await NotificationService.instance.cancelAll();
+    await ref.read(authControllerProvider.notifier).signOut();
+    // Router redirect picks up the auth-state change and routes to /login.
   }
 
   Future<void> _pickLeadMinutes(

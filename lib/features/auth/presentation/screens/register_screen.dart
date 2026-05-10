@@ -134,13 +134,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Gap(8),
+                Center(
+                  child: Image.asset(
+                    'assets/brand/siraat_logo.png',
+                    width: 64,
+                    height: 64,
+                  ),
+                ),
+                const Gap(20),
                 Text('Create account', style: theme.textTheme.displaySmall),
                 const Gap(8),
                 Text(
                   'A few quiet details to begin.',
                   style: theme.textTheme.bodyMedium,
                 ),
-                const Gap(32),
+                const Gap(28),
                 Row(
                   children: [
                     Expanded(
