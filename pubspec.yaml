@@ -1,0 +1,90 @@
+name: faith_mobile
+description: "Siraat — a multi-faith spiritual companion."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State + DI
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # Models
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.3
+
+  # UI
+  google_fonts: ^6.2.1
+  intl: ^0.20.2
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  flutter_animate: ^4.5.2
+
+  # Sensors & location (Qibla compass + prayer times)
+  flutter_compass: ^0.8.1
+  geolocator: ^13.0.2
+  permission_handler: ^11.3.1
+
+  # Audio (Quran recitation)
+  # NOTE: just_audio_background was removed — its underlying audio_service
+  # plugin throws PlatformException on init on this Android setup. Plain
+  # just_audio handles foreground playback. Lock-screen / background controls
+  # are a Phase 2 task.
+  just_audio: ^0.9.42
+
+  # Calendar
+  hijri: ^3.0.0
+
+  # Notifications (prayer-time reminders)
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
+
+  # Share cards (render-to-image + system share sheet)
+  share_plus: ^10.1.2
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  freezed: ^3.0.0
+  json_serializable: ^6.8.0
+  custom_lint: ^0.7.5
+  riverpod_lint: ^2.6.5
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: false
+  image_path: "assets/brand/siraat_logo.png"
+  min_sdk_android: 24
+  adaptive_icon_background: "#101A2C"
+  adaptive_icon_foreground: "assets/brand/siraat_logo.png"
+  adaptive_icon_foreground_inset: 18
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/brand/siraat_logo.png

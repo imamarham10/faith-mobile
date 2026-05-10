@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tells AGP's resource shrinker to retain raw resources that are only
+  referenced from Dart (via flutter_local_notifications' string-name lookup),
+  which AAPT cannot see.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/soft_chime" />
