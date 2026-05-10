@@ -23,19 +23,26 @@ class PrayerArc extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // CustomPaint defaults its preferred size to Size.zero when there's no
+    // child — pin the width via LayoutBuilder so the arc spans the card.
     return SizedBox(
       height: 96,
-      child: CustomPaint(
-        painter: _PrayerArcPainter(
-          times: times,
-          now: now,
-          activeKey: activeKey,
-          accent: theme.colorScheme.primary,
-          softAccent: theme.colorScheme.primaryContainer,
-          rest: theme.colorScheme.outline,
-          past: theme.colorScheme.onSurfaceVariant,
-          labelStyle: theme.textTheme.labelSmall ?? const TextStyle(),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return CustomPaint(
+            size: Size(constraints.maxWidth, 96),
+            painter: _PrayerArcPainter(
+              times: times,
+              now: now,
+              activeKey: activeKey,
+              accent: theme.colorScheme.primary,
+              softAccent: theme.colorScheme.primaryContainer,
+              rest: theme.colorScheme.outline,
+              past: theme.colorScheme.onSurfaceVariant,
+              labelStyle: theme.textTheme.labelSmall ?? const TextStyle(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -97,6 +104,8 @@ class _PrayerArcPainter extends CustomPainter {
       (key: 'isha', label: 'ʿIshā', time: times.isha),
     ];
 
+    // Pass 1 — paint the dots and prepare each label's TextPainter.
+    final layouts = <_LabelLayout>[];
     for (final m in markers) {
       final t = _fractionOfDay(m.time);
       final angle = math.pi - t.clamp(0.0, 1.0) * math.pi;
@@ -133,7 +142,44 @@ class _PrayerArcPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, Offset(x - tp.width / 2, centerY + 8));
+      layouts.add(_LabelLayout(tp: tp, dotX: x));
+    }
+
+    // Pass 2 — redistribute label x-positions horizontally so close-together
+    // prayers (e.g. Maghrib + ʿIshā in summer) don't collide. Labels prefer
+    // sitting centered under their dots, but neighbors push each other to
+    // satisfy a minimum gap. Forward sweep enforces "no overlap with the
+    // previous label"; backward sweep shifts earlier labels left to make
+    // room for later ones — so e.g. Asr nudges Dhuhr leftward when Maghrib
+    // crowds Asr.
+    const minGap = 6.0;
+    final positions = layouts
+        .map((l) => l.dotX.clamp(l.tp.width / 2, size.width - l.tp.width / 2))
+        .toList(growable: false)
+        .cast<double>();
+    final widths = layouts
+        .map((l) => l.tp.width)
+        .toList(growable: false);
+
+    for (var i = 1; i < positions.length; i++) {
+      final minX = positions[i - 1] +
+          widths[i - 1] / 2 +
+          minGap +
+          widths[i] / 2;
+      if (positions[i] < minX) positions[i] = minX;
+    }
+    for (var i = positions.length - 2; i >= 0; i--) {
+      final maxX = positions[i + 1] -
+          widths[i + 1] / 2 -
+          minGap -
+          widths[i] / 2;
+      if (positions[i] > maxX) positions[i] = maxX;
+    }
+    for (var i = 0; i < layouts.length; i++) {
+      layouts[i].tp.paint(
+        canvas,
+        Offset(positions[i] - widths[i] / 2, centerY + 8),
+      );
     }
 
     // "Now" indicator — vertical tick at the current 24-hour fraction.
@@ -160,4 +206,10 @@ class _PrayerArcPainter extends CustomPainter {
       old.now != now ||
       old.activeKey != activeKey ||
       old.accent != accent;
+}
+
+class _LabelLayout {
+  _LabelLayout({required this.tp, required this.dotX});
+  final TextPainter tp;
+  final double dotX;
 }
