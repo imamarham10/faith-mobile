@@ -4,6 +4,7 @@ import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/shared/widgets/poppy_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -63,6 +64,46 @@ void main() {
       expect(node.flagsCollection.isEnabled, isNot(Tristate.none));
       expect(node.flagsCollection.isEnabled, Tristate.isFalse);
       expect(node.label, 'Disabled');
+      handle.dispose();
+    },
+  );
+
+  testWidgets(
+    // Regression guard: excludeSemantics: true on the wrapping Semantics
+    // node drops the GestureDetector's own tap action along with everything
+    // else it would contribute, so the activate action must be declared on
+    // the Semantics node itself (onTap:) or screen-reader/switch-access
+    // activation silently stops working even though a real touch still
+    // fires. This was broken and fixed once already; guard it permanently.
+    'tap action survives excludeSemantics: fires onPressed when enabled, '
+    'absent from the node when disabled',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+
+      var pressed = false;
+      await tester.pumpWidget(
+        harness(
+          PoppyButton(label: 'Continue', onPressed: () => pressed = true),
+        ),
+      );
+      final enabledNode = tester.getSemantics(find.byType(PoppyButton));
+      expect(
+        enabledNode.getSemanticsData().hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+      tester.semantics.tap(find.semantics.byLabel('Continue'));
+      await tester.pumpAndSettle();
+      expect(pressed, isTrue);
+
+      await tester.pumpWidget(
+        harness(const PoppyButton(label: 'Disabled', onPressed: null)),
+      );
+      final disabledNode = tester.getSemantics(find.byType(PoppyButton));
+      expect(
+        disabledNode.getSemanticsData().hasAction(SemanticsAction.tap),
+        isFalse,
+      );
+
       handle.dispose();
     },
   );
