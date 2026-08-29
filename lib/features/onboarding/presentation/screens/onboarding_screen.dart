@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_icon.dart';
@@ -59,9 +60,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _enableReminders() async {
     HapticFeedback.mediumImpact();
-    final granted = await NotificationService.instance.requestPermissions();
-    if (!mounted) return;
-    setState(() => _remindersGranted = granted);
+    try {
+      final granted = await NotificationService.instance.requestPermissions();
+      if (!mounted) return;
+      setState(() => _remindersGranted = granted);
+    } on Object {
+      if (!mounted) return;
+      // A thrown platform-channel error still needs to resolve to *some*
+      // visible state — treat it as denied so the user gets the
+      // denied-state affordance instead of the button silently staying
+      // unresolved forever.
+      setState(() => _remindersGranted = false);
+    }
   }
 
   @override
@@ -98,7 +108,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.sm,
+                0,
+              ),
               child: Row(
                 children: [
                   const Spacer(),
@@ -131,7 +146,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             _DotIndicator(count: _slides.length, index: _index),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 child: PoppyButton(
@@ -183,7 +203,7 @@ class _Slide extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       child: Column(
         children: [
           const Spacer(flex: 2),
@@ -222,7 +242,8 @@ class _Slide extends StatelessWidget {
                       if (remindersGranted == false) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'You can turn these on later in Settings.',
+                          'Notification permission denied. Enable in system '
+                          'settings.',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall,
                         ),
@@ -262,7 +283,7 @@ class _DotIndicator extends StatelessWidget {
           AnimatedContainer(
             duration: const Duration(milliseconds: 240),
             curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             width: i == index ? 22 : 7,
             height: 7,
             decoration: BoxDecoration(
