@@ -38,25 +38,27 @@ class _PoppyButtonState extends State<PoppyButton> {
     final ext = Theme.of(context).extension<FaithThemeExtension>()!;
     final palette = ext.palette;
     final enabled = widget.onPressed != null;
-    final fill = switch (widget.variant) {
-      PoppyButtonVariant.primary =>
-        _pressed ? palette.primaryPressed : palette.primary,
-      PoppyButtonVariant.secondary =>
-        _pressed ? palette.secondaryPressed : palette.secondary,
-    };
     final offset = _pressed ? 0.0 : ext.pressOffset;
     // AppTheme computes onPrimary/onSecondary as separately contrast-checked
     // colors (_onColorFor(palette.primary) vs _onColorFor(palette.secondary)) —
     // they aren't guaranteed to match, so the secondary variant must read its
-    // own on* color rather than hardcoding onPrimary for both.
-    final onColor = switch (widget.variant) {
-      PoppyButtonVariant.primary => Theme.of(context).colorScheme.onPrimary,
-      PoppyButtonVariant.secondary =>
+    // own on* color rather than hardcoding onPrimary for both. Fill and
+    // onColor are computed together so a future variant can't update one and
+    // forget the other.
+    final (fill, onColor) = switch (widget.variant) {
+      PoppyButtonVariant.primary => (
+        _pressed ? palette.primaryPressed : palette.primary,
+        Theme.of(context).colorScheme.onPrimary,
+      ),
+      PoppyButtonVariant.secondary => (
+        _pressed ? palette.secondaryPressed : palette.secondary,
         Theme.of(context).colorScheme.onSecondary,
+      ),
     };
 
     final button = AnimatedContainer(
       duration: ext.pressDuration,
+      curve: Curves.easeOut,
       transform: Matrix4.translationValues(0, ext.pressOffset - offset, 0),
       transformAlignment: Alignment.center,
       height: 56,
@@ -86,20 +88,37 @@ class _PoppyButtonState extends State<PoppyButton> {
       ),
     );
 
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: enabled
-          ? GestureDetector(
-              onTapDown: (_) => setState(() => _pressed = true),
-              onTapCancel: () => setState(() => _pressed = false),
-              onTapUp: (_) => setState(() => _pressed = false),
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                widget.onPressed!();
-              },
-              child: button,
-            )
-          : button,
+    void handleTap() {
+      HapticFeedback.mediumImpact();
+      widget.onPressed!();
+    }
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.label,
+      // The label above would duplicate the Text child's own semantics node
+      // ("Continue" announced twice) unless descendant semantics are
+      // excluded — this node is the single source of truth for the a11y
+      // tree here. That also means the activate action must be declared
+      // here directly (excludeSemantics drops the GestureDetector's own tap
+      // action along with everything else it would have contributed), so
+      // screen-reader/switch-access activation still fires the same
+      // haptic + callback as a real touch.
+      onTap: enabled ? handleTap : null,
+      excludeSemantics: true,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: enabled
+            ? GestureDetector(
+                onTapDown: (_) => setState(() => _pressed = true),
+                onTapCancel: () => setState(() => _pressed = false),
+                onTapUp: (_) => setState(() => _pressed = false),
+                onTap: handleTap,
+                child: button,
+              )
+            : button,
+      ),
     );
   }
 }

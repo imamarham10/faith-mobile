@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/shared/widgets/poppy_button.dart';
@@ -24,14 +26,46 @@ void main() {
   });
 
   testWidgets('disabled when onPressed is null', (tester) async {
+    // The disabled branch returns the bare button without wrapping it in a
+    // GestureDetector, so a real, falsifiable assertion is that no
+    // GestureDetector is built at all — mirrors PoppyCard's equivalent test.
     await tester.pumpWidget(
       harness(const PoppyButton(label: 'Disabled', onPressed: null)),
     );
-    var pressed = false;
-    await tester.tap(find.text('Disabled'));
-    await tester.pumpAndSettle();
-    expect(pressed, isFalse);
+    expect(find.byType(GestureDetector), findsNothing);
   });
+
+  testWidgets(
+    'exposes button role and enabled state to accessibility services',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        harness(PoppyButton(label: 'Continue', onPressed: () {})),
+      );
+      final node = tester.getSemantics(find.byType(PoppyButton));
+      expect(node.flagsCollection.isButton, isTrue);
+      expect(node.flagsCollection.isEnabled, isNot(Tristate.none));
+      expect(node.flagsCollection.isEnabled, Tristate.isTrue);
+      expect(node.label, 'Continue');
+      handle.dispose();
+    },
+  );
+
+  testWidgets(
+    'exposes disabled state to accessibility services',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        harness(const PoppyButton(label: 'Disabled', onPressed: null)),
+      );
+      final node = tester.getSemantics(find.byType(PoppyButton));
+      expect(node.flagsCollection.isButton, isTrue);
+      expect(node.flagsCollection.isEnabled, isNot(Tristate.none));
+      expect(node.flagsCollection.isEnabled, Tristate.isFalse);
+      expect(node.label, 'Disabled');
+      handle.dispose();
+    },
+  );
 
   testWidgets('pressing the button does not reflow sibling widgets', (
     tester,
@@ -46,7 +80,7 @@ void main() {
           mainAxisSize: MainAxisSize.min,
           children: [
             PoppyButton(label: 'Tap', onPressed: () {}),
-            SizedBox(key: siblingKey, width: 10, height: 10),
+            const SizedBox(key: siblingKey, width: 10, height: 10),
           ],
         ),
       ),
