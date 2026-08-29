@@ -11,3 +11,12 @@ enum FaithId {
     return null;
   }
 }
+
+/// Human-readable display label for each faith — the single source of truth
+/// shared by the faith picker, settings, and app-shell nav.
+extension FaithIdLabel on FaithId {
+  String get label => switch (this) {
+    FaithId.islam => 'Islam',
+    FaithId.hindu => 'Hindu',
+  };
+}

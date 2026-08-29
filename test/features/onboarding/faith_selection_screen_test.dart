@@ -1,4 +1,5 @@
 import 'package:faith_mobile/core/preferences/selected_faith.dart';
+import 'package:faith_mobile/core/router/routes.dart';
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/features/onboarding/presentation/screens/faith_selection_screen.dart';
@@ -99,4 +100,72 @@ void main() {
     expect(container.read(selectedFaithProvider).valueOrNull, FaithId.hindu);
     expect(find.text('LOGIN'), findsOneWidget);
   });
+
+  testWidgets(
+    'standalone: tapping a faith then Continue persists it and pops back '
+    '(no markDone/login navigation)',
+    (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            theme: AppTheme.light(FaithId.islam),
+            routerConfig: GoRouter(
+              initialLocation: '/settings',
+              routes: [
+                GoRoute(
+                  path: '/settings',
+                  builder: (context, __) => Scaffold(
+                    body: TextButton(
+                      onPressed: () => context.push(Routes.switchFaith),
+                      child: const Text('SETTINGS HOME'),
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: Routes.switchFaith,
+                  builder: (_, __) =>
+                      const FaithSelectionScreen(standalone: true),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Land on the settings stand-in, then push the picker the same way
+      // Settings → "Switch faith" would.
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.text('SETTINGS HOME'), findsOneWidget);
+      await tester.tap(find.text('SETTINGS HOME'));
+      await tester.pump();
+      // MascotView's idle animation repeats forever (see comment on `pump`
+      // above), so pumpAndSettle would spin until it times out — bounded
+      // pumps are used instead everywhere in this test.
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text('Choose your path'), findsOneWidget);
+
+      await tester.tap(find.text('Islam'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('Continue'));
+      // Flush the async set() call plus the go_router pop and its page
+      // transition (the outgoing picker route needs the full transition
+      // duration to finish removing itself from the tree).
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(container.read(selectedFaithProvider).valueOrNull, FaithId.islam);
+      // Popped back to the initial screen, not stuck on the picker and not
+      // routed to /login — standalone mode does neither of those.
+      expect(find.text('SETTINGS HOME'), findsOneWidget);
+      expect(find.text('Choose your path'), findsNothing);
+      expect(find.text('LOGIN'), findsNothing);
+    },
+  );
 }

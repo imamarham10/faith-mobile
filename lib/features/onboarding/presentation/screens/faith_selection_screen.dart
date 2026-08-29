@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/preferences/selected_faith.dart';
+import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/mascot_view.dart';
@@ -32,7 +33,6 @@ class _FaithSelectionScreenState extends ConsumerState<FaithSelectionScreen> {
   Future<void> _continue() async {
     final faith = _selected;
     if (faith == null) return;
-    HapticFeedback.mediumImpact();
     await ref.read(selectedFaithProvider.notifier).set(faith);
     if (!mounted) return;
     if (widget.standalone) {
@@ -41,7 +41,7 @@ class _FaithSelectionScreenState extends ConsumerState<FaithSelectionScreen> {
     }
     await ref.read(onboardingDoneProvider.notifier).markDone();
     if (!mounted) return;
-    context.go('/login');
+    context.go(Routes.login);
   }
 
   @override
@@ -62,7 +62,9 @@ class _FaithSelectionScreenState extends ConsumerState<FaithSelectionScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'You can change this later from settings.',
+                    widget.standalone
+                        ? 'Pick the tradition you\'d like the app to follow.'
+                        : 'You can change this later from settings.',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],
@@ -117,10 +119,7 @@ class _FaithCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final label = switch (faith) {
-      FaithId.islam => 'Islam',
-      FaithId.hindu => 'Hindu',
-    };
+    final label = faith.label;
     return AnimatedScale(
       duration: AppMotion.cardPress,
       scale: selected ? 1.02 : 1.0,
