@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../data/dtos/verse.dart';
 
 /// Renders a single ayah: Arabic (right-aligned, large), the ayah-number
@@ -33,6 +34,10 @@ class AyahView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final translation = verse.translations.isNotEmpty
         ? verse.translations.first.text
         : null;
@@ -82,7 +87,7 @@ class AyahView extends ConsumerWidget {
                 _AyahMedallion(number: verse.verseNumber, isPlaying: isPlaying),
                 const SizedBox(width: AppSpacing.sm),
                 if (isBookmarked)
-                  Icon(Icons.bookmark, size: 16, color: cs.secondary),
+                  Icon(Icons.bookmark, size: 16, color: accentText),
                 const Spacer(),
                 if (isPlaying)
                   Icon(Icons.graphic_eq_rounded, size: 18, color: cs.primary),

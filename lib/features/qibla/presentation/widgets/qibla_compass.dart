@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/faith_theme_extension.dart';
 import 'kaaba_marker.dart';
 
 /// The compass dial.
@@ -37,6 +38,9 @@ class QiblaCompass extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final accentText = Theme.of(
+      context,
+    ).extension<FaithThemeExtension>()!.palette.accentText;
     // Counter-rotate the dial so north is fixed on the screen.
     final dialRotation = -(deviceHeading ?? 0) * math.pi / 180;
     // Place the Kaaba marker at the Qibla bearing on the dial.
@@ -63,6 +67,7 @@ class QiblaCompass extends StatelessWidget {
                     tickColor: cs.onSurfaceVariant,
                     cardinalColor: cs.onSurface,
                     accent: aligned ? cs.secondary : cs.primary,
+                    accentText: aligned ? accentText : cs.primary,
                     aligned: aligned,
                     textStyle:
                         Theme.of(context).textTheme.labelSmall ??
@@ -100,6 +105,7 @@ class _DialPainter extends CustomPainter {
     required this.tickColor,
     required this.cardinalColor,
     required this.accent,
+    required this.accentText,
     required this.aligned,
     required this.textStyle,
   });
@@ -108,6 +114,7 @@ class _DialPainter extends CustomPainter {
   final Color tickColor;
   final Color cardinalColor;
   final Color accent;
+  final Color accentText;
   final bool aligned;
   final TextStyle textStyle;
 
@@ -162,7 +169,7 @@ class _DialPainter extends CustomPainter {
         text: TextSpan(
           text: letter,
           style: textStyle.copyWith(
-            color: letter == 'N' ? accent : cardinalColor,
+            color: letter == 'N' ? accentText : cardinalColor,
             fontWeight: FontWeight.w700,
             fontSize: 12,
             letterSpacing: 1.4,
@@ -183,5 +190,6 @@ class _DialPainter extends CustomPainter {
   bool shouldRepaint(covariant _DialPainter old) =>
       old.aligned != aligned ||
       old.ringColor != ringColor ||
-      old.accent != accent;
+      old.accent != accent ||
+      old.accentText != accentText;
 }

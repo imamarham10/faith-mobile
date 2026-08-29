@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/bookmark.dart';
 import '../controllers/bookmarks_controller.dart';
@@ -93,6 +94,10 @@ class _BookmarkTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final name = item.surahName ?? 'Surah ${item.surahId}';
     final snippet = item.textArabic;
 
@@ -115,7 +120,7 @@ class _BookmarkTile extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bookmark, size: 16, color: cs.secondary),
+                  Icon(Icons.bookmark, size: 16, color: accentText),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/journal_entry.dart';
@@ -80,6 +81,7 @@ class _FrequencyRow extends StatelessWidget {
             count: frequency[mood.slug] ?? 0,
             maxCount: maxCount,
             color: _moodColor(context, mood.slug),
+            textColor: _moodTextColor(context, mood.slug),
             mutedColor: cs.outline,
             theme: theme,
           ),
@@ -94,6 +96,20 @@ class _FrequencyRow extends StatelessWidget {
     const warmer = {'tested', 'lonely', 'lost', 'heavy', 'searching'};
     return warmer.contains(slug) ? cs.secondary : cs.primary;
   }
+
+  /// Same warm/calm split as [_moodColor], but for the count text drawn
+  /// inside the dot — `secondary` fails WCAG AA as text on `surface`, so
+  /// warmer moods use the palette's contrast-safe `accentText` instead.
+  Color _moodTextColor(BuildContext context, String slug) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
+    const warmer = {'tested', 'lonely', 'lost', 'heavy', 'searching'};
+    return warmer.contains(slug) ? accentText : cs.primary;
+  }
 }
 
 class _FrequencyDot extends StatelessWidget {
@@ -102,6 +118,7 @@ class _FrequencyDot extends StatelessWidget {
     required this.count,
     required this.maxCount,
     required this.color,
+    required this.textColor,
     required this.mutedColor,
     required this.theme,
   });
@@ -110,6 +127,7 @@ class _FrequencyDot extends StatelessWidget {
   final int count;
   final int maxCount;
   final Color color;
+  final Color textColor;
   final Color mutedColor;
   final ThemeData theme;
 
@@ -145,7 +163,9 @@ class _FrequencyDot extends StatelessWidget {
               child: Text(
                 count.toString(),
                 style: theme.textTheme.labelLarge?.copyWith(
-                  color: filled ? color : theme.colorScheme.onSurfaceVariant,
+                  color: filled
+                      ? textColor
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),

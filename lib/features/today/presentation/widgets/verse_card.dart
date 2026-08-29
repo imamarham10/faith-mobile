@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 
 /// Quran verse card — Arabic, divider, English translation, reference.
 class VerseCard extends ConsumerWidget {
@@ -24,6 +25,10 @@ class VerseCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final content = Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -53,7 +58,7 @@ class VerseCard extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             reference.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(color: cs.secondary),
+            style: theme.textTheme.labelSmall?.copyWith(color: accentText),
           ),
         ],
       ),

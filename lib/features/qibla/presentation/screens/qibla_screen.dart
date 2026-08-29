@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/location/location_service.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/qibla_data.dart';
 import '../../domain/qibla_math.dart';
@@ -191,7 +192,9 @@ class _AlignmentBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final color = aligned ? cs.secondary : cs.onSurfaceVariant;
+    final color = aligned
+        ? theme.extension<FaithThemeExtension>()!.palette.accentText
+        : cs.onSurfaceVariant;
     final label = aligned ? 'Facing Qibla' : 'Turn until aligned';
 
     return AnimatedDefaultTextStyle(

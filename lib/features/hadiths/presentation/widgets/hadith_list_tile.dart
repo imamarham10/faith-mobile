@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../data/dtos/hadith.dart';
 
 /// Compact row used on the book screen and search results.
@@ -130,7 +131,10 @@ class _Excerpt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final base = theme.textTheme.bodySmall;
     final term = highlightTerm?.trim() ?? '';
 
@@ -163,7 +167,7 @@ class _Excerpt extends StatelessWidget {
           TextSpan(
             text: text.substring(idx, idx + term.length),
             style: base?.copyWith(
-              color: cs.secondary,
+              color: accentText,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -186,11 +190,15 @@ class GradeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final lower = grade.toLowerCase();
 
     final (Color bg, Color fg) = switch (true) {
       _ when lower.contains('sahih') => (cs.primaryContainer, cs.primary),
-      _ when lower.contains('hasan') => (cs.secondaryContainer, cs.secondary),
+      _ when lower.contains('hasan') => (cs.secondaryContainer, accentText),
       _ => (cs.surface, cs.onSurfaceVariant),
     };
 

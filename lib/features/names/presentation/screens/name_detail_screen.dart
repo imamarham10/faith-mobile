@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/divine_name.dart';
 import '../../domain/names_kind.dart';
@@ -78,6 +79,10 @@ class _DetailContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final favs = ref.watch(nameFavoritesControllerProvider(kind));
     final favsCtrl = ref.read(nameFavoritesControllerProvider(kind).notifier);
     final isFav = favs.valueOrNull?.any((n) => n.id == name.id) ?? false;
@@ -100,7 +105,7 @@ class _DetailContent extends ConsumerWidget {
                 child: Text(
                   '${name.id} of 99'.toUpperCase(),
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.secondary,
+                    color: accentText,
                   ),
                 ),
               ),
@@ -176,6 +181,10 @@ class _ActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     return SafeArea(
       top: false,
       child: Container(
@@ -193,7 +202,7 @@ class _ActionBar extends StatelessWidget {
             _ActionButton(
               icon: isFavorite ? Icons.favorite : Icons.favorite_outline,
               label: 'Favorite',
-              tint: isFavorite ? cs.secondary : cs.onSurfaceVariant,
+              tint: isFavorite ? accentText : cs.onSurfaceVariant,
               onTap: onToggleFavorite,
             ),
             _ActionButton(

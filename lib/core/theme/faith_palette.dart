@@ -5,12 +5,25 @@ import 'faith_id.dart';
 /// Flat token bag for one faith + brightness. Only `primary`/`primaryPressed`
 /// /`secondary`/`secondaryPressed`/`mascotAccent` vary by faith — neutrals
 /// (surface/ink/outline/shadow) are shared so both faiths read as siblings.
+///
+/// `secondary` is deliberately bold/saturated — it's tuned as a FILL color
+/// (buttons, chips, badge backgrounds) where a computed contrasting "on"
+/// color sits on top of it. It fails WCAG AA (~1.5:1) when read directly as
+/// TEXT color on `surface`/`surfaceCard` — a distinct use case that this
+/// same bold value was incorrectly pressed into across ~20 call sites app-
+/// wide (found 2026-08-29: verse references, day-number labels, section
+/// headers, etc. — all unreadable in light mode). Use `accentText` instead
+/// for that case: same hue/saturation as `secondary`, lightness reduced
+/// until it clears WCAG AA against `surface` (light mode only needs this —
+/// dark mode's `secondary` already has 11.8-13.1:1 against dark surfaces,
+/// so `accentText` just equals `secondary` there).
 class FaithPalette {
   const FaithPalette({
     required this.primary,
     required this.primaryPressed,
     required this.secondary,
     required this.secondaryPressed,
+    required this.accentText,
     required this.mascotAccent,
     required this.surface,
     required this.surfaceCard,
@@ -25,6 +38,7 @@ class FaithPalette {
   final Color primaryPressed;
   final Color secondary;
   final Color secondaryPressed;
+  final Color accentText;
   final Color mascotAccent;
   final Color surface;
   final Color surfaceCard;
@@ -43,6 +57,7 @@ class FaithPalette {
           primaryPressed == other.primaryPressed &&
           secondary == other.secondary &&
           secondaryPressed == other.secondaryPressed &&
+          accentText == other.accentText &&
           mascotAccent == other.mascotAccent &&
           surface == other.surface &&
           surfaceCard == other.surfaceCard &&
@@ -58,6 +73,7 @@ class FaithPalette {
     primaryPressed,
     secondary,
     secondaryPressed,
+    accentText,
     mascotAccent,
     surface,
     surfaceCard,
@@ -97,6 +113,7 @@ class FaithPalette {
     primaryPressed: Color(0xFF00935F),
     secondary: Color(0xFFFFC93C),
     secondaryPressed: Color(0xFFE0AC1F),
+    accentText: Color(0xFF876200), // 5.3:1 vs surface — same hue as secondary
     mascotAccent: Color(0xFFFFC93C),
     surface: _surfaceLight,
     surfaceCard: _surfaceCardLight,
@@ -112,6 +129,7 @@ class FaithPalette {
     primaryPressed: Color(0xFF14A876),
     secondary: Color(0xFFFFD666),
     secondaryPressed: Color(0xFFE0B93E),
+    accentText: Color(0xFFFFD666), // already 11.8-13.1:1 vs dark surfaces
     mascotAccent: Color(0xFFFFD666),
     surface: _surfaceDark,
     surfaceCard: _surfaceCardDark,
@@ -127,6 +145,7 @@ class FaithPalette {
     primaryPressed: Color(0xFFE0532A),
     secondary: Color(0xFFFFB000),
     secondaryPressed: Color(0xFFD99400),
+    accentText: Color(0xFF8C6100), // 5.25:1 vs surface — same hue as secondary
     mascotAccent: Color(0xFFFFD23F),
     surface: _surfaceLight,
     surfaceCard: _surfaceCardLight,
@@ -142,6 +161,7 @@ class FaithPalette {
     primaryPressed: Color(0xFFE06C3D),
     secondary: Color(0xFFFFC94D),
     secondaryPressed: Color(0xFFE0AA2E),
+    accentText: Color(0xFFFFC94D), // already 11.9:1 vs dark surfaces
     mascotAccent: Color(0xFFFFD23F),
     surface: _surfaceDark,
     surfaceCard: _surfaceCardDark,

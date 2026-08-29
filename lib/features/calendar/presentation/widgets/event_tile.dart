@@ -4,6 +4,7 @@ import 'package:hijri/hijri_calendar.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/islamic_event.dart';
 
@@ -18,6 +19,10 @@ class EventTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
 
     final probe = HijriCalendar()
       ..hYear = HijriCalendar.now().hYear
@@ -53,7 +58,7 @@ class EventTile extends StatelessWidget {
                     Text(
                       '${event.hijriDay}',
                       style: theme.textTheme.titleLarge?.copyWith(
-                        color: cs.secondary,
+                        color: accentText,
                       ),
                     ),
                     Text(

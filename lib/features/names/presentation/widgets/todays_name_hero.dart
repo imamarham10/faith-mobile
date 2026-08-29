@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/divine_name.dart';
 
@@ -21,6 +22,10 @@ class TodaysNameHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
 
     return Material(
       color: Colors.transparent,
@@ -42,9 +47,7 @@ class TodaysNameHero extends ConsumerWidget {
             children: [
               Text(
                 'Name of the day'.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.secondary,
-                ),
+                style: theme.textTheme.labelSmall?.copyWith(color: accentText),
               ),
               const Gap(AppSpacing.lg),
               Center(

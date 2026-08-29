@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/location/location_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
 
 /// Live countdown card for the next prayer.
@@ -135,6 +136,9 @@ class _LiveCardState extends State<_LiveCard> {
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final accent = _imminent ? cs.secondary : cs.primary;
+    final accentText = _imminent
+        ? theme.extension<FaithThemeExtension>()!.palette.accentText
+        : cs.primary;
     final accentSoft = _imminent
         ? (isDark ? AppColors.goldNightSoft : AppColors.goldSoft)
         : (isDark ? AppColors.sageNightSoft : AppColors.sageSoft);
@@ -176,7 +180,9 @@ class _LiveCardState extends State<_LiveCard> {
                   const SizedBox(width: 8),
                   Text(
                     'NEXT  ·  ${widget.prayerName}',
-                    style: theme.textTheme.labelSmall?.copyWith(color: accent),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: accentText,
+                    ),
                   ),
                 ],
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 
 /// A square-ish card on the duas home grid.
 ///
@@ -97,6 +98,10 @@ class FavoritesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
 
     return Material(
       color: Colors.transparent,
@@ -116,7 +121,7 @@ class FavoritesCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.favorite, size: 22, color: cs.secondary),
+              Icon(Icons.favorite, size: 22, color: accentText),
               const Spacer(),
               Text('Favorites', style: theme.textTheme.titleLarge),
               const SizedBox(height: 4),

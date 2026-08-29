@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../hadiths/data/dtos/hadith.dart';
 import '../../../hadiths/presentation/controllers/daily_hadith_controller.dart';
@@ -47,6 +48,10 @@ class _Content extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final bookName = hadith.book?.name ?? 'Hadith';
     final header = '${bookName.toUpperCase()} · #${hadith.hadithNumber}';
 
@@ -72,9 +77,7 @@ class _Content extends ConsumerWidget {
             children: [
               Text(
                 header,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.secondary,
-                ),
+                style: theme.textTheme.labelSmall?.copyWith(color: accentText),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

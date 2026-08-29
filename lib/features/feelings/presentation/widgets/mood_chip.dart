@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 
 /// A pill-shaped, tappable mood label.
 ///
@@ -26,10 +27,19 @@ class MoodChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final fg = selected ? cs.secondary : cs.onSurface;
+    final palette = theme.extension<FaithThemeExtension>()!.palette;
+    final fg = selected ? palette.accentText : cs.onSurface;
     final border = selected ? cs.secondary.withValues(alpha: 0.5) : cs.outline;
+    // Note: `cs.secondaryContainer` is itself `secondary` at 16% alpha — an
+    // earlier version of this chip called `.withValues(alpha: 0.6)` on that
+    // ALREADY-translucent color, which overwrites (not multiplies) alpha
+    // channels, silently jumping the fill from a 16% tint to a bold 60% one
+    // and leaving `accentText` too low-contrast against it. Compute the tint
+    // directly off `palette.secondary` instead, at an alpha verified to keep
+    // `accentText` ≥4.5:1 for both faiths (0.20 → 4.66:1 hindu, the tighter
+    // of the two — see the palette's accentText doc comment for the method).
     final bg = selected
-        ? cs.secondaryContainer.withValues(alpha: 0.6)
+        ? palette.secondary.withValues(alpha: 0.20)
         : Colors.transparent;
 
     final hPad = compact ? 14.0 : 20.0;

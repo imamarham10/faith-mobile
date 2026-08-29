@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../data/dtos/surah.dart';
 
 /// One row in the surah list. Renders the surah number medallion, Arabic
@@ -126,6 +127,9 @@ class _PlaceBadge extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final color = isMeccan ? cs.secondary : cs.primary;
+    final textColor = isMeccan
+        ? theme.extension<FaithThemeExtension>()!.palette.accentText
+        : cs.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -134,7 +138,7 @@ class _PlaceBadge extends StatelessWidget {
       ),
       child: Text(
         isMeccan ? 'Meccan' : 'Medinan',
-        style: theme.textTheme.labelSmall?.copyWith(color: color),
+        style: theme.textTheme.labelSmall?.copyWith(color: textColor),
       ),
     );
   }

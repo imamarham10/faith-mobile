@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/hadith_book.dart';
 import '../controllers/hadiths_by_book_controller.dart';
@@ -165,7 +166,10 @@ class _BookHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenEdge,
@@ -185,7 +189,7 @@ class _BookHeader extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '${book.totalHadiths} hadiths',
-              style: theme.textTheme.labelSmall?.copyWith(color: cs.secondary),
+              style: theme.textTheme.labelSmall?.copyWith(color: accentText),
             ),
           ],
         ],

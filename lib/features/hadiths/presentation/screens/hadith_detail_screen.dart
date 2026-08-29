@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../share/domain/shareable_content.dart';
 import '../../data/dtos/hadith.dart';
@@ -99,6 +100,10 @@ class _DetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final bookName = hadith.book?.name ?? 'Hadith';
 
     return Column(
@@ -185,7 +190,7 @@ class _DetailContent extends StatelessWidget {
                       Text(
                         hadith.reference!.toUpperCase(),
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: cs.secondary,
+                          color: accentText,
                         ),
                       ),
                     ],

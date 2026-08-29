@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../data/dtos/hadith_book.dart';
 
 /// A square-ish card on the hadiths home grid.
@@ -20,6 +21,10 @@ class BookCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
 
     return Material(
       color: Colors.transparent,
@@ -69,7 +74,7 @@ class BookCard extends StatelessWidget {
                       child: Text(
                         'PREMIUM',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: cs.secondary,
+                          color: accentText,
                           fontSize: 9,
                         ),
                       ),

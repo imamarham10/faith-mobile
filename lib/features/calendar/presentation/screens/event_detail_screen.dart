@@ -8,6 +8,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/islamic_event.dart';
 import '../controllers/calendar_controller.dart';
@@ -64,6 +65,10 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
 
     final probe = HijriCalendar()
       ..hYear = HijriCalendar.now().hYear
@@ -117,7 +122,7 @@ class _Content extends StatelessWidget {
                   child: Text(
                     'MAJOR',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.secondary,
+                      color: accentText,
                       letterSpacing: 1.2,
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../data/dtos/remedy.dart';
 
 /// Display card for a single remedy — Arabic, divider, translation,
@@ -17,6 +18,10 @@ class RemedyCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     final hasArabic = remedy.arabicText.trim().isNotEmpty;
     final hasTranslit = (remedy.transliteration ?? '').trim().isNotEmpty;
     final hasSource = (remedy.source ?? '').trim().isNotEmpty;
@@ -66,7 +71,7 @@ class RemedyCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               remedy.source!.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(color: cs.secondary),
+              style: theme.textTheme.labelSmall?.copyWith(color: accentText),
             ),
           ],
         ],

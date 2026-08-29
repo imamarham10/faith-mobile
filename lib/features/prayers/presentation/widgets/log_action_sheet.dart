@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../data/dtos/prayer_log.dart';
 
@@ -35,6 +36,10 @@ class _LogActionSheetContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accentText = theme
+        .extension<FaithThemeExtension>()!
+        .palette
+        .accentText;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenEdge,
@@ -65,7 +70,7 @@ class _LogActionSheetContent extends StatelessWidget {
             icon: Icons.schedule_outlined,
             title: 'Late',
             subtitle: 'Prayed but not on time',
-            color: theme.colorScheme.secondary,
+            color: accentText,
             onTap: () {
               HapticFeedback.mediumImpact();
               Navigator.of(context).pop(PrayerStatus.late);
