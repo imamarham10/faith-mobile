@@ -26,11 +26,21 @@ class AudioMiniPlayer extends ConsumerWidget {
       offset: Offset.zero,
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
+      // Explicit height: this widget sits in Scaffold.bottomNavigationBar,
+      // which lays it out with a *loose* height constraint (0..screen
+      // height) and uses whatever height it reports back — verified live on
+      // device that an unconstrained Container/PoppyCard here reports back
+      // almost the full screen height instead of its content height,
+      // stretching into a giant empty pill. A tight height sidesteps
+      // whatever is going wrong in that report and is also why this one
+      // spot uses a plain Container instead of PoppyCard (which has no
+      // height parameter to force this).
       child: Container(
+        height: 72,
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: cs.outline),
+          border: Border.all(color: cs.outline, width: 2),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.base,

@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/surah.dart';
 import '../controllers/quran_home_controller.dart';
@@ -194,73 +196,55 @@ class _ContinueReadingCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            context.push(
-              '/quran/surah/${lastRead.surahId}?ayah=${lastRead.verseNumber}',
-            );
-          },
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(color: cs.outline),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  cs.surface,
-                  cs.primaryContainer.withValues(alpha: 0.4),
+      child: PoppyCard(
+        radius: AppRadius.xl,
+        color: cs.primaryContainer,
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          context.push(
+            '/quran/surah/${lastRead.surahId}?ayah=${lastRead.verseNumber}',
+          );
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: cs.surface,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.play_arrow_rounded,
+                color: cs.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.base),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'CONTINUE READING',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: cs.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(name, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Verse ${lastRead.verseNumber}',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.play_arrow_rounded,
-                    color: cs.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.base),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CONTINUE READING',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: cs.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(name, style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Verse ${lastRead.verseNumber}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
-              ],
-            ),
-          ),
+            Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+          ],
         ),
       ),
     );
@@ -309,24 +293,12 @@ class _LoadingShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       sliver: SliverList.separated(
         itemCount: 5,
         separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-        itemBuilder: (_, __) => Shimmer.fromColors(
-          baseColor: cs.surface,
-          highlightColor: cs.primaryContainer.withValues(alpha: 0.4),
-          child: Container(
-            height: 76,
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: cs.outline),
-            ),
-          ),
-        ),
+        itemBuilder: (_, __) => const PoppySkeleton(height: 76, radius: AppRadius.lg),
       ),
     );
   }
@@ -367,12 +339,9 @@ class _ErrorState extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             const Gap(AppSpacing.base),
-            FilledButton.tonal(
-              onPressed: () {
-                HapticFeedback.heavyImpact();
-                ref.invalidate(surahListProvider);
-              },
-              child: const Text('Retry'),
+            PoppyButton(
+              label: 'Retry',
+              onPressed: () => ref.invalidate(surahListProvider),
             ),
           ],
         ),

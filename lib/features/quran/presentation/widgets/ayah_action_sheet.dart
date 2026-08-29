@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../share/domain/shareable_content.dart';
 import '../../data/dtos/verse.dart';
 import '../controllers/audio_controller.dart';
@@ -95,6 +97,7 @@ class AyahActionSheet extends ConsumerWidget {
               icon: Icons.play_arrow_rounded,
               label: 'Play recitation',
               onTap: () {
+                HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
                 ref
                     .read(audioControllerProvider.notifier)
@@ -106,12 +109,14 @@ class AyahActionSheet extends ConsumerWidget {
                     );
               },
             ),
+            const Gap(AppSpacing.sm),
             _ActionRow(
               icon: isBookmarked
                   ? Icons.bookmark_rounded
                   : Icons.bookmark_border_rounded,
               label: isBookmarked ? 'Remove bookmark' : 'Bookmark',
               onTap: () async {
+                HapticFeedback.selectionClick();
                 await ref
                     .read(bookmarksControllerProvider.notifier)
                     .toggle(
@@ -126,6 +131,7 @@ class AyahActionSheet extends ConsumerWidget {
                 if (context.mounted) Navigator.of(context).pop();
               },
             ),
+            const Gap(AppSpacing.sm),
             _ActionRow(
               icon: Icons.share_outlined,
               label: 'Share',
@@ -149,6 +155,7 @@ class AyahActionSheet extends ConsumerWidget {
                 );
               },
             ),
+            const Gap(AppSpacing.sm),
             const _ActionRow(
               icon: Icons.menu_book_outlined,
               label: 'Tafsir',
@@ -179,39 +186,33 @@ class _ActionRow extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final disabled = onTap == null;
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+    return PoppyCard(
+      radius: AppRadius.lg,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.base,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: disabled ? cs.onSurfaceVariant : cs.onSurface,
-            ),
-            const SizedBox(width: AppSpacing.base),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: disabled ? cs.onSurfaceVariant : cs.onSurface,
-                    ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 22,
+            color: disabled ? cs.onSurfaceVariant : cs.onSurface,
+          ),
+          const SizedBox(width: AppSpacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: disabled ? cs.onSurfaceVariant : cs.onSurface,
                   ),
-                  if (subtitle != null)
-                    Text(subtitle!, style: theme.textTheme.bodySmall),
-                ],
-              ),
+                ),
+                if (subtitle != null)
+                  Text(subtitle!, style: theme.textTheme.bodySmall),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/verse.dart';
 import '../controllers/audio_controller.dart';
 import '../controllers/bookmarks_controller.dart';
@@ -443,41 +444,25 @@ class _ReaderLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.screenEdge,
           vertical: AppSpacing.lg,
         ),
-        child: Shimmer.fromColors(
-          baseColor: cs.surface,
-          highlightColor: cs.primaryContainer.withValues(alpha: 0.4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                height: 28,
-                margin: const EdgeInsets.symmetric(horizontal: 80),
-                decoration: BoxDecoration(
-                  color: cs.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-              ),
-              const Gap(AppSpacing.xl),
-              for (var i = 0; i < 6; i++) ...[
-                Container(
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: cs.surface,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: cs.outline),
-                  ),
-                ),
-                const Gap(AppSpacing.base),
-              ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 80),
+              child: PoppySkeleton(height: 28, radius: AppRadius.sm),
+            ),
+            const Gap(AppSpacing.xl),
+            for (var i = 0; i < 6; i++) ...[
+              const PoppySkeleton(height: 80, radius: AppRadius.md),
+              const Gap(AppSpacing.base),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -520,13 +505,7 @@ class _ReaderError extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const Gap(AppSpacing.base),
-              FilledButton.tonal(
-                onPressed: () {
-                  HapticFeedback.heavyImpact();
-                  onRetry();
-                },
-                child: const Text('Retry'),
-              ),
+              PoppyButton(label: 'Retry', onPressed: onRetry),
             ],
           ),
         ),

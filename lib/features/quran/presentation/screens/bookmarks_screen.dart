@@ -8,6 +8,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/bookmark.dart';
 import '../controllers/bookmarks_controller.dart';
 
@@ -101,65 +103,53 @@ class _BookmarkTile extends ConsumerWidget {
     final name = item.surahName ?? 'Surah ${item.surahId}';
     final snippet = item.textArabic;
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-            color: cs.surface,
-          ),
-          padding: const EdgeInsets.all(AppSpacing.base),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.all(AppSpacing.base),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(Icons.bookmark, size: 16, color: accentText),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      '$name · ${item.surahId}:${item.verseNumber}',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                ],
+              Icon(Icons.bookmark, size: 16, color: accentText),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  '$name · ${item.surahId}:${item.verseNumber}',
+                  style: theme.textTheme.titleMedium,
+                ),
               ),
-              if (snippet != null && snippet.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Text(
-                    snippet,
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: arabicTextStyleOf(
-                      ref,
-                      fontSize: 20,
-                      height: 1.6,
-                      color: cs.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-              if (item.translation != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  item.translation!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
             ],
           ),
-        ),
+          if (snippet != null && snippet.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                snippet,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: arabicTextStyleOf(
+                  ref,
+                  fontSize: 20,
+                  height: 1.6,
+                  color: cs.onSurface,
+                ),
+              ),
+            ),
+          ],
+          if (item.translation != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              item.translation!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -254,12 +244,9 @@ class _ErrorState extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             const Gap(AppSpacing.base),
-            FilledButton.tonal(
-              onPressed: () {
-                HapticFeedback.heavyImpact();
-                ref.invalidate(bookmarksControllerProvider);
-              },
-              child: const Text('Retry'),
+            PoppyButton(
+              label: 'Retry',
+              onPressed: () => ref.invalidate(bookmarksControllerProvider),
             ),
           ],
         ),
