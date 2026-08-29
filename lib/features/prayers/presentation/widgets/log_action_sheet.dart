@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_id.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/mascot_view.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/prayer_log.dart';
 
 /// Modal bottom sheet for choosing how to log a prayer.
@@ -60,6 +63,14 @@ class _LogActionSheetContent extends StatelessWidget {
             title: 'On time',
             subtitle: 'Prayed within its window',
             color: theme.colorScheme.primary,
+            // The one genuinely celebratory moment in this sheet — praying
+            // on time is the goal, so its tile gets the mascot instead of a
+            // plain icon.
+            mascot: const MascotView(
+              faith: FaithId.islam,
+              state: MascotState.celebrate,
+              size: 40,
+            ),
             onTap: () {
               HapticFeedback.mediumImpact();
               Navigator.of(context).pop(PrayerStatus.onTime);
@@ -100,6 +111,7 @@ class _ActionTile extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.mascot,
   });
 
   final IconData icon;
@@ -108,46 +120,36 @@ class _ActionTile extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
+  /// Replaces the leading icon when set — used for the one genuinely
+  /// celebratory tile ("On time") rather than every tile in this sheet.
+  final Widget? mascot;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: theme.colorScheme.outline),
+    return PoppyCard(
+      radius: AppRadius.lg,
+      onTap: onTap,
+      child: Row(
+        children: [
+          mascot ?? Icon(icon, color: color, size: 24),
+          const Gap.h(AppSpacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleMedium),
+                const Gap(2),
+                Text(subtitle, style: theme.textTheme.bodySmall),
+              ],
+            ),
           ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.base,
-            vertical: AppSpacing.base,
+          Icon(
+            Icons.chevron_right,
+            color: theme.colorScheme.onSurfaceVariant,
+            size: 22,
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const Gap.h(AppSpacing.base),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleMedium),
-                    const Gap(2),
-                    Text(subtitle, style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 22,
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

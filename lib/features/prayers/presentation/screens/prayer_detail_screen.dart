@@ -9,6 +9,8 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/prayer_log.dart';
 import '../../data/dtos/prayer_times.dart';
 import '../../domain/next_prayer.dart';
@@ -135,17 +137,13 @@ class _Content extends ConsumerWidget {
         AppSpacing.xxl,
       ),
       children: [
-        Container(
+        PoppyCard(
+          radius: AppRadius.xl,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.base,
             AppSpacing.lg,
             AppSpacing.base,
             AppSpacing.base,
-          ),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: theme.colorScheme.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,53 +259,40 @@ class _MethodPickerSheet extends ConsumerWidget {
             final selected = m.code == currentCode;
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  onTap: () async {
-                    HapticFeedback.selectionClick();
-                    await ref.read(calcMethodPrefProvider.notifier).set(m.code);
-                    if (context.mounted) Navigator.of(context).pop();
-                  },
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? theme.colorScheme.primaryContainer
-                          : null,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(
-                        color: selected
-                            ? theme.colorScheme.primary.withValues(alpha: 0.4)
-                            : theme.colorScheme.outline,
+              child: PoppyCard(
+                radius: AppRadius.md,
+                color: selected ? theme.colorScheme.primaryContainer : null,
+                borderColor: selected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.4)
+                    : null,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.base,
+                  vertical: AppSpacing.md,
+                ),
+                onTap: () async {
+                  HapticFeedback.selectionClick();
+                  await ref.read(calcMethodPrefProvider.notifier).set(m.code);
+                  if (context.mounted) Navigator.of(context).pop();
+                },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(m.label, style: theme.textTheme.titleMedium),
+                          const Gap(2),
+                          Text(m.code, style: theme.textTheme.bodySmall),
+                        ],
                       ),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.base,
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(m.label, style: theme.textTheme.titleMedium),
-                              const Gap(2),
-                              Text(m.code, style: theme.textTheme.bodySmall),
-                            ],
-                          ),
-                        ),
-                        if (selected)
-                          Icon(
-                            Icons.check_circle,
-                            color: theme.colorScheme.primary,
-                            size: 22,
-                          ),
-                      ],
-                    ),
-                  ),
+                    if (selected)
+                      Icon(
+                        Icons.check_circle,
+                        color: theme.colorScheme.primary,
+                        size: 22,
+                      ),
+                  ],
                 ),
               ),
             );
@@ -399,14 +384,12 @@ class _ErrorView extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
         ),
         const Gap(AppSpacing.lg),
-        Center(
-          child: FilledButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              onRetry();
-            },
-            child: const Text('Try again'),
-          ),
+        PoppyButton(
+          label: 'Try again',
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            onRetry();
+          },
         ),
       ],
     );
@@ -444,14 +427,12 @@ class _LocationDeniedView extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
         ),
         const Gap(AppSpacing.lg),
-        Center(
-          child: FilledButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              onEnable();
-            },
-            child: const Text('Enable location'),
-          ),
+        PoppyButton(
+          label: 'Enable location',
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            onEnable();
+          },
         ),
       ],
     );

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/prayer_log.dart';
 
 /// Logical role of a row relative to "now" — used to drive tinting.
@@ -37,83 +38,69 @@ class PrayerRow extends StatelessWidget {
     final isPast = state == PrayerRowState.past;
     final isInfo = state == PrayerRowState.informational;
 
-    final bg = isCurrent
-        ? cs.primaryContainer
-        : isPast
-        ? cs.surface
-        : cs.surface;
+    // Non-current rows fall back to PoppyCard's own default (surfaceCard) —
+    // only the current-prayer row gets a distinct tinted fill.
+    final bg = isCurrent ? cs.primaryContainer : null;
     final textColor = isPast || isInfo ? cs.onSurfaceVariant : cs.onSurface;
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: canLog
-            ? () {
-                HapticFeedback.lightImpact();
-                onTap();
-              }
-            : null,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: isCurrent ? cs.primary.withValues(alpha: 0.4) : cs.outline,
-              width: isCurrent ? 1.2 : 1,
+    return PoppyCard(
+      color: bg,
+      borderColor: isCurrent ? cs.primary.withValues(alpha: 0.4) : null,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.base,
+        vertical: AppSpacing.base,
+      ),
+      radius: 16,
+      onTap: canLog
+          ? () {
+              HapticFeedback.lightImpact();
+              onTap();
+            }
+          : null,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 8,
+            height: 8,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: isCurrent
+                    ? cs.primary
+                    : isPast
+                    ? cs.outline
+                    : cs.onSurfaceVariant.withValues(alpha: 0.4),
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.base,
-            vertical: AppSpacing.base,
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 8,
-                height: 8,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: isCurrent
-                        ? cs.primary
-                        : isPast
-                        ? cs.outline
-                        : cs.onSurfaceVariant.withValues(alpha: 0.4),
-                    shape: BoxShape.circle,
+          const Gap.h(AppSpacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: textColor,
                   ),
                 ),
-              ),
-              const Gap.h(AppSpacing.base),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: textColor,
-                      ),
-                    ),
-                    if (isInfo) ...[
-                      const Gap(2),
-                      Text('Informational', style: theme.textTheme.bodySmall),
-                    ],
-                  ],
-                ),
-              ),
-              _StatusBadge(log: log, isInfo: isInfo, isCurrent: isCurrent),
-              const Gap.h(AppSpacing.md),
-              Text(
-                DateFormat.jm().format(time),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: textColor,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
+                if (isInfo) ...[
+                  const Gap(2),
+                  Text('Informational', style: theme.textTheme.bodySmall),
+                ],
+              ],
+            ),
           ),
-        ),
+          _StatusBadge(log: log, isInfo: isInfo, isCurrent: isCurrent),
+          const Gap.h(AppSpacing.md),
+          Text(
+            DateFormat.jm().format(time),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: textColor,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
       ),
     );
   }

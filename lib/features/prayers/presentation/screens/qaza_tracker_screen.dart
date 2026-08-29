@@ -7,7 +7,10 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../../shared/widgets/stat_chip.dart';
 import '../../data/dtos/prayer_stats.dart';
 import '../controllers/prayer_log_controller.dart';
 
@@ -84,21 +87,14 @@ class _Content extends ConsumerWidget {
         AppSpacing.xxl,
       ),
       children: [
-        Container(
+        PoppyCard(
+          radius: AppRadius.xl,
+          color: cs.primaryContainer,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-          ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [cs.surface, cs.primaryContainer.withValues(alpha: 0.5)],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: cs.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,15 +159,11 @@ class _QazaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.md,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.base,
         vertical: AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: theme.colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -180,12 +172,10 @@ class _QazaRow extends StatelessWidget {
             duration: const Duration(milliseconds: 220),
             transitionBuilder: (child, anim) =>
                 FadeTransition(opacity: anim, child: child),
-            child: Text(
-              '$count',
+            child: StatChip(
               key: ValueKey<int>(count),
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
+              value: '$count',
+              label: 'missed',
             ),
           ),
           const Gap.h(AppSpacing.base),
@@ -314,14 +304,12 @@ class _ErrorView extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
         ),
         const Gap(AppSpacing.lg),
-        Center(
-          child: FilledButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              onRetry();
-            },
-            child: const Text('Try again'),
-          ),
+        PoppyButton(
+          label: 'Try again',
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            onRetry();
+          },
         ),
       ],
     );
