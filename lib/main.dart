@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/notifications/notification_orchestrator.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/preferences/selected_faith.dart';
 import 'core/preferences/theme_mode.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/faith_id.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,12 +34,13 @@ class FaithApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode =
         ref.watch(themeModePrefProvider).valueOrNull ?? ThemeMode.system;
+    final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
     return NotificationOrchestrator(
       child: MaterialApp.router(
         title: 'Siraat',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
+        theme: AppTheme.light(faith),
+        darkTheme: AppTheme.dark(faith),
         themeMode: themeMode,
         routerConfig: router,
         supportedLocales: const [Locale('en')],

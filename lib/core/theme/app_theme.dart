@@ -1,255 +1,225 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'app_colors.dart';
+import 'faith_id.dart';
+import 'faith_palette.dart';
+import 'faith_theme_extension.dart';
 
-/// Builds the Material 3 light and dark themes for Faith.
+/// Builds the Material 3 light and dark themes for the active faith.
 ///
-/// The display/headline scale uses Fraunces (a soulful serif), and body/labels
-/// use Inter for clean utility text.
+/// Typography: Baloo 2 for display/headline (chunky, rounded, "poppy"),
+/// Nunito for body/labels (readable at small sizes, still rounded/friendly).
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData light() => _build(
-    brightness: Brightness.light,
-    scaffoldBg: AppColors.parchment,
-    surface: AppColors.parchmentRaised,
-    onSurface: AppColors.ink,
-    onSurfaceMuted: AppColors.inkMuted,
-    onSurfaceSubtle: AppColors.inkSubtle,
-    primary: AppColors.sage,
-    onPrimary: AppColors.parchmentRaised,
-    primaryContainer: AppColors.sageSoft,
-    secondary: AppColors.gold,
-    onSecondary: AppColors.parchmentRaised,
-    secondaryContainer: AppColors.goldSoft,
-    outline: AppColors.line,
-    navIndicator: AppColors.sageSoft,
-  );
+  static ThemeData light(FaithId faith) =>
+      _build(faith: faith, brightness: Brightness.light);
 
-  static ThemeData dark() => _build(
-    brightness: Brightness.dark,
-    scaffoldBg: AppColors.night,
-    surface: AppColors.nightSurface,
-    onSurface: AppColors.moonlight,
-    onSurfaceMuted: AppColors.moonMuted,
-    onSurfaceSubtle: AppColors.moonSubtle,
-    primary: AppColors.sageNight,
-    onPrimary: AppColors.night,
-    primaryContainer: AppColors.sageNightSoft,
-    secondary: AppColors.goldNight,
-    onSecondary: AppColors.night,
-    secondaryContainer: AppColors.goldNightSoft,
-    outline: AppColors.nightLine,
-    navIndicator: AppColors.nightSurfaceHigh,
-  );
+  static ThemeData dark(FaithId faith) =>
+      _build(faith: faith, brightness: Brightness.dark);
 
   static ThemeData _build({
+    required FaithId faith,
     required Brightness brightness,
-    required Color scaffoldBg,
-    required Color surface,
-    required Color onSurface,
-    required Color onSurfaceMuted,
-    required Color onSurfaceSubtle,
-    required Color primary,
-    required Color onPrimary,
-    required Color primaryContainer,
-    required Color secondary,
-    required Color onSecondary,
-    required Color secondaryContainer,
-    required Color outline,
-    required Color navIndicator,
   }) {
+    final palette = FaithPalette.of(faith, brightness);
+    final onPrimary = brightness == Brightness.dark
+        ? const Color(0xFF0A0A0A)
+        : const Color(0xFFFFFFFF);
+
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: primary,
+      primary: palette.primary,
       onPrimary: onPrimary,
-      primaryContainer: primaryContainer,
-      onPrimaryContainer: onSurface,
-      secondary: secondary,
-      onSecondary: onSecondary,
-      secondaryContainer: secondaryContainer,
-      onSecondaryContainer: onSurface,
-      tertiary: secondary,
-      onTertiary: onSecondary,
-      error: const Color(0xFFB3261E),
-      onError: const Color(0xFFFFFFFF),
-      surface: surface,
-      onSurface: onSurface,
-      onSurfaceVariant: onSurfaceMuted,
-      outline: outline,
-      outlineVariant: outline,
-      shadow: Colors.black.withValues(alpha: 0.08),
+      primaryContainer: palette.primary.withValues(alpha: 0.16),
+      onPrimaryContainer: palette.ink,
+      secondary: palette.secondary,
+      onSecondary: onPrimary,
+      secondaryContainer: palette.secondary.withValues(alpha: 0.16),
+      onSecondaryContainer: palette.ink,
+      tertiary: palette.secondary,
+      onTertiary: onPrimary,
+      error: palette.error,
+      onError: Colors.white,
+      surface: palette.surface,
+      onSurface: palette.ink,
+      onSurfaceVariant: palette.inkMuted,
+      outline: palette.outline,
+      outlineVariant: palette.outline.withValues(alpha: 0.4),
+      shadow: palette.shadow,
       scrim: Colors.black.withValues(alpha: 0.4),
-      inverseSurface: onSurface,
-      onInverseSurface: surface,
-      inversePrimary: primary,
+      inverseSurface: palette.ink,
+      onInverseSurface: palette.surface,
+      inversePrimary: palette.primary,
     );
 
-    final textTheme = _buildTextTheme(onSurface, onSurfaceMuted);
+    final textTheme = _buildTextTheme(palette.ink, palette.inkMuted);
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: scaffoldBg,
-      canvasColor: scaffoldBg,
+      scaffoldBackgroundColor: palette.surface,
+      canvasColor: palette.surface,
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
-      hoverColor: primary.withValues(alpha: 0.04),
+      hoverColor: palette.primary.withValues(alpha: 0.04),
+      extensions: [FaithThemeExtension.of(faith, palette)],
       appBarTheme: AppBarTheme(
-        backgroundColor: scaffoldBg,
+        backgroundColor: palette.surface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: false,
-        foregroundColor: onSurface,
+        foregroundColor: palette.ink,
         titleTextStyle: textTheme.titleLarge,
-        iconTheme: IconThemeData(color: onSurface),
+        iconTheme: IconThemeData(color: palette.ink),
       ),
       navigationBarTheme: NavigationBarThemeData(
         height: 68,
         elevation: 0,
-        backgroundColor: scaffoldBg,
+        backgroundColor: palette.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: navIndicator,
+        indicatorColor: palette.primary.withValues(alpha: 0.16),
         labelTextStyle: WidgetStatePropertyAll(textTheme.labelSmall),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: onSurface, size: 24);
+            return IconThemeData(color: palette.primary, size: 26);
           }
-          return IconThemeData(color: onSurfaceMuted, size: 24);
+          return IconThemeData(color: palette.inkMuted, size: 24);
         }),
       ),
-      dividerTheme: DividerThemeData(color: outline, thickness: 1, space: 1),
+      dividerTheme: DividerThemeData(
+        color: palette.outline,
+        thickness: 1,
+        space: 1,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: palette.surfaceCard,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
-        hintStyle: textTheme.bodyLarge?.copyWith(color: onSurfaceSubtle),
-        labelStyle: textTheme.bodyMedium?.copyWith(color: onSurfaceMuted),
+        hintStyle: textTheme.bodyLarge?.copyWith(color: palette.inkMuted),
+        labelStyle: textTheme.bodyMedium?.copyWith(color: palette.inkMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: palette.outline, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: palette.outline, width: 2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: primary, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: palette.primary, width: 2.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: colorScheme.error),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: colorScheme.error, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.error, width: 2.5),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: palette.primary,
           foregroundColor: onPrimary,
           minimumSize: const Size.fromHeight(56),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: textTheme.titleMedium,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primary,
+          foregroundColor: palette.primary,
           textStyle: textTheme.labelLarge,
         ),
       ),
     );
   }
 
-  static TextTheme _buildTextTheme(Color onSurface, Color onSurfaceMuted) {
-    final fraunces = GoogleFonts.frauncesTextTheme();
-    final inter = GoogleFonts.interTextTheme();
+  static TextTheme _buildTextTheme(Color ink, Color inkMuted) {
+    final baloo = GoogleFonts.baloo2TextTheme();
+    final nunito = GoogleFonts.nunitoTextTheme();
 
     return TextTheme(
-      displayLarge: fraunces.displayLarge?.copyWith(
-        fontSize: 56,
-        fontWeight: FontWeight.w300,
-        letterSpacing: -2,
-        height: 1.0,
-        color: onSurface,
-      ),
-      displayMedium: fraunces.displayMedium?.copyWith(
-        fontSize: 40,
-        fontWeight: FontWeight.w400,
+      displayLarge: baloo.displayLarge?.copyWith(
+        fontSize: 52,
+        fontWeight: FontWeight.w700,
         letterSpacing: -1,
         height: 1.05,
-        color: onSurface,
+        color: ink,
       ),
-      displaySmall: fraunces.displaySmall?.copyWith(
-        fontSize: 32,
-        fontWeight: FontWeight.w500,
+      displayMedium: baloo.displayMedium?.copyWith(
+        fontSize: 38,
+        fontWeight: FontWeight.w700,
         letterSpacing: -0.5,
-        color: onSurface,
+        height: 1.08,
+        color: ink,
       ),
-      headlineMedium: fraunces.headlineMedium?.copyWith(
+      displaySmall: baloo.displaySmall?.copyWith(
+        fontSize: 30,
+        fontWeight: FontWeight.w600,
+        color: ink,
+      ),
+      headlineMedium: baloo.headlineMedium?.copyWith(
         fontSize: 22,
         fontWeight: FontWeight.w600,
-        letterSpacing: -0.3,
-        color: onSurface,
+        color: ink,
       ),
-      titleLarge: inter.titleLarge?.copyWith(
+      titleLarge: nunito.titleLarge?.copyWith(
         fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: onSurface,
+        fontWeight: FontWeight.w800,
+        color: ink,
       ),
-      titleMedium: inter.titleMedium?.copyWith(
+      titleMedium: nunito.titleMedium?.copyWith(
         fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: onSurface,
+        fontWeight: FontWeight.w700,
+        color: ink,
       ),
-      bodyLarge: inter.bodyLarge?.copyWith(
+      bodyLarge: nunito.bodyLarge?.copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w400,
-        height: 1.55,
-        color: onSurface,
-      ),
-      bodyMedium: inter.bodyMedium?.copyWith(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         height: 1.5,
-        color: onSurfaceMuted,
+        color: ink,
       ),
-      bodySmall: inter.bodySmall?.copyWith(
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
+      bodyMedium: nunito.bodyMedium?.copyWith(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
         height: 1.45,
-        color: onSurfaceMuted,
+        color: inkMuted,
       ),
-      labelLarge: inter.labelLarge?.copyWith(
+      bodySmall: nunito.bodySmall?.copyWith(
         fontSize: 13,
         fontWeight: FontWeight.w500,
+        height: 1.4,
+        color: inkMuted,
+      ),
+      labelLarge: nunito.labelLarge?.copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0.2,
-        color: onSurface,
+        color: ink,
       ),
-      labelMedium: inter.labelMedium?.copyWith(
+      labelMedium: nunito.labelMedium?.copyWith(
         fontSize: 12,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.6,
-        color: onSurfaceMuted,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+        color: inkMuted,
       ),
-      labelSmall: inter.labelSmall?.copyWith(
+      labelSmall: nunito.labelSmall?.copyWith(
         fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 1.2,
-        color: onSurfaceMuted,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.8,
+        color: inkMuted,
       ),
     );
   }

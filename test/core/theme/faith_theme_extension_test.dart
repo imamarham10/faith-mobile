@@ -13,6 +13,14 @@ void main() {
     expect(ext.faithId, FaithId.hindu);
   });
 
+  test('two separately-constructed-but-equal instances compare equal', () {
+    final palette = FaithPalette.of(FaithId.islam, Brightness.light);
+    expect(
+      FaithThemeExtension.of(FaithId.islam, palette),
+      FaithThemeExtension.of(FaithId.islam, palette),
+    );
+  });
+
   test('lerp at t<0.5 keeps this faithId, t>=0.5 keeps other', () {
     final islam = FaithThemeExtension.of(
       FaithId.islam,

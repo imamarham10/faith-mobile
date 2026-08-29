@@ -34,6 +34,40 @@ class FaithPalette {
   final Color shadow;
   final Color error;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FaithPalette &&
+          runtimeType == other.runtimeType &&
+          primary == other.primary &&
+          primaryPressed == other.primaryPressed &&
+          secondary == other.secondary &&
+          secondaryPressed == other.secondaryPressed &&
+          mascotAccent == other.mascotAccent &&
+          surface == other.surface &&
+          surfaceCard == other.surfaceCard &&
+          ink == other.ink &&
+          inkMuted == other.inkMuted &&
+          outline == other.outline &&
+          shadow == other.shadow &&
+          error == other.error;
+
+  @override
+  int get hashCode => Object.hash(
+    primary,
+    primaryPressed,
+    secondary,
+    secondaryPressed,
+    mascotAccent,
+    surface,
+    surfaceCard,
+    ink,
+    inkMuted,
+    outline,
+    shadow,
+    error,
+  );
+
   static FaithPalette of(FaithId faith, Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     return switch (faith) {

@@ -49,6 +49,26 @@ class FaithThemeExtension extends ThemeExtension<FaithThemeExtension> {
   );
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FaithThemeExtension &&
+          runtimeType == other.runtimeType &&
+          faithId == other.faithId &&
+          palette == other.palette &&
+          cardOutlineWidth == other.cardOutlineWidth &&
+          pressDuration == other.pressDuration &&
+          pressOffset == other.pressOffset;
+
+  @override
+  int get hashCode => Object.hash(
+    faithId,
+    palette,
+    cardOutlineWidth,
+    pressDuration,
+    pressOffset,
+  );
+
+  @override
   FaithThemeExtension lerp(
     covariant ThemeExtension<FaithThemeExtension>? other,
     double t,
