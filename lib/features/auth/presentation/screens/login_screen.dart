@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../controllers/auth_controller.dart';
 
 /// Email + password sign in. Router redirect handles navigation when
@@ -89,7 +92,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.screenEdge,
           ),
@@ -158,17 +161,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   _ErrorBanner(message: _errorMessage!),
                 ],
                 const Gap(24),
-                FilledButton(
+                PoppyButton(
+                  label: _submitting ? 'Signing in…' : 'Sign in',
                   onPressed: _submitting ? null : _submit,
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator.adaptive(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('Sign in'),
                 ),
                 const Gap(8),
                 TextButton(
@@ -177,7 +172,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       : () => context.push(Routes.register),
                   child: const Text('Create account'),
                 ),
-                const Spacer(),
+                const Gap(48),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Text(
@@ -203,15 +198,11 @@ class _ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.md,
+      color: theme.colorScheme.error.withValues(alpha: 0.08),
+      borderColor: theme.colorScheme.error.withValues(alpha: 0.3),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.error.withValues(alpha: 0.3),
-        ),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
