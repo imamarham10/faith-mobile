@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 
 /// A square-ish card on the duas home grid.
 ///
@@ -37,51 +38,41 @@ class CategoryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: cs.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: cs.primary),
           ),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 18, color: cs.primary),
-              ),
-              const Spacer(),
-              Text(
-                name,
-                style: theme.textTheme.titleLarge,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _subtitle(),
-                style: theme.textTheme.bodySmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          const Spacer(),
+          Text(
+            name,
+            style: theme.textTheme.titleLarge,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            _subtitle(),
+            style: theme.textTheme.bodySmall,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -103,39 +94,30 @@ class FavoritesCard extends StatelessWidget {
         .palette
         .accentText;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cs.secondaryContainer,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
+    return PoppyCard(
+      radius: AppRadius.lg,
+      color: cs.secondaryContainer,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.favorite, size: 22, color: accentText),
+          const Spacer(),
+          Text('Favorites', style: theme.textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            count == 0
+                ? 'Tap any heart to save'
+                : count == 1
+                ? '1 saved'
+                : '$count saved',
+            style: theme.textTheme.bodySmall,
           ),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.favorite, size: 22, color: accentText),
-              const Spacer(),
-              Text('Favorites', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(
-                count == 0
-                    ? 'Tap any heart to save'
-                    : count == 1
-                    ? '1 saved'
-                    : '$count saved',
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

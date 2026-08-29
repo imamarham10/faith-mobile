@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/dua.dart';
 import '../controllers/dua_controller.dart';
 import '../controllers/dua_favorites_controller.dart';
@@ -140,12 +142,8 @@ class _DetailContentState extends ConsumerState<_DetailContent> {
                 ),
               ],
               const Gap(AppSpacing.lg),
-              Container(
-                decoration: BoxDecoration(
-                  color: cs.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: cs.outline),
-                ),
+              PoppyCard(
+                radius: AppRadius.lg,
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,11 +213,9 @@ class _RepeatCounter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.primaryContainer,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
+    return PoppyCard(
+      radius: AppRadius.lg,
+      color: cs.primaryContainer,
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         children: [
@@ -244,10 +240,12 @@ class _RepeatCounter extends StatelessWidget {
             children: [
               TextButton(onPressed: onReset, child: const Text('Reset')),
               const Gap.h(AppSpacing.md),
-              FilledButton(
-                onPressed: onIncrement,
-                style: FilledButton.styleFrom(minimumSize: const Size(160, 48)),
-                child: const Text('Tap to count'),
+              SizedBox(
+                width: 160,
+                child: PoppyButton(
+                  label: 'Tap to count',
+                  onPressed: onIncrement,
+                ),
               ),
             ],
           ),
@@ -354,41 +352,17 @@ class _DetailShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.screenEdge),
-      child: Shimmer.fromColors(
-        baseColor: cs.surface,
-        highlightColor: cs.outline,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 28,
-              width: 220,
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            Container(
-              height: 220,
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-            ),
-            const Gap(AppSpacing.xl),
-            Container(
-              height: 160,
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-            ),
-          ],
-        ),
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.screenEdge),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PoppySkeleton(height: 28, radius: AppRadius.sm),
+          Gap(AppSpacing.lg),
+          PoppySkeleton(height: 220, radius: AppRadius.lg),
+          Gap(AppSpacing.xl),
+          PoppySkeleton(height: 160, radius: AppRadius.lg),
+        ],
       ),
     );
   }
@@ -419,7 +393,7 @@ class _ErrorPanel extends StatelessWidget {
               style: theme.textTheme.bodyLarge,
             ),
             const Gap(AppSpacing.lg),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),

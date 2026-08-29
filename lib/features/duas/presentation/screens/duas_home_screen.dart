@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/dua.dart';
 import '../../data/dtos/dua_category.dart';
 import '../controllers/dua_categories_controller.dart';
@@ -175,7 +177,7 @@ class _CategoriesGridSliver extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: AppSpacing.md,
               mainAxisSpacing: AppSpacing.md,
-              mainAxisExtent: 148,
+              mainAxisExtent: 164,
             ),
             itemCount: tiles.length,
             itemBuilder: (_, i) => tiles[i],
@@ -216,7 +218,6 @@ class _CategoriesShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenEdge,
@@ -229,19 +230,10 @@ class _CategoriesShimmer extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: AppSpacing.md,
           mainAxisSpacing: AppSpacing.md,
-          mainAxisExtent: 148,
+          mainAxisExtent: 164,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => Shimmer.fromColors(
-          baseColor: cs.surface,
-          highlightColor: cs.outline,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-          ),
-        ),
+        itemBuilder: (_, __) => const PoppySkeleton(height: 164, radius: AppRadius.lg),
       ),
     );
   }
@@ -344,56 +336,46 @@ class _SearchResultRow extends StatelessWidget {
         .extension<FaithThemeExtension>()!
         .palette
         .accentText;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-          ),
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.base,
-            AppSpacing.sm,
-            AppSpacing.base,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      dua.titleEnglish,
-                      style: theme.textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dua.textEnglish,
-                      style: theme.textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.base,
+        AppSpacing.sm,
+        AppSpacing.base,
+      ),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dua.titleEnglish,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              IconButton(
-                onPressed: onToggleFavorite,
-                icon: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_outline,
-                  color: isFavorite ? accentText : cs.onSurfaceVariant,
-                  size: 22,
+                const SizedBox(height: 4),
+                Text(
+                  dua.textEnglish,
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          IconButton(
+            onPressed: onToggleFavorite,
+            icon: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_outline,
+              color: isFavorite ? accentText : cs.onSurfaceVariant,
+              size: 22,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -424,7 +406,7 @@ class _ErrorPanel extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const Gap(AppSpacing.lg),
-          FilledButton(onPressed: onRetry, child: const Text('Try again')),
+          PoppyButton(label: 'Try again', onPressed: onRetry),
         ],
       ),
     );
