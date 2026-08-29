@@ -7,6 +7,7 @@ import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/preferences/arabic_script.dart';
 import '../../../../core/preferences/notification_preferences.dart';
 import '../../../../core/preferences/theme_mode.dart';
+import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -142,6 +143,17 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: AppSpacing.xl),
+            _SectionHeader(label: 'Faith'),
+            ListTile(
+              leading: const Icon(Icons.diversity_3_outlined),
+              title: const Text('Switch faith'),
+              subtitle: const Text('Change which tradition the app follows'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.push(Routes.switchFaith);
+              },
+            ),
             const Divider(height: 1),
             ListTile(
               leading: Icon(Icons.logout_rounded, color: cs.error),
