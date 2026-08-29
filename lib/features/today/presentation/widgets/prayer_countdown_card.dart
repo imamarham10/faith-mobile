@@ -8,9 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/location/location_service.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
 
 /// Live countdown card for the next prayer.
@@ -20,6 +20,11 @@ import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
 /// * a "Enable location" CTA (permission denied)
 /// * an error retry surface
 /// * the live countdown over today's day-arc
+///
+/// All four states render as a `PoppyCard` at `AppRadius.xl` (28) rather
+/// than the 24 default the other Today cards (verse/hadith/mood/quick) use —
+/// a deliberate "hero card" distinction, since this is the first thing on
+/// the screen and the one live/ticking element.
 class PrayerCountdownCard extends ConsumerWidget {
   const PrayerCountdownCard({super.key, this.onTap});
 
@@ -134,77 +139,62 @@ class _LiveCardState extends State<_LiveCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final palette = theme.extension<FaithThemeExtension>()!.palette;
     final accent = _imminent ? cs.secondary : cs.primary;
-    final accentText = _imminent
-        ? theme.extension<FaithThemeExtension>()!.palette.accentText
-        : cs.primary;
+    final accentText = _imminent ? palette.accentText : cs.primary;
+    // "Imminent prayer" gets an accent-tinted card fill instead of the
+    // default surfaceCard — computed inline from the live palette
+    // (0.16 alpha matches the primaryContainer/secondaryContainer
+    // convention in app_theme.dart) rather than the old hand-rolled
+    // light/dark AppColors.*Soft tokens, which only ever existed as a
+    // pre-poppy fallback. FaithPalette.of already resolves the correct
+    // brightness, so no isDark branch is needed here.
     final accentSoft = _imminent
-        ? (isDark ? AppColors.goldNightSoft : AppColors.goldSoft)
-        : (isDark ? AppColors.sageNightSoft : AppColors.sageSoft);
+        ? palette.secondary.withValues(alpha: 0.16)
+        : palette.primary.withValues(alpha: 0.16);
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onTap?.call();
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: cs.outline),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [cs.surface, accentSoft.withValues(alpha: 0.4)],
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return PoppyCard(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onTap?.call();
+      },
+      radius: AppRadius.xl,
+      color: accentSoft,
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: accent,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'NEXT  ·  ${widget.prayerName}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: accentText,
-                    ),
-                  ),
-                ],
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
               ),
-              const SizedBox(height: 14),
-              Text(_countdownText, style: theme.textTheme.displayLarge),
-              const SizedBox(height: 6),
+              const SizedBox(width: 8),
               Text(
-                'until ${DateFormat.jm().format(widget.prayerTime)}',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                height: 36,
-                child: _DayArc(
-                  progress: widget.dayProgress.clamp(0, 1).toDouble(),
-                  accent: accent,
-                  rest: cs.outline,
-                ),
+                'NEXT  ·  ${widget.prayerName}',
+                style: theme.textTheme.labelSmall?.copyWith(color: accentText),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 14),
+          Text(_countdownText, style: theme.textTheme.displayLarge),
+          const SizedBox(height: 6),
+          Text(
+            'until ${DateFormat.jm().format(widget.prayerTime)}',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            height: 36,
+            child: _DayArc(
+              progress: widget.dayProgress.clamp(0, 1).toDouble(),
+              accent: accent,
+              rest: cs.outline,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -217,14 +207,18 @@ class _LoadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final base = theme.colorScheme.outline.withValues(alpha: 0.4);
-    final highlight = theme.colorScheme.surface;
+    // Matches the fill the loaded PoppyCard uses (surfaceContainer maps to
+    // FaithPalette.surfaceCard in AppTheme) rather than the app-background
+    // `surface`, so the shimmer doesn't flash a visibly different color than
+    // the card it's standing in for.
+    final cardFill = theme.colorScheme.surfaceContainer;
     return Shimmer.fromColors(
       baseColor: base,
-      highlightColor: highlight,
+      highlightColor: cardFill,
       child: Container(
         height: 180,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+          color: cardFill,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
       ),
@@ -247,61 +241,46 @@ class _MessageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: cs.outline),
-            color: cs.surface,
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return PoppyCard(
+      // Callers (loading-error retry, "enable location" CTA) already fire
+      // their own HapticFeedback before their side effect — don't double it.
+      onTap: onTap,
+      radius: AppRadius.xl,
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'PRAYER TIMES',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.primary,
-                    ),
-                  ),
-                ],
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
               ),
-              const SizedBox(height: 14),
-              Text(title, style: theme.textTheme.displaySmall),
-              const SizedBox(height: 6),
-              Text(body, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Icon(
-                    Icons.touch_app_outlined,
-                    size: 16,
-                    color: cs.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Text('Tap to continue', style: theme.textTheme.bodySmall),
-                ],
+              const SizedBox(width: 8),
+              Text(
+                'PRAYER TIMES',
+                style: theme.textTheme.labelSmall?.copyWith(color: cs.primary),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 14),
+          Text(title, style: theme.textTheme.displaySmall),
+          const SizedBox(height: 6),
+          Text(body, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Icon(
+                Icons.touch_app_outlined,
+                size: 16,
+                color: cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text('Tap to continue', style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ],
       ),
     );
   }

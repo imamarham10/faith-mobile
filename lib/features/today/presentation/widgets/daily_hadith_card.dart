@@ -4,18 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../hadiths/data/dtos/hadith.dart';
 import '../../../hadiths/presentation/controllers/daily_hadith_controller.dart';
 
 /// "Hadith of the day" card on the Today screen.
 ///
-/// Visually mirrors `VerseCard` (20-radius hairline-border surface) so it
-/// reads as a peer to "Verse for today". Tap pushes to the hadith detail.
+/// Rendered as a `PoppyCard`, visually mirroring `VerseCard` so it reads as
+/// a peer to "Verse for today". Tap pushes to the hadith detail.
 /// Renders all four states; never leaves the user staring at an empty box.
 class DailyHadithCard extends ConsumerWidget {
   const DailyHadithCard({super.key});
@@ -55,67 +56,54 @@ class _Content extends ConsumerWidget {
     final bookName = hadith.book?.name ?? 'Hadith';
     final header = '${bookName.toUpperCase()} · #${hadith.hadithNumber}';
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          context.push('/hadiths/${hadith.id}');
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
+    return PoppyCard(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/hadiths/${hadith.id}');
+      },
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            header,
+            style: theme.textTheme.labelSmall?.copyWith(color: accentText),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                header,
-                style: theme.textTheme.labelSmall?.copyWith(color: accentText),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          const Gap(AppSpacing.md),
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: Text(
+              hadith.textArabic,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: arabicTextStyleOf(
+                ref,
+                fontSize: 22,
+                height: 2.0,
+                color: cs.onSurface,
               ),
-              const Gap(AppSpacing.md),
-              Directionality(
-                textDirection: TextDirection.rtl,
-                child: Text(
-                  hadith.textArabic,
-                  textAlign: TextAlign.right,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: arabicTextStyleOf(
-                    ref,
-                    fontSize: 22,
-                    height: 2.0,
-                    color: cs.onSurface,
-                  ),
-                ),
-              ),
-              const Gap(AppSpacing.lg),
-              Container(
-                width: 40,
-                height: 1,
-                color: cs.secondary.withValues(alpha: 0.4),
-              ),
-              const Gap(AppSpacing.base),
-              Text(
-                hadith.textEnglish,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface,
-                  height: 1.55,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
-        ),
+          const Gap(AppSpacing.lg),
+          Container(
+            width: 40,
+            height: 1,
+            color: cs.secondary.withValues(alpha: 0.4),
+          ),
+          const Gap(AppSpacing.base),
+          Text(
+            hadith.textEnglish,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurface,
+              height: 1.55,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -126,16 +114,22 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final ext = theme.extension<FaithThemeExtension>()!;
     return Shimmer.fromColors(
       baseColor: cs.surface,
+      // Matches the fill/outline/radius the loaded PoppyCard uses
+      // (surfaceContainer -> FaithPalette.surfaceCard; PoppyCard's default
+      // radius is 24, cardOutlineWidth is themed) so the shimmer doesn't
+      // flash a visibly different card shape than the one it's replacing.
       highlightColor: cs.primaryContainer.withValues(alpha: 0.4),
       child: Container(
         height: 200,
         decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: cs.outline),
+          color: cs.surfaceContainer,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: cs.outline, width: ext.cardOutlineWidth),
         ),
       ),
     );
@@ -151,15 +145,11 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.outline),
-      ),
+    return PoppyCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.cloud_off_outlined, color: cs.onSurfaceVariant),
           const Gap(AppSpacing.sm),
@@ -168,10 +158,7 @@ class _ErrorCard extends StatelessWidget {
             style: theme.textTheme.bodyLarge,
           ),
           const Gap(AppSpacing.md),
-          FilledButton.tonal(
-            onPressed: onRetry,
-            child: const Text('Try again'),
-          ),
+          PoppyButton(label: 'Try again', onPressed: onRetry),
         ],
       ),
     );

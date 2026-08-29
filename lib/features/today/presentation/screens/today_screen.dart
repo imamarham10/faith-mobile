@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../widgets/daily_hadith_card.dart';
@@ -17,8 +20,28 @@ import '../widgets/verse_card.dart';
 
 /// The first impression — sets the brand tone and the architectural pattern
 /// Phase 1 feature agents will mirror.
+///
+/// Faith-aware: branches on [selectedFaithProvider] and picks content by
+/// faith. Islam has the full Phase 1 build-out (`_IslamTodayContent`); Hindu
+/// doesn't have a Today vertical yet (that's Part C), so it gets an honest
+/// placeholder rather than either crashing or silently reusing Islam copy.
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
+    return switch (faith) {
+      FaithId.islam => const _IslamTodayContent(),
+      FaithId.hindu => const _HinduTodayPlaceholder(),
+    };
+  }
+}
+
+/// The full Islam "Today" build-out: Hijri-dated greeting, prayer countdown,
+/// verse/hadith of the day, mood prompt, quick actions.
+class _IslamTodayContent extends ConsumerWidget {
+  const _IslamTodayContent();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77,6 +100,74 @@ class TodayScreen extends ConsumerWidget {
                   const QuickActionsRow(),
                   const Gap(24),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Part C (the Hindu vertical) hasn't been built yet, so there is no real
+/// Hindu "Today" content to show. This is a deliberately honest placeholder
+/// — not a crash, not a silent reuse of Islam's greeting/prayer/verse copy —
+/// and should be replaced with real Hindu home content once Part C lands.
+class _HinduTodayPlaceholder extends StatelessWidget {
+  const _HinduTodayPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  right: AppSpacing.screenEdge / 2,
+                  top: AppSpacing.sm,
+                ),
+                child: IconButton(
+                  tooltip: 'Settings',
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    context.push('/settings');
+                  },
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenEdge,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const MascotView(
+                        faith: FaithId.hindu,
+                        state: MascotState.idle,
+                      ),
+                      const Gap(AppSpacing.lg),
+                      Text(
+                        'Hindu home is coming soon',
+                        style: theme.textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const Gap(AppSpacing.sm),
+                      Text(
+                        'We\'re building this out next — check back soon.',
+                        style: theme.textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],

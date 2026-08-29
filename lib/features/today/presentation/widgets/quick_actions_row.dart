@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_radius.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_icon.dart';
 import '../../../quran/presentation/controllers/quran_home_controller.dart';
 
 /// Three-up grid of headlining quick-actions on the Today screen.
@@ -65,31 +66,18 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 22, color: cs.onSurface),
-              const SizedBox(height: 8),
-              Text(label, style: theme.textTheme.labelLarge),
-            ],
-          ),
-        ),
+    return PoppyCard(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Column(
+        children: [
+          PoppyIcon(icon: icon, size: 36),
+          const SizedBox(height: 8),
+          Text(label, style: theme.textTheme.labelLarge),
+        ],
       ),
     );
   }

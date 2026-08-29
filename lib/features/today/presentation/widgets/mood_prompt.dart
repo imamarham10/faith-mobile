@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 
 /// Tappable card opening the mood reflection sheet.
 class MoodPrompt extends StatelessWidget {
@@ -13,59 +14,47 @@ class MoodPrompt extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () async {
-          HapticFeedback.lightImpact();
-          await showModalBottomSheet<String>(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            backgroundColor: theme.scaffoldBackgroundColor,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppRadius.xl),
-              ),
+    return PoppyCard(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      onTap: () async {
+        HapticFeedback.lightImpact();
+        await showModalBottomSheet<String>(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
             ),
-            builder: (_) => const _MoodSheet(),
-          );
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'How are you feeling?',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'A moment of reflection',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
+          builder: (_) => const _MoodSheet(),
+        );
+      },
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How are you feeling?',
+                  style: theme.textTheme.titleMedium,
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward,
-                size: 18,
-                color: cs.onSurface.withValues(alpha: 0.5),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  'A moment of reflection',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
-        ),
+          Icon(
+            Icons.arrow_forward,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.5),
+          ),
+        ],
       ),
     );
   }
@@ -142,26 +131,14 @@ class _MoodChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        onTap: () {
-          HapticFeedback.selectionClick();
-          Navigator.pop(context, label);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: cs.outline),
-          ),
-          child: Text(label, style: theme.textTheme.titleMedium),
-        ),
-      ),
+    return PoppyCard(
+      radius: AppRadius.pill,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        Navigator.pop(context, label);
+      },
+      child: Text(label, style: theme.textTheme.titleMedium),
     );
   }
 }
