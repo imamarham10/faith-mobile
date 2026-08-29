@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/hadith_book.dart';
 import '../controllers/hadiths_by_book_controller.dart';
 import '../controllers/hadiths_home_controller.dart';
@@ -203,7 +204,6 @@ class _BookShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(
@@ -214,17 +214,7 @@ class _BookShimmer extends StatelessWidget {
       ),
       itemCount: 8,
       separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-      itemBuilder: (_, __) => Shimmer.fromColors(
-        baseColor: cs.surface,
-        highlightColor: cs.outline,
-        child: Container(
-          height: 88,
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-      ),
+      itemBuilder: (_, __) => const PoppySkeleton(height: 88, radius: AppRadius.lg),
     );
   }
 }
@@ -286,7 +276,7 @@ class _ErrorPanel extends StatelessWidget {
             const Gap(AppSpacing.md),
             Text(message, style: theme.textTheme.bodyLarge),
             const Gap(AppSpacing.lg),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),

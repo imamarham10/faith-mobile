@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
 import '../controllers/hadith_search_controller.dart';
 import '../controllers/hadiths_home_controller.dart';
 import '../widgets/hadith_list_tile.dart';
@@ -255,7 +256,7 @@ class _ErrorPanel extends StatelessWidget {
             const Gap(AppSpacing.md),
             Text(message, style: theme.textTheme.bodyLarge),
             const Gap(AppSpacing.lg),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),

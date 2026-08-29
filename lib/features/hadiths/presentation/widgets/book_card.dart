@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/hadith_book.dart';
 
 /// A square-ish card on the hadiths home grid.
@@ -26,93 +27,83 @@ class BookCard extends StatelessWidget {
         .palette
         .accentText;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.menu_book_outlined,
-                      size: 18,
-                      color: cs.primary,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (book.isPremium)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.secondaryContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      child: Text(
-                        'PREMIUM',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: accentText,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ),
-                ],
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.menu_book_outlined,
+                  size: 18,
+                  color: cs.primary,
+                ),
               ),
               const Spacer(),
-              Text(
-                book.name,
-                style: theme.textTheme.titleLarge,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              if ((book.author ?? '').isNotEmpty)
-                Text(
-                  book.author!,
-                  style: theme.textTheme.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              else
-                Text(
-                  _countLabel(book.totalHadiths),
-                  style: theme.textTheme.bodySmall,
-                ),
-              if ((book.author ?? '').isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  _countLabel(book.totalHadiths),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+              if (book.isPremium)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cs.secondaryContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    'PREMIUM',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: accentText,
+                      fontSize: 9,
+                    ),
                   ),
                 ),
-              ],
             ],
           ),
-        ),
+          const Spacer(),
+          Text(
+            book.name,
+            style: theme.textTheme.titleLarge,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          if ((book.author ?? '').isNotEmpty)
+            Text(
+              book.author!,
+              style: theme.textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            )
+          else
+            Text(
+              _countLabel(book.totalHadiths),
+              style: theme.textTheme.bodySmall,
+            ),
+          if ((book.author ?? '').isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              _countLabel(book.totalHadiths),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

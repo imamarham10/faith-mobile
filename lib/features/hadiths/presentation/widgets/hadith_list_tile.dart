@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/hadith.dart';
 
 /// Compact row used on the book screen and search results.
@@ -27,61 +28,50 @@ class HadithListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final narrator = (hadith.narratorChain ?? '').trim();
     final excerpt = _firstLine(hadith.textEnglish);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.base),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _NumberBadge(number: hadith.hadithNumber),
-              const SizedBox(width: AppSpacing.base),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.all(AppSpacing.base),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _NumberBadge(number: hadith.hadithNumber),
+          const SizedBox(width: AppSpacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            narrator.isEmpty
-                                ? (hadith.book?.name ??
-                                      'Hadith ${hadith.hadithNumber}')
-                                : narrator,
-                            style: theme.textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if ((hadith.grade ?? '').isNotEmpty) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          GradeChip(grade: hadith.grade!),
-                        ],
-                      ],
+                    Expanded(
+                      child: Text(
+                        narrator.isEmpty
+                            ? (hadith.book?.name ??
+                                  'Hadith ${hadith.hadithNumber}')
+                            : narrator,
+                        style: theme.textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    _Excerpt(text: excerpt, highlightTerm: highlightTerm),
+                    if ((hadith.grade ?? '').isNotEmpty) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      GradeChip(grade: hadith.grade!),
+                    ],
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                _Excerpt(text: excerpt, highlightTerm: highlightTerm),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

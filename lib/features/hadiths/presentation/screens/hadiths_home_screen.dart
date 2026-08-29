@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/hadith_book.dart';
 import '../controllers/hadiths_home_controller.dart';
@@ -127,35 +129,26 @@ class _SearchTrigger extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: onTap,
-        child: Ink(
-          height: 56,
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: cs.outline),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
-          child: Row(
-            children: [
-              Icon(Icons.search, color: cs.onSurfaceVariant, size: 20),
-              const Gap.h(AppSpacing.md),
-              Expanded(
-                child: Text(
-                  'Search hadiths',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
+    return PoppyCard(
+      radius: AppRadius.md,
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.base,
+        vertical: AppSpacing.base,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search, color: cs.onSurfaceVariant, size: 20),
+          const Gap.h(AppSpacing.md),
+          Expanded(
+            child: Text(
+              'Search hadiths',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: cs.onSurfaceVariant,
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -175,7 +168,7 @@ class _BooksGrid extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: AppSpacing.md,
           mainAxisSpacing: AppSpacing.md,
-          mainAxisExtent: 156,
+          mainAxisExtent: 172,
         ),
         itemCount: books.length,
         itemBuilder: (_, i) {
@@ -195,7 +188,6 @@ class _BooksShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       sliver: SliverGrid.builder(
@@ -203,19 +195,10 @@ class _BooksShimmer extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: AppSpacing.md,
           mainAxisSpacing: AppSpacing.md,
-          mainAxisExtent: 156,
+          mainAxisExtent: 172,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => Shimmer.fromColors(
-          baseColor: cs.surface,
-          highlightColor: cs.outline,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-          ),
-        ),
+        itemBuilder: (_, __) => const PoppySkeleton(height: 172, radius: AppRadius.lg),
       ),
     );
   }
@@ -244,7 +227,7 @@ class _ErrorPanel extends StatelessWidget {
             style: theme.textTheme.titleMedium,
           ),
           const Gap(AppSpacing.lg),
-          FilledButton.tonal(onPressed: onRetry, child: const Text('Retry')),
+          PoppyButton(label: 'Retry', onPressed: onRetry),
         ],
       ),
     );
