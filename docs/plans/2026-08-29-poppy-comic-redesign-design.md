@@ -73,9 +73,18 @@ Dark mode: same token structure, near-black neutral surfaces (not navy/"night sk
 
 **Suggested implementation sequence** (design covers all modules; build sequencing front-loads visibility): shell/nav → faith picker/onboarding → today/home → prayers/practice → quran/duas/names/hadiths → dhikr/reflect/feelings → calendar/qibla/settings/share.
 
+## Scope update (2026-08-29, same-day revision)
+
+Initial approval of this doc deferred Hindu content/feature parity on mobile as a separate workstream. Later the same day, after a research pass inventoried the existing Hindu backend (`unified-faith-service/src/faiths/hindu/*`, 8 live submodules) and web pages (`faith-web-remix/app/routes/hindu.*`), the user confirmed: **build full Hindu feature parity on mobile as part of this effort**, not just the visual redesign. This doc's design decisions (palette, mascots, components, motion, faith-picker) all held up under that expansion — only the "out of scope" list below changed. The implementation plan (`2026-08-29-poppy-comic-redesign-plan.md`) covers the full scope including the Hindu build; see its Part C.
+
+Key structural decisions made during the scope expansion:
+- 7 of 9 Hindu backend modules map cleanly to existing Islam mobile screens (Quran↔Scriptures, Dhikr↔Japa, Duas↔Stotras, Calendar↔Panchang, Feelings↔Feelings, Hadiths↔Sacred Stories (loose), Prayers↔Puja-Times (partial)). Temple Locator is Hindu-only (no Islam precedent). Names (99 Names) and Qibla are Islam-only (no Hindu equivalent — `deity-names` backend module is an empty stub).
+- **Nav decision:** faiths get their own tab set, not shared labels over swapped content — Islam keeps Qibla+Names inside its Practice grid, Hindu gets Temples instead; both faiths share the same 5 bottom-nav slots (Today/[Scripture-tab]/[Second-reading-tab]/Practice/Reflect), with tab 2 and 3's label/icon/content switching by active faith.
+- Feelings module becomes faith-aware in place (one module, faith-parameterized backend path) rather than duplicated, since its Hindu/Islam backends are already symmetric.
+
 ## Out of scope (this round)
 
 - New gamification mechanics (XP, levels, achievements, badges) — visual language only, on top of existing data.
 - Sourced/commissioned mascot artwork — using coded vector mascots instead (see rationale above).
-- Hindu content/feature parity on mobile (separate workstream — this doc covers UI/UX only, assuming Hindu content lands via the existing module pattern).
 - Web app changes — this redesign is mobile-only; web keeps its current "first light / dawn" identity.
+- A map view for Temple Locator (list-only, distance-sorted, in this pass).
