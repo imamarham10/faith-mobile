@@ -23,27 +23,32 @@ class AppTheme {
     required Brightness brightness,
   }) {
     final palette = FaithPalette.of(faith, brightness);
-    final onPrimary = brightness == Brightness.dark
-        ? const Color(0xFF0A0A0A)
-        : const Color(0xFFFFFFFF);
+    final onPrimaryColor = _onColorFor(palette.primary);
+    final onSecondaryColor = _onColorFor(palette.secondary);
+    final onErrorColor = _onColorFor(palette.error);
 
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: palette.primary,
-      onPrimary: onPrimary,
+      onPrimary: onPrimaryColor,
       primaryContainer: palette.primary.withValues(alpha: 0.16),
       onPrimaryContainer: palette.ink,
       secondary: palette.secondary,
-      onSecondary: onPrimary,
+      onSecondary: onSecondaryColor,
       secondaryContainer: palette.secondary.withValues(alpha: 0.16),
       onSecondaryContainer: palette.ink,
       tertiary: palette.secondary,
-      onTertiary: onPrimary,
+      onTertiary: onSecondaryColor,
       error: palette.error,
-      onError: Colors.white,
+      onError: onErrorColor,
       surface: palette.surface,
       onSurface: palette.ink,
       onSurfaceVariant: palette.inkMuted,
+      surfaceContainerLowest: palette.surface,
+      surfaceContainerLow: palette.surfaceCard,
+      surfaceContainer: palette.surfaceCard,
+      surfaceContainerHigh: palette.surfaceCard,
+      surfaceContainerHighest: palette.surfaceCard,
       outline: palette.outline,
       outlineVariant: palette.outline.withValues(alpha: 0.4),
       shadow: palette.shadow,
@@ -129,7 +134,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: palette.primary,
-          foregroundColor: onPrimary,
+          foregroundColor: onPrimaryColor,
           minimumSize: const Size.fromHeight(56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -144,6 +149,24 @@ class AppTheme {
         ),
       ),
     );
+  }
+
+  static double _contrastRatio(Color a, Color b) {
+    final l1 = a.computeLuminance() + 0.05;
+    final l2 = b.computeLuminance() + 0.05;
+    return l1 > l2 ? l1 / l2 : l2 / l1;
+  }
+
+  /// Picks whichever of near-black or white has higher WCAG contrast against
+  /// [background] — the "poppy" palette's saturated colors don't reliably
+  /// pair with one fixed choice the way a muted palette would.
+  static Color _onColorFor(Color background) {
+    const darkText = Color(0xFF1A1A1A);
+    const lightText = Colors.white;
+    return _contrastRatio(darkText, background) >=
+            _contrastRatio(lightText, background)
+        ? darkText
+        : lightText;
   }
 
   static TextTheme _buildTextTheme(Color ink, Color inkMuted) {
@@ -170,8 +193,18 @@ class AppTheme {
         fontWeight: FontWeight.w600,
         color: ink,
       ),
+      headlineLarge: baloo.headlineLarge?.copyWith(
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        color: ink,
+      ),
       headlineMedium: baloo.headlineMedium?.copyWith(
         fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: ink,
+      ),
+      headlineSmall: baloo.headlineSmall?.copyWith(
+        fontSize: 20,
         fontWeight: FontWeight.w600,
         color: ink,
       ),
@@ -182,6 +215,11 @@ class AppTheme {
       ),
       titleMedium: nunito.titleMedium?.copyWith(
         fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: ink,
+      ),
+      titleSmall: nunito.titleSmall?.copyWith(
+        fontSize: 14,
         fontWeight: FontWeight.w700,
         color: ink,
       ),
