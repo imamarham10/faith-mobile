@@ -3,14 +3,25 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/router/routes.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_icon.dart';
 
-/// Four-slide intro per design spec line 124. Final slide CTA jumps to
-/// `/onboarding/faith` for faith selection.
+/// Two-slide intro per design doc §3 (condensed from the original 4):
+/// (1) brand/value-prop, (2) notification-permission ask. Final slide CTA
+/// jumps to `/onboarding/faith` for faith selection — this screen runs
+/// *before* a faith is chosen, so its visuals stay faith-neutral: no
+/// [MascotView] here (its faith-specific accessory — crescent-and-star vs.
+/// diya flame — would read as a religious-symbol claim on the screen right
+/// before "Choose your path"). [PoppyIcon] is used instead: it only picks up
+/// the active palette's brand *color*, which is ambient/pre-existing
+/// (main.dart already falls back to the Islam palette before a faith is
+/// selected) rather than a symbolic statement. Mascot-narrated onboarding
+/// per the design doc becomes possible once onboarding moves *after* the
+/// picker — out of scope for this task.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -25,31 +36,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   static const _slides = <_SlideData>[
     _SlideData(
       icon: Icons.self_improvement_rounded,
-      tint: Color(0xFF7A8E73),
-      title: 'Your spiritual companion',
-      body: 'Siraat helps you build and maintain your spiritual practice — '
-          'gently, steadily, day by day.',
+      title: 'Meet Siraat',
+      body: 'Your gentle companion for building a steady spiritual '
+          'practice — one small step at a time.',
     ),
     _SlideData(
       icon: Icons.notifications_active_rounded,
-      tint: Color(0xFFB08B5C),
-      title: 'Never miss a prayer',
-      body: 'Accurate prayer times for your location, with soft reminders '
-          'that respect your day.',
-    ),
-    _SlideData(
-      icon: Icons.menu_book_rounded,
-      tint: Color(0xFFB089C9),
-      title: 'Read, reflect, grow',
-      body: 'Quran reader, dhikr counter, dua library, hadiths — '
-          'all in one quiet place.',
-    ),
-    _SlideData(
-      icon: Icons.insights_rounded,
-      tint: Color(0xFFC9A95F),
-      title: 'Your journey, your way',
-      body: 'Track your progress and grow at your own pace. '
-          'No streak shame, no noise.',
+      title: 'Stay gently on track',
+      body: 'Turn on notifications so Siraat can nudge you at the right '
+          'moments. Nothing pushy — just a gentle reminder.',
     ),
   ];
 
@@ -87,12 +82,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.sm,
-                0,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
               child: Row(
                 children: [
                   const Spacer(),
@@ -120,23 +110,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             _DotIndicator(count: _slides.length, index: _index),
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.xl,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               child: SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                child: PoppyButton(
+                  label: isLast ? 'Get started' : 'Next',
                   onPressed: _next,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                  ),
-                  child: Text(isLast ? 'Get started' : 'Next'),
                 ),
               ),
             ),
@@ -150,18 +129,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 class _SlideData {
   const _SlideData({
     required this.icon,
-    required this.tint,
     required this.title,
     required this.body,
   });
 
   final IconData icon;
-  final Color tint;
   final String title;
   final String body;
 }
 
-class _Slide extends StatelessWidget {
+class _Slide extends StatefulWidget {
   const _Slide({required this.data, required this.pageIndex});
 
   final _SlideData data;
@@ -169,77 +146,70 @@ class _Slide extends StatelessWidget {
   final int pageIndex;
 
   @override
+  State<_Slide> createState() => _SlideState();
+}
+
+class _SlideState extends State<_Slide> {
+  // Only meaningful on the notification slide; harmless elsewhere.
+  bool? _remindersGranted;
+
+  Future<void> _enableReminders() async {
+    HapticFeedback.mediumImpact();
+    final granted = await NotificationService.instance.requestPermissions();
+    if (!mounted) return;
+    setState(() => _remindersGranted = granted);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final data = widget.data;
+    final isNotificationSlide = widget.pageIndex == 1;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           const Spacer(flex: 2),
-          // Halo behind the icon for warmth — pulses while visible.
-          SizedBox(
-                width: 220,
-                height: 220,
-                child: Stack(
-                  alignment: Alignment.center,
+          PoppyCard(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            data.tint.withValues(alpha: 0.28),
-                            data.tint.withValues(alpha: 0),
-                          ],
-                        ),
-                      ),
+                    PoppyIcon(icon: data.icon, size: 72),
+                    const SizedBox(height: 24),
+                    Text(
+                      data.title,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.displaySmall,
                     ),
-                    Container(
-                      width: 132,
-                      height: 132,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: data.tint.withValues(alpha: 0.15),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(data.icon, size: 60, color: data.tint),
+                    const SizedBox(height: 12),
+                    Text(
+                      data.body,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge,
                     ),
+                    if (isNotificationSlide) ...[
+                      const SizedBox(height: 20),
+                      PoppyButton(
+                        label: _remindersGranted == true
+                            ? 'Reminders on'
+                            : 'Turn on reminders',
+                        icon: _remindersGranted == true
+                            ? Icons.check_circle
+                            : Icons.notifications_active_rounded,
+                        variant: PoppyButtonVariant.secondary,
+                        onPressed: _remindersGranted == true
+                            ? null
+                            : _enableReminders,
+                      ),
+                    ],
                   ],
                 ),
               )
-              .animate(key: ValueKey('hero-$pageIndex'))
+              .animate(key: ValueKey('hero-${widget.pageIndex}'))
               .fadeIn(duration: 450.ms, curve: Curves.easeOut)
-              .scaleXY(
-                begin: 0.86,
-                end: 1.0,
-                duration: 520.ms,
-                curve: Curves.easeOutCubic,
-              ),
-          const SizedBox(height: 40),
-          Text(
-                data.title,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.fraunces(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface,
-                  height: 1.2,
-                ),
-              )
-              .animate(key: ValueKey('title-$pageIndex'))
-              .fadeIn(delay: 220.ms, duration: 420.ms)
-              .moveY(begin: 8, end: 0, delay: 220.ms, duration: 420.ms),
-          const SizedBox(height: 16),
-          Text(
-                data.body,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              )
-              .animate(key: ValueKey('body-$pageIndex'))
-              .fadeIn(delay: 380.ms, duration: 480.ms),
+              .moveY(begin: 12, end: 0, duration: 450.ms, curve: Curves.easeOutCubic),
           const Spacer(flex: 3),
         ],
       ),
