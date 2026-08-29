@@ -9,6 +9,8 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/qibla_data.dart';
 import '../../domain/qibla_math.dart';
 import '../controllers/qibla_controller.dart';
@@ -415,13 +417,9 @@ class _PermissionDenied extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.screenEdge,
                 ),
-                child: Container(
+                child: PoppyCard(
+                  radius: AppRadius.lg,
                   padding: const EdgeInsets.all(AppSpacing.xl),
-                  decoration: BoxDecoration(
-                    color: cs.surface,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: cs.outline),
-                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -443,12 +441,11 @@ class _PermissionDenied extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const Gap(AppSpacing.lg),
-                      FilledButton(
+                      PoppyButton(
+                        label: 'Allow location',
                         onPressed: () async {
-                          HapticFeedback.lightImpact();
                           await onRetry();
                         },
-                        child: const Text('Allow location'),
                       ),
                     ],
                   ),
@@ -490,7 +487,7 @@ class _ErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const Gap(AppSpacing.lg),
-            TextButton(onPressed: onRetry, child: const Text('Try again')),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),
