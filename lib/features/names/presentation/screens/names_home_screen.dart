@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/divine_name.dart';
 import '../../domain/names_kind.dart';
 import '../controllers/allah_names_controller.dart';
@@ -219,18 +220,7 @@ class _HeroShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Shimmer.fromColors(
-      baseColor: cs.surface,
-      highlightColor: cs.outline,
-      child: Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-      ),
-    );
+    return const PoppySkeleton(height: 220, radius: AppRadius.xl);
   }
 }
 
@@ -239,7 +229,6 @@ class _ListShimmerSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenEdge,
@@ -250,17 +239,7 @@ class _ListShimmerSliver extends StatelessWidget {
       sliver: SliverList.separated(
         itemCount: 8,
         separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-        itemBuilder: (_, __) => Shimmer.fromColors(
-          baseColor: cs.surface,
-          highlightColor: cs.outline,
-          child: Container(
-            height: 72,
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-          ),
-        ),
+        itemBuilder: (_, __) => const PoppySkeleton(height: 72, radius: AppRadius.lg),
       ),
     );
   }
@@ -291,7 +270,7 @@ class _ErrorPanel extends StatelessWidget {
               style: theme.textTheme.bodyLarge,
             ),
             const Gap(AppSpacing.lg),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),
