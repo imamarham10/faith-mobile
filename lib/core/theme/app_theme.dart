@@ -55,6 +55,9 @@ class AppTheme {
       scrim: Colors.black.withValues(alpha: 0.4),
       inverseSurface: palette.ink,
       onInverseSurface: palette.surface,
+      // TODO: fails WCAG contrast vs inverseSurface in dark mode (~1.7-2.1:1,
+      // needs 3:1). Zero live impact today (no SnackBarAction exists yet) —
+      // must be fixed before anyone adds one.
       inversePrimary: palette.primary,
     );
 
@@ -144,7 +147,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: palette.primary,
+          foregroundColor: _onColorFor(palette.surface),
           textStyle: textTheme.labelLarge,
         ),
       ),
