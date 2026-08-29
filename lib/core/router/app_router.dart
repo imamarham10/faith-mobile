@@ -11,6 +11,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/hadiths/hadiths_routes.dart';
 import '../../features/onboarding/data/onboarding_pref.dart';
 import '../../features/onboarding/onboarding_routes.dart';
+import '../../features/onboarding/presentation/screens/faith_selection_screen.dart';
 import '../../features/practice/practice_routes.dart';
 import '../../features/quran/quran_routes.dart';
 import '../../features/reflect/reflect_routes.dart';
@@ -105,6 +106,10 @@ GoRouter appRouter(Ref ref) {
       ),
       ...onboardingRoutes,
       ...settingsRoutes,
+      GoRoute(
+        path: Routes.switchFaith,
+        builder: (_, __) => const FaithSelectionScreen(standalone: true),
+      ),
       ...shareRoutes,
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
