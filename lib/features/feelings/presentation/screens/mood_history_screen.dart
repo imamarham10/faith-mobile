@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/journal_entry.dart';
 import '../controllers/emotions_controller.dart';
@@ -197,14 +198,11 @@ class _TimelineRow extends StatelessWidget {
         ? ''
         : entry.mood[0].toUpperCase() + entry.mood.substring(1);
 
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.md,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.base,
         vertical: AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: cs.outline),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/remedy.dart';
 
 /// Display card for a single remedy — Arabic, divider, translation,
@@ -26,12 +27,8 @@ class RemedyCard extends ConsumerWidget {
     final hasTranslit = (remedy.transliteration ?? '').trim().isNotEmpty;
     final hasSource = (remedy.source ?? '').trim().isNotEmpty;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.outline),
-      ),
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

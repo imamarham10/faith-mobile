@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/remedy.dart';
 import '../controllers/journal_controller.dart';
@@ -70,7 +72,6 @@ class _MoodResultScreenState extends ConsumerState<MoodResultScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final asyncDetail = ref.watch(emotionDetailProvider(widget.moodSlug));
 
     return Scaffold(
@@ -156,19 +157,9 @@ class _MoodResultScreenState extends ConsumerState<MoodResultScreen> {
                   focus: _noteFocus,
                 ),
                 const Gap(AppSpacing.base),
-                FilledButton(
+                PoppyButton(
+                  label: _saving ? 'Saving…' : 'Save reflection',
                   onPressed: _saving ? null : _saveJournalEntry,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: cs.primary,
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Save reflection'),
                 ),
               ],
             );
@@ -236,28 +227,17 @@ class _IconAction extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: cs.outline),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 16, color: cs.onSurface),
-                const Gap.h(AppSpacing.sm),
-                Text(label, style: theme.textTheme.labelLarge),
-              ],
-            ),
-          ),
+      child: PoppyCard(
+        radius: AppRadius.lg,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        onTap: onTap,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: cs.onSurface),
+            const Gap.h(AppSpacing.sm),
+            Text(label, style: theme.textTheme.labelLarge),
+          ],
         ),
       ),
     );
@@ -268,13 +248,9 @@ class _NoRemedy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.outline),
-      ),
       child: Text(
         'No remedy is associated with this mood yet — but your reflection still matters.',
         style: theme.textTheme.bodyMedium,
@@ -288,36 +264,21 @@ class _MoodResultLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
+    return const Padding(
+      padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.screenEdge,
         vertical: AppSpacing.base,
       ),
-      child: Shimmer.fromColors(
-        baseColor: cs.outline.withValues(alpha: 0.4),
-        highlightColor: cs.outline.withValues(alpha: 0.15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 100,
-              height: 32,
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            Container(
-              height: 220,
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: PoppySkeleton(height: 32, radius: AppRadius.pill),
+          ),
+          Gap(AppSpacing.lg),
+          PoppySkeleton(height: 220, radius: AppRadius.lg),
+        ],
       ),
     );
   }
@@ -350,7 +311,7 @@ class _ErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const Gap(AppSpacing.lg),
-            TextButton(onPressed: onRetry, child: const Text('Try again')),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),

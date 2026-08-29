@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
 import '../../data/dtos/journal_entry.dart';
 import '../controllers/journal_controller.dart';
 import '../widgets/journal_entry_tile.dart';
@@ -204,7 +205,7 @@ class _ErrorState extends StatelessWidget {
             ),
           ),
           const Gap(AppSpacing.lg),
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
+          PoppyButton(label: 'Try again', onPressed: onRetry),
         ],
       ),
     );

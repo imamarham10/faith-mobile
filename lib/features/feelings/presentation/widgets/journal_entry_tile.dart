@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/journal_entry.dart';
 import 'mood_chip.dart';
 
@@ -27,46 +28,36 @@ class JournalEntryTile extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.base,
+      ),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.base,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: cs.outline),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                MoodChip(label: moodLabel, compact: true),
-                const Spacer(),
-                Text(
-                  _relativeTime(entry.createdAt),
-                  style: theme.textTheme.labelSmall,
-                ),
-              ],
-            ),
-            if (entry.note.isNotEmpty) ...[
-              const Gap(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              MoodChip(label: moodLabel, compact: true),
+              const Spacer(),
               Text(
-                entry.note,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface,
-                ),
-                maxLines: expanded ? null : 3,
-                overflow: expanded
-                    ? TextOverflow.visible
-                    : TextOverflow.ellipsis,
+                _relativeTime(entry.createdAt),
+                style: theme.textTheme.labelSmall,
               ),
             ],
+          ),
+          if (entry.note.isNotEmpty) ...[
+            const Gap(AppSpacing.md),
+            Text(
+              entry.note,
+              style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
+              maxLines: expanded ? null : 3,
+              overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
