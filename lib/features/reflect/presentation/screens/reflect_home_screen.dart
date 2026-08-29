@@ -3,9 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/mascot_view.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../feelings/data/dtos/journal_entry.dart';
 import '../../../feelings/presentation/controllers/journal_controller.dart';
@@ -13,10 +17,29 @@ import '../../../feelings/presentation/widgets/mood_chip_row.dart';
 
 /// `/reflect` — the calm landing for the Reflect tab.
 ///
-/// Tone: unhurried, never gamified. Three doors (mood, journal, history)
-/// stacked vertically with hairline borders, plus a small "Recent" preview.
+/// Faith-aware: branches on [selectedFaithProvider]. Islam has the full
+/// mood/journal/history build-out (`_IslamReflectContent`); Hindu doesn't
+/// have a Reflect vertical yet (that's Part C — the feelings backend's
+/// Hindu shape is structurally different, not a drop-in swap), so it gets
+/// an honest placeholder rather than leaking Islam-specific "there's a dua
+/// for what you're carrying" copy to Hindu users.
 class ReflectHomeScreen extends ConsumerWidget {
   const ReflectHomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
+    return switch (faith) {
+      FaithId.islam => const _IslamReflectContent(),
+      FaithId.hindu => const _HinduReflectPlaceholder(),
+    };
+  }
+}
+
+/// Tone: unhurried, never gamified. Three doors (mood, journal, history)
+/// stacked vertically with thick outlines, plus a small "Recent" preview.
+class _IslamReflectContent extends ConsumerWidget {
+  const _IslamReflectContent();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,6 +145,49 @@ class ReflectHomeScreen extends ConsumerWidget {
   }
 }
 
+/// Part C (the Hindu vertical) hasn't been built yet, so there is no real
+/// Hindu "Reflect" content to show. This is a deliberately honest
+/// placeholder — not a crash, not a silent reuse of Islam's mood/dua copy —
+/// and should be replaced with real Hindu reflection content once Part C
+/// lands.
+class _HinduReflectPlaceholder extends StatelessWidget {
+  const _HinduReflectPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdge,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const MascotView(faith: FaithId.hindu, state: MascotState.idle),
+                const Gap(AppSpacing.lg),
+                Text(
+                  'Hindu reflection is coming soon',
+                  style: theme.textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const Gap(AppSpacing.sm),
+                Text(
+                  'We\'re building this out next — check back soon.',
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MoodCard extends StatelessWidget {
   const _MoodCard({required this.onTap});
 
@@ -131,50 +197,39 @@ class _MoodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'How are you feeling?',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: cs.primary,
-                      ),
-                    ),
-                    const Gap(AppSpacing.xs),
-                    Text(
-                      "There's a dua for what you're carrying.",
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How are you feeling?',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: cs.primary,
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward,
-                size: 18,
-                color: cs.onSurface.withValues(alpha: 0.5),
-              ),
-            ],
+                const Gap(AppSpacing.xs),
+                Text(
+                  "There's a dua for what you're carrying.",
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
-        ),
+          Icon(
+            Icons.arrow_forward,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.5),
+          ),
+        ],
       ),
     );
   }
@@ -197,44 +252,33 @@ class _LinkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: cs.onSurface),
+          const Gap.h(AppSpacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleMedium),
+                const Gap(AppSpacing.xs),
+                Text(subtitle, style: theme.textTheme.bodySmall),
+              ],
+            ),
           ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
+          Icon(
+            Icons.arrow_forward,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.5),
           ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: cs.onSurface),
-              const Gap.h(AppSpacing.base),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleMedium),
-                    const Gap(AppSpacing.xs),
-                    Text(subtitle, style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward,
-                size: 18,
-                color: cs.onSurface.withValues(alpha: 0.5),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
