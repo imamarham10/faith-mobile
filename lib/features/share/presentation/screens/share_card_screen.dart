@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/poppy_button.dart';
 import '../../domain/share_card_theme.dart';
 import '../../domain/shareable_content.dart';
 import '../widgets/share_card.dart';
@@ -90,9 +91,6 @@ class _ShareCardScreenState extends ConsumerState<ShareCardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -166,28 +164,10 @@ class _ShareCardScreenState extends ConsumerState<ShareCardScreen> {
                 AppSpacing.lg,
                 AppSpacing.lg,
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _busy ? null : _share,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                  ),
-                  icon: _busy
-                      ? SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: cs.onPrimary,
-                          ),
-                        )
-                      : const Icon(Icons.ios_share_rounded, size: 20),
-                  label: Text(_busy ? 'Preparing…' : 'Share image'),
-                ),
+              child: PoppyButton(
+                label: _busy ? 'Preparing…' : 'Share image',
+                icon: _busy ? null : Icons.ios_share_rounded,
+                onPressed: _busy ? null : _share,
               ),
             ),
           ],
