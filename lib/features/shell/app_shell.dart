@@ -28,7 +28,30 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
-    final isHindu = faith == FaithId.hindu;
+    final (tab2Icon, tab2SelectedIcon, tab2Label) = switch (faith) {
+      FaithId.islam => (
+        Icons.menu_book_outlined,
+        Icons.menu_book,
+        'Quran',
+      ),
+      FaithId.hindu => (
+        Icons.auto_stories_outlined,
+        Icons.auto_stories,
+        'Scripture',
+      ),
+    };
+    final (tab3Icon, tab3SelectedIcon, tab3Label) = switch (faith) {
+      FaithId.islam => (
+        Icons.history_edu_outlined,
+        Icons.history_edu,
+        'Hadiths',
+      ),
+      FaithId.hindu => (
+        Icons.temple_hindu_outlined,
+        Icons.temple_hindu,
+        'Stories',
+      ),
+    };
 
     return Scaffold(
       body: navigationShell,
@@ -42,24 +65,14 @@ class AppShell extends ConsumerWidget {
             label: 'Today',
           ),
           NavigationDestination(
-            icon: Icon(
-              isHindu ? Icons.auto_stories_outlined : Icons.menu_book_outlined,
-            ),
-            selectedIcon: Icon(
-              isHindu ? Icons.auto_stories : Icons.menu_book,
-            ),
-            label: isHindu ? 'Scripture' : 'Quran',
+            icon: Icon(tab2Icon),
+            selectedIcon: Icon(tab2SelectedIcon),
+            label: tab2Label,
           ),
           NavigationDestination(
-            icon: Icon(
-              isHindu
-                  ? Icons.temple_hindu_outlined
-                  : Icons.history_edu_outlined,
-            ),
-            selectedIcon: Icon(
-              isHindu ? Icons.temple_hindu : Icons.history_edu,
-            ),
-            label: isHindu ? 'Stories' : 'Hadiths',
+            icon: Icon(tab3Icon),
+            selectedIcon: Icon(tab3SelectedIcon),
+            label: tab3Label,
           ),
           const NavigationDestination(
             icon: Icon(Icons.spa_outlined),
