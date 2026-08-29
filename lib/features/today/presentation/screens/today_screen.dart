@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../widgets/daily_hadith_card.dart';
 import '../widgets/mood_prompt.dart';
 import '../widgets/prayer_countdown_card.dart';
@@ -15,14 +17,21 @@ import '../widgets/verse_card.dart';
 
 /// The first impression — sets the brand tone and the architectural pattern
 /// Phase 1 feature agents will mirror.
-class TodayScreen extends StatelessWidget {
+class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
-    final hijri = HijriCalendar.fromDate(now);
-    final hijriLabel = '${hijri.hDay} ${hijri.getLongMonthName()}';
+    // Prefer the server's calendarAdjust-corrected Hijri date (kept in sync
+    // with the Calendar screen's grid); fall back to the local, uncorrected
+    // package while loading or on a network error so the greeting never
+    // blocks or blanks — being briefly one day off during a cold start is
+    // far less jarring than an empty header.
+    final serverToday = ref.watch(hijriTodayProvider).valueOrNull;
+    final hijriLabel = serverToday != null
+        ? '${serverToday.hijriDay} ${serverToday.hijriMonthName}'
+        : '${HijriCalendar.fromDate(now).hDay} ${HijriCalendar.fromDate(now).getLongMonthName()}';
     final dayLabel = '${DateFormat.EEEE().format(now)} · $hijriLabel';
 
     return Scaffold(

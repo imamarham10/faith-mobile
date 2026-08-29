@@ -25,6 +25,30 @@ final islamicEventsProvider = FutureProvider<List<IslamicEvent>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef IslamicEventsRef = FutureProviderRef<List<IslamicEvent>>;
+String _$hijriTodayHash() => r'52d1a3341519a02f21c4fd39f99ef5d33618ef1c';
+
+/// Server-side, calendarAdjust-corrected "today" — consumed by the Today
+/// screen's greeting so it agrees with the Calendar screen's grid rather
+/// than each computing its own (previously uncorrected, and now
+/// inconsistent-with-each-other) local Hijri date. Callers should fall back
+/// to a local approximation while loading/on error (see
+/// `today_screen.dart`) rather than blocking the greeting on network.
+///
+/// Copied from [hijriToday].
+@ProviderFor(hijriToday)
+final hijriTodayProvider = AutoDisposeFutureProvider<HijriToday>.internal(
+  hijriToday,
+  name: r'hijriTodayProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$hijriTodayHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef HijriTodayRef = AutoDisposeFutureProviderRef<HijriToday>;
 String _$islamicEventByIdHash() => r'7fe518f811501056da79706d13dc953c896fe838';
 
 /// Copied from Dart SDK
@@ -179,10 +203,20 @@ class _IslamicEventByIdProviderElement
   String get id => (origin as IslamicEventByIdProvider).id;
 }
 
-String _$calendarMonthHash() => r'4dc5c922d150c6b0180353ab31c08e39cf5a14a1';
+String _$calendarMonthHash() => r'e2738348607fbba47463c34448371b52411decad';
 
 /// Builds the 42-cell grid for the active anchor and folds in any events for
 /// the visible Hijri month.
+///
+/// Grid-window seeding (which Gregorian dates the 42 cells span) still uses
+/// the local `hijri` package — it only needs to be in the right ballpark
+/// (the 42-cell window has generous lead-in/lead-out slack either side of
+/// the target month), so a ~1-day local approximation here is harmless. The
+/// per-cell Hijri day/month/year actually shown to the user — and therefore
+/// which cells highlight as "in view" and which events land on which day —
+/// comes from the backend's calendarAdjust-corrected `/gregorian-month`
+/// endpoint instead, since that's the data users actually read off screen
+/// (see kCalendarAdjust's doc comment for why the correction matters).
 ///
 /// Copied from [calendarMonth].
 @ProviderFor(calendarMonth)

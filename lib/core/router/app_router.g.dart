@@ -26,7 +26,7 @@ final splashGateProvider = FutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SplashGateRef = FutureProviderRef<bool>;
-String _$appRouterHash() => r'809fba207323debfba38ebe5f18cc2dfb879604b';
+String _$appRouterHash() => r'e16b4b18ccc78d6c2de7d1f8fb3f6874afa1d4f0';
 
 /// Top-level GoRouter, wired to [AuthController] + [OnboardingDone] so route
 /// guards re-evaluate when either resolves.

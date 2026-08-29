@@ -3,6 +3,8 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/calendar_repository.dart';
+import '../../data/dtos/hijri_day.dart';
+import '../../data/dtos/hijri_today.dart';
 import '../../data/dtos/islamic_event.dart';
 
 part 'calendar_controller.g.dart';
@@ -12,6 +14,18 @@ part 'calendar_controller.g.dart';
 Future<List<IslamicEvent>> islamicEvents(Ref ref) {
   final repo = ref.watch(calendarRepositoryProvider);
   return repo.getEvents();
+}
+
+/// Server-side, calendarAdjust-corrected "today" — consumed by the Today
+/// screen's greeting so it agrees with the Calendar screen's grid rather
+/// than each computing its own (previously uncorrected, and now
+/// inconsistent-with-each-other) local Hijri date. Callers should fall back
+/// to a local approximation while loading/on error (see
+/// `today_screen.dart`) rather than blocking the greeting on network.
+@riverpod
+Future<HijriToday> hijriToday(Ref ref) {
+  final repo = ref.watch(calendarRepositoryProvider);
+  return repo.getToday();
 }
 
 /// Single event lookup helper.
@@ -148,16 +162,25 @@ class CalendarAnchorController extends _$CalendarAnchorController {
 
 /// Builds the 42-cell grid for the active anchor and folds in any events for
 /// the visible Hijri month.
+///
+/// Grid-window seeding (which Gregorian dates the 42 cells span) still uses
+/// the local `hijri` package — it only needs to be in the right ballpark
+/// (the 42-cell window has generous lead-in/lead-out slack either side of
+/// the target month), so a ~1-day local approximation here is harmless. The
+/// per-cell Hijri day/month/year actually shown to the user — and therefore
+/// which cells highlight as "in view" and which events land on which day —
+/// comes from the backend's calendarAdjust-corrected `/gregorian-month`
+/// endpoint instead, since that's the data users actually read off screen
+/// (see kCalendarAdjust's doc comment for why the correction matters).
 @riverpod
 Future<CalendarMonthData> calendarMonth(Ref ref) async {
   final anchor = ref.watch(calendarAnchorControllerProvider);
   final events = await ref.watch(islamicEventsProvider.future);
+  final repo = ref.watch(calendarRepositoryProvider);
 
   // Determine the Gregorian first-of-view-month start, then back up to the
   // Sunday before so we render a stable 6×7 grid regardless of weekday.
   late final DateTime gregFirst;
-  late final int viewHijriMonth;
-  late final int viewHijriYear;
   late final int viewGregMonth;
   late final int viewGregYear;
 
@@ -167,15 +190,10 @@ Future<CalendarMonthData> calendarMonth(Ref ref) async {
       ..hMonth = anchor.month
       ..hDay = 1;
     gregFirst = h.hijriToGregorian(anchor.year, anchor.month, 1);
-    viewHijriMonth = anchor.month;
-    viewHijriYear = anchor.year;
     viewGregMonth = gregFirst.month;
     viewGregYear = gregFirst.year;
   } else {
     gregFirst = DateTime(anchor.year, anchor.month, 1);
-    final h = HijriCalendar.fromDate(gregFirst);
-    viewHijriMonth = h.hMonth;
-    viewHijriYear = h.hYear;
     viewGregMonth = anchor.month;
     viewGregYear = anchor.year;
   }
@@ -183,25 +201,73 @@ Future<CalendarMonthData> calendarMonth(Ref ref) async {
   // Sunday-leading grid. weekday: Mon=1..Sun=7 → offset back to Sunday.
   final firstWeekday = gregFirst.weekday % 7; // 0..6 with Sun=0
   final gridStart = gregFirst.subtract(Duration(days: firstWeekday));
+  final gridDates = List.generate(
+    42,
+    (i) => DateTime(gridStart.year, gridStart.month, gridStart.day + i),
+  );
+
+  // Fetch every distinct Gregorian (year, month) the 42-cell grid touches —
+  // typically 2, occasionally 3 — from the corrected backend endpoint.
+  final monthKeys = <String>{};
+  final monthsToFetch = <(int, int)>[];
+  for (final date in gridDates) {
+    final key = '${date.year}-${date.month}';
+    if (monthKeys.add(key)) monthsToFetch.add((date.year, date.month));
+  }
+  final fetched = await Future.wait(
+    monthsToFetch.map((ym) => repo.getGregorianMonth(ym.$1, ym.$2)),
+  );
+  final byDate = <String, HijriDay>{
+    for (final month in fetched)
+      for (final day in month) day.gregorianDate: day,
+  };
+
+  String dateKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  // Fallback to the local package only if a date is somehow missing from the
+  // fetched months (shouldn't happen — defensive, not the happy path).
+  HijriDay resolve(DateTime date) {
+    final hit = byDate[dateKey(date)];
+    if (hit != null) return hit;
+    final h = HijriCalendar.fromDate(date);
+    return HijriDay(
+      hijriDay: h.hDay,
+      hijriMonth: h.hMonth,
+      hijriYear: h.hYear,
+      hijriMonthName: h.getLongMonthName(),
+      gregorianDate: dateKey(date),
+      dayOfWeek: '',
+    );
+  }
+
+  // Hijri mode: the anchor itself IS the Hijri (year, month) being viewed —
+  // no need to derive it. Gregorian mode: derive it from gregFirst's info.
+  final gregFirstInfo = resolve(gregFirst);
+  final viewHijriMonth =
+      anchor.mode == CalendarMode.hijri ? anchor.month : gregFirstInfo.hijriMonth;
+  final viewHijriYear =
+      anchor.mode == CalendarMode.hijri ? anchor.year : gregFirstInfo.hijriYear;
 
   final cells = <HijriDayCell>[];
-  for (var i = 0; i < 42; i++) {
-    final date = DateTime(gridStart.year, gridStart.month, gridStart.day + i);
-    final h = HijriCalendar.fromDate(date);
+  for (final date in gridDates) {
+    final info = resolve(date);
     final inView = anchor.mode == CalendarMode.hijri
-        ? (h.hMonth == viewHijriMonth && h.hYear == viewHijriYear)
+        ? (info.hijriMonth == viewHijriMonth && info.hijriYear == viewHijriYear)
         : (date.month == viewGregMonth && date.year == viewGregYear);
 
     final dayEvents = events
-        .where((e) => e.hijriMonth == h.hMonth && e.hijriDay == h.hDay)
+        .where(
+          (e) => e.hijriMonth == info.hijriMonth && e.hijriDay == info.hijriDay,
+        )
         .toList(growable: false);
 
     cells.add(
       HijriDayCell(
         gregorianDate: date,
-        hijriDay: h.hDay,
-        hijriMonth: h.hMonth,
-        hijriYear: h.hYear,
+        hijriDay: info.hijriDay,
+        hijriMonth: info.hijriMonth,
+        hijriYear: info.hijriYear,
         inViewMonth: inView,
         events: dayEvents,
       ),
@@ -213,7 +279,9 @@ Future<CalendarMonthData> calendarMonth(Ref ref) async {
       events.where((e) => e.hijriMonth == viewHijriMonth).toList(growable: true)
         ..sort((a, b) => a.hijriDay.compareTo(b.hijriDay));
 
-  // Labels — Hijri month name from the package, Gregorian via DateFormat.
+  // Labels — Hijri month name from the package (name lookup only, not a
+  // date conversion, so calendarAdjust doesn't apply here), Gregorian via
+  // DateFormat.
   final hijriProbe = HijriCalendar()
     ..hYear = viewHijriYear
     ..hMonth = viewHijriMonth
