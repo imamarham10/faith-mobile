@@ -37,16 +37,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _SlideData(
       icon: Icons.self_improvement_rounded,
       title: 'Meet Siraat',
-      body: 'Your gentle companion for building a steady spiritual '
+      body:
+          'Your gentle companion for building a steady spiritual '
           'practice — one small step at a time.',
     ),
     _SlideData(
       icon: Icons.notifications_active_rounded,
       title: 'Stay gently on track',
-      body: 'Turn on notifications so Siraat can nudge you at the right '
+      body:
+          'Turn on notifications so Siraat can nudge you at the right '
           'moments. Nothing pushy — just a gentle reminder.',
+      showPermissionAction: true,
     ),
   ];
+
+  // Lifted up here (rather than kept inside a per-page widget) so it
+  // survives page swipes: PageView.builder's children aren't wrapped in
+  // AutomaticKeepAliveClientMixin, so per-page State could be disposed once
+  // a page scrolls out of the viewport/cache extent.
+  bool? _remindersGranted;
+
+  Future<void> _enableReminders() async {
+    HapticFeedback.mediumImpact();
+    final granted = await NotificationService.instance.requestPermissions();
+    if (!mounted) return;
+    setState(() => _remindersGranted = granted);
+  }
 
   @override
   void dispose() {
@@ -105,7 +121,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _pages,
                 onPageChanged: (i) => setState(() => _index = i),
                 itemCount: _slides.length,
-                itemBuilder: (_, i) => _Slide(data: _slides[i], pageIndex: i),
+                itemBuilder: (_, i) => _Slide(
+                  data: _slides[i],
+                  pageIndex: i,
+                  remindersGranted: _remindersGranted,
+                  onEnableReminders: _enableReminders,
+                ),
               ),
             ),
             _DotIndicator(count: _slides.length, index: _index),
@@ -131,40 +152,35 @@ class _SlideData {
     required this.icon,
     required this.title,
     required this.body,
+    this.showPermissionAction = false,
   });
 
   final IconData icon;
   final String title;
   final String body;
+  // True only for the notification-permission slide — kept on the data
+  // rather than inferred from a page index, so reordering/inserting slides
+  // can't silently misplace the in-card action.
+  final bool showPermissionAction;
 }
 
-class _Slide extends StatefulWidget {
-  const _Slide({required this.data, required this.pageIndex});
+class _Slide extends StatelessWidget {
+  const _Slide({
+    required this.data,
+    required this.pageIndex,
+    required this.remindersGranted,
+    required this.onEnableReminders,
+  });
 
   final _SlideData data;
   // Used to key animations so each page swipe re-plays its hero entrance.
   final int pageIndex;
-
-  @override
-  State<_Slide> createState() => _SlideState();
-}
-
-class _SlideState extends State<_Slide> {
-  // Only meaningful on the notification slide; harmless elsewhere.
-  bool? _remindersGranted;
-
-  Future<void> _enableReminders() async {
-    HapticFeedback.mediumImpact();
-    final granted = await NotificationService.instance.requestPermissions();
-    if (!mounted) return;
-    setState(() => _remindersGranted = granted);
-  }
+  final bool? remindersGranted;
+  final VoidCallback onEnableReminders;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final data = widget.data;
-    final isNotificationSlide = widget.pageIndex == 1;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -189,27 +205,40 @@ class _SlideState extends State<_Slide> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge,
                     ),
-                    if (isNotificationSlide) ...[
+                    if (data.showPermissionAction) ...[
                       const SizedBox(height: 20),
                       PoppyButton(
-                        label: _remindersGranted == true
+                        label: remindersGranted == true
                             ? 'Reminders on'
                             : 'Turn on reminders',
-                        icon: _remindersGranted == true
+                        icon: remindersGranted == true
                             ? Icons.check_circle
                             : Icons.notifications_active_rounded,
                         variant: PoppyButtonVariant.secondary,
-                        onPressed: _remindersGranted == true
+                        onPressed: remindersGranted == true
                             ? null
-                            : _enableReminders,
+                            : onEnableReminders,
                       ),
+                      if (remindersGranted == false) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'You can turn these on later in Settings.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
                     ],
                   ],
                 ),
               )
-              .animate(key: ValueKey('hero-${widget.pageIndex}'))
+              .animate(key: ValueKey('hero-$pageIndex'))
               .fadeIn(duration: 450.ms, curve: Curves.easeOut)
-              .moveY(begin: 12, end: 0, duration: 450.ms, curve: Curves.easeOutCubic),
+              .moveY(
+                begin: 12,
+                end: 0,
+                duration: 450.ms,
+                curve: Curves.easeOutCubic,
+              ),
           const Spacer(flex: 3),
         ],
       ),

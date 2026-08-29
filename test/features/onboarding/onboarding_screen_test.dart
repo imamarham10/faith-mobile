@@ -64,6 +64,10 @@ void main() {
       // holds exactly 2 pages via public behavior rather than reaching into
       // PageView internals.
       expect(find.text('Next'), findsNothing);
+      // The permission-ask action lives only on this slide — its presence
+      // is the slide's whole reason to exist, so a regression that dropped
+      // it silently would otherwise slip past this smoke test.
+      expect(find.text('Turn on reminders'), findsOneWidget);
     },
   );
 
