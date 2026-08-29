@@ -4,10 +4,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
 import '../../data/dtos/dhikr_counter.dart';
 import '../controllers/dhikr_counter_controller.dart';
 import '../controllers/dhikr_counters_controller.dart';
@@ -204,10 +204,10 @@ class _DhikrCounterScreenState extends ConsumerState<DhikrCounterScreen> {
                       style: theme.textTheme.bodySmall,
                     ),
                     const Gap(16),
-                    FilledButton(
+                    PoppyButton(
+                      label: 'Try again',
                       onPressed: () =>
                           ref.invalidate(dhikrCounterControllerProvider),
-                      child: const Text('Try again'),
                     ),
                   ],
                 ),
@@ -295,33 +295,17 @@ class _DhikrCounterScreenState extends ConsumerState<DhikrCounterScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              side: BorderSide(color: cs.outline),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                            ),
+                          child: PoppyButton(
+                            label: 'Reset',
+                            variant: PoppyButtonVariant.secondary,
                             onPressed: () => _confirmReset(counter),
-                            child: const Text('Reset'),
                           ),
                         ),
                         const Gap(12),
                         Expanded(
-                          child: FilledButton(
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                            ),
+                          child: PoppyButton(
+                            label: 'Done',
                             onPressed: _doneAndPop,
-                            child: const Text('Done'),
                           ),
                         ),
                       ],

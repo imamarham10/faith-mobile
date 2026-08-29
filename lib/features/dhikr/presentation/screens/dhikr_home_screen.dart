@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/dhikr_counter.dart';
 import '../../data/dtos/dhikr_phrase.dart';
@@ -230,14 +232,11 @@ class _EmptyCounters extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.xl,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,13 +250,10 @@ class _EmptyCounters extends StatelessWidget {
             style: theme.textTheme.bodyMedium,
           ),
           const Gap(16),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
+          PoppyButton(
+            label: 'New counter',
+            icon: Icons.add,
             onPressed: onCreate,
-            icon: const Icon(Icons.add),
-            label: const Text('New counter'),
           ),
         ],
       ),
@@ -280,30 +276,19 @@ class _SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: cs.outline),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          child: Column(
-            children: [
-              Icon(icon, size: 22, color: cs.onSurface),
-              const Gap(6),
-              Text(label, style: theme.textTheme.labelLarge),
-            ],
-          ),
-        ),
+    return PoppyCard(
+      radius: AppRadius.md,
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Column(
+        children: [
+          Icon(icon, size: 22, color: cs.onSurface),
+          const Gap(6),
+          Text(label, style: theme.textTheme.labelLarge),
+        ],
       ),
     );
   }
@@ -314,25 +299,12 @@ class _LoadingSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       sliver: SliverList.list(
         children: [
           for (var i = 0; i < 3; i++) ...[
-            Shimmer.fromColors(
-              baseColor: cs.surface,
-              highlightColor: cs.outline.withValues(alpha: 0.4),
-              child: Container(
-                height: 100,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: cs.outline),
-                  color: cs.surface,
-                ),
-              ),
-            ),
+            const PoppySkeleton(height: 100, radius: AppRadius.lg),
             const Gap(10),
           ],
         ],
@@ -353,12 +325,9 @@ class _ErrorSliver extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       sliver: SliverToBoxAdapter(
-        child: Container(
+        child: PoppyCard(
+          radius: AppRadius.lg,
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: theme.colorScheme.outline),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -369,11 +338,7 @@ class _ErrorSliver extends StatelessWidget {
               const Gap(6),
               Text(message, style: theme.textTheme.bodySmall),
               const Gap(12),
-              TextButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try again'),
-              ),
+              PoppyButton(label: 'Try again', onPressed: onRetry),
             ],
           ),
         ),

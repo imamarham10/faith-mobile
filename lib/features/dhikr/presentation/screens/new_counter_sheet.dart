@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/dhikr_phrase.dart';
 import '../controllers/dhikr_counters_controller.dart';
@@ -67,12 +69,8 @@ class _NewCounterSheetState extends ConsumerState<NewCounterSheet> {
               const SectionLabel('From dictionary'),
               const Gap(12),
               if (dictionary.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.base),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: theme.colorScheme.outline),
-                  ),
+                PoppyCard(
+                  radius: AppRadius.md,
                   child: Text(
                     'Loading phrases…',
                     style: theme.textTheme.bodyMedium,
@@ -182,7 +180,7 @@ class _CustomForm extends StatelessWidget {
             children: [
               TextButton(onPressed: onCancel, child: const Text('Back')),
               const Spacer(),
-              FilledButton(onPressed: onCreate, child: const Text('Create')),
+              PoppyButton(label: 'Create', onPressed: onCreate),
             ],
           ),
         ],

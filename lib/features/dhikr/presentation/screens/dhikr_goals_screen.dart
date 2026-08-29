@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/dhikr_goal.dart';
 import '../../data/dtos/dhikr_phrase.dart';
 import '../controllers/dhikr_counters_controller.dart';
@@ -140,11 +142,8 @@ class _GoalTile extends StatelessWidget {
         ? 'until ${DateFormat.MMMd().format(goal.endDate!)}'
         : null;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.outline),
-      ),
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,12 +366,9 @@ class _EmptyGoals extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.outline),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -385,14 +381,7 @@ class _EmptyGoals extends StatelessWidget {
             style: theme.textTheme.bodyMedium,
           ),
           const Gap(16),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            onPressed: onCreate,
-            icon: const Icon(Icons.add),
-            label: const Text('New goal'),
-          ),
+          PoppyButton(label: 'New goal', icon: Icons.add, onPressed: onCreate),
         ],
       ),
     );
@@ -404,24 +393,12 @@ class _ShimmerSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       sliver: SliverList.list(
         children: [
           for (var i = 0; i < 3; i++) ...[
-            Shimmer.fromColors(
-              baseColor: cs.surface,
-              highlightColor: cs.outline.withValues(alpha: 0.4),
-              child: Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: cs.outline),
-                  color: cs.surface,
-                ),
-              ),
-            ),
+            const PoppySkeleton(height: 110, radius: AppRadius.lg),
             const Gap(10),
           ],
         ],
@@ -439,12 +416,9 @@ class _ErrorBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -452,11 +426,7 @@ class _ErrorBlock extends StatelessWidget {
           const Gap(6),
           Text(message, style: theme.textTheme.bodySmall),
           const Gap(12),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
-          ),
+          PoppyButton(label: 'Try again', onPressed: onRetry),
         ],
       ),
     );

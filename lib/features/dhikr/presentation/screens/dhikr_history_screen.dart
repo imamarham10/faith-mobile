@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/dhikr_history_entry.dart';
 import '../controllers/dhikr_history_controller.dart';
@@ -133,20 +134,16 @@ class _EntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final time = entry.recordedAt != null
         ? DateFormat.jm().format(entry.recordedAt!)
         : '—';
     final phrase = entry.phraseEnglish ?? entry.phraseArabic ?? 'Dhikr';
 
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.md,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.base,
         vertical: AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: cs.outline),
       ),
       child: Row(
         children: [
@@ -210,24 +207,12 @@ class _Shimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
       sliver: SliverList.list(
         children: [
           for (var i = 0; i < 4; i++) ...[
-            Shimmer.fromColors(
-              baseColor: cs.surface,
-              highlightColor: cs.outline.withValues(alpha: 0.4),
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: cs.outline),
-                  color: cs.surface,
-                ),
-              ),
-            ),
+            const PoppySkeleton(height: 56, radius: AppRadius.md),
             const Gap(8),
           ],
         ],
@@ -244,12 +229,9 @@ class _ErrorBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return PoppyCard(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

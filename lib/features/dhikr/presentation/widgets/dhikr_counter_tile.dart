@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/dhikr_counter.dart';
 import 'milestone_ring.dart';
 
@@ -34,89 +35,73 @@ class DhikrCounterTile extends ConsumerWidget {
     final meaning = counter.meaning;
     final arabic = counter.phraseArabic;
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: cs.outline),
-          ),
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.base,
-            AppSpacing.base,
-            AppSpacing.base,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (arabic != null && arabic.isNotEmpty)
-                      Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          arabic,
-                          textAlign: TextAlign.right,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: arabicTextStyleOf(
-                            ref,
-                            fontSize: 22,
-                            height: 1.4,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 4),
-                    Text(
-                      transliteration,
-                      style: theme.textTheme.titleMedium,
+    return PoppyCard(
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.base,
+        AppSpacing.base,
+        AppSpacing.base,
+      ),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (arabic != null && arabic.isNotEmpty)
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      arabic,
+                      textAlign: TextAlign.right,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    if (meaning != null && meaning.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        meaning,
-                        style: theme.textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      style: arabicTextStyleOf(
+                        ref,
+                        fontSize: 22,
+                        height: 1.4,
+                        color: cs.onSurface,
                       ),
-                    ],
-                    const SizedBox(height: AppSpacing.sm),
-                    _CountPill(
-                      count: counter.count,
-                      target: counter.targetCount,
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.base),
-              MilestoneRing(
-                progress: progress,
-                size: 56,
-                child: Text(
-                  '${(progress * 100).round()}%',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.primary,
                   ),
+                const SizedBox(height: 4),
+                Text(
+                  transliteration,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                if (meaning != null && meaning.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    meaning,
+                    style: theme.textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.sm),
+                _CountPill(count: counter.count, target: counter.targetCount),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: AppSpacing.base),
+          MilestoneRing(
+            progress: progress,
+            size: 56,
+            child: Text(
+              '${(progress * 100).round()}%',
+              style: theme.textTheme.labelSmall?.copyWith(color: cs.primary),
+            ),
+          ),
+        ],
       ),
     );
   }
