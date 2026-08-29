@@ -6,17 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-/// Fakes [SelectedFaith] to resolve synchronously to a fixed faith, so the
-/// shell's nav destinations render deterministically without touching
-/// shared_preferences.
-class _FakeSelectedFaith extends SelectedFaith {
-  _FakeSelectedFaith(this._faith);
-
-  final FaithId _faith;
-
-  @override
-  Future<FaithId?> build() async => _faith;
-}
+import '../../helpers/fake_selected_faith.dart';
 
 void main() {
   // A minimal 5-branch StatefulShellRoute, mirroring the real app_router's
@@ -80,7 +70,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          selectedFaithProvider.overrideWith(() => _FakeSelectedFaith(faith)),
+          selectedFaithProvider.overrideWith(() => FakeSelectedFaith(faith)),
         ],
         child: MaterialApp.router(routerConfig: buildRouter()),
       ),

@@ -2,22 +2,13 @@ import 'package:faith_mobile/core/preferences/selected_faith.dart';
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/features/today/presentation/screens/today_screen.dart';
+import 'package:faith_mobile/shared/widgets/mascot_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Fakes [SelectedFaith] to resolve synchronously to a fixed faith, so
-/// TodayScreen's faith branch renders deterministically without touching
-/// shared_preferences. Mirrors the convention in app_shell_test.dart.
-class _FakeSelectedFaith extends SelectedFaith {
-  _FakeSelectedFaith(this._faith);
-
-  final FaithId _faith;
-
-  @override
-  Future<FaithId?> build() async => _faith;
-}
+import '../../helpers/fake_selected_faith.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -47,7 +38,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          selectedFaithProvider.overrideWith(() => _FakeSelectedFaith(faith)),
+          selectedFaithProvider.overrideWith(() => FakeSelectedFaith(faith)),
         ],
         child: MaterialApp(
           theme: AppTheme.light(faith),
@@ -125,7 +116,7 @@ void main() {
       await pump(tester, FaithId.hindu);
 
       expect(find.text('Hindu home is coming soon'), findsOneWidget);
-      expect(find.byType(CustomPaint), findsWidgets); // MascotView renders
+      expect(find.byType(MascotView), findsOneWidget);
     });
 
     testWidgets('does not reuse any Islam-specific copy or widgets', (

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
@@ -10,6 +9,7 @@ import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../hadiths/data/dtos/hadith.dart';
 import '../../../hadiths/presentation/controllers/daily_hadith_controller.dart';
 
@@ -114,25 +114,10 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final ext = theme.extension<FaithThemeExtension>()!;
-    return Shimmer.fromColors(
-      baseColor: cs.surface,
-      // Matches the fill/outline/radius the loaded PoppyCard uses
-      // (surfaceContainer -> FaithPalette.surfaceCard; PoppyCard's default
-      // radius is 24, cardOutlineWidth is themed) so the shimmer doesn't
-      // flash a visibly different card shape than the one it's replacing.
-      highlightColor: cs.primaryContainer.withValues(alpha: 0.4),
-      child: Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainer,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: cs.outline, width: ext.cardOutlineWidth),
-        ),
-      ),
-    );
+    // PoppySkeleton matches PoppyCard's shape at its own default radius (24)
+    // — same as the loaded _Content card — so the loading state never
+    // flashes a visibly different silhouette than what replaces it.
+    return const PoppySkeleton(height: 200);
   }
 }
 

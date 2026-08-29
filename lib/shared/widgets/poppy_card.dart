@@ -35,7 +35,21 @@ class _PoppyCardState extends State<PoppyCard> {
   Widget build(BuildContext context) {
     final ext = Theme.of(context).extension<FaithThemeExtension>()!;
     final palette = ext.palette;
-    final fill = widget.color ?? palette.surfaceCard;
+    // Pre-blended to opaque: this Container sits inside an AnimatedContainer
+    // with a (possibly no-op) Transform for the press animation, and on at
+    // least one real Android/Impeller combination, a translucent
+    // BoxDecoration.color inside a transformed layer composites incorrectly
+    // (renders as a much darker, near-opaque fill instead of blending
+    // against whatever's behind it) — verified live on-device. Blending
+    // against `surfaceCard` up front sidesteps the runtime compositing
+    // entirely and is a safe default since callers only ever sit on
+    // `surface`/`surfaceCard`, which are visually near-identical. A caller
+    // passing an already-opaque color is unaffected (alphaBlend of a fully
+    // opaque foreground returns it unchanged).
+    final fill = Color.alphaBlend(
+      widget.color ?? palette.surfaceCard,
+      palette.surfaceCard,
+    );
     final border = widget.borderColor ?? palette.outline;
     final offset = _pressed ? 0.0 : ext.pressOffset;
 

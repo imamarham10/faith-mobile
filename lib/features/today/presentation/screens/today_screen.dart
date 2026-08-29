@@ -123,22 +123,9 @@ class _HinduTodayPlaceholder extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Align(
+            const Align(
               alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  right: AppSpacing.screenEdge / 2,
-                  top: AppSpacing.sm,
-                ),
-                child: IconButton(
-                  tooltip: 'Settings',
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    context.push('/settings');
-                  },
-                ),
-              ),
+              child: _SettingsButton(),
             ),
             Expanded(
               child: Center(
@@ -185,17 +172,17 @@ class _Greeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenEdge,
-        AppSpacing.lg,
-        AppSpacing.screenEdge,
-        AppSpacing.xl,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenEdge,
+              AppSpacing.lg,
+              0,
+              AppSpacing.xl,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -230,15 +217,39 @@ class _Greeting extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              context.push('/settings');
-            },
-          ),
-        ],
+        ),
+        const _SettingsButton(),
+      ],
+    );
+  }
+}
+
+/// Top-right settings affordance shared by every faith branch's Today
+/// layout — one canonical inset (lifted from `_Greeting`'s original padding,
+/// the more deliberate of the two independently-tuned insets that existed
+/// pre-refactor) so switching faiths never visibly moves the settings
+/// button.
+class _SettingsButton extends StatelessWidget {
+  const _SettingsButton();
+
+  static const EdgeInsets padding = EdgeInsets.fromLTRB(
+    AppSpacing.screenEdge,
+    AppSpacing.lg,
+    AppSpacing.screenEdge,
+    AppSpacing.xl,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: IconButton(
+        tooltip: 'Settings',
+        icon: const Icon(Icons.settings_outlined),
+        onPressed: () {
+          HapticFeedback.selectionClick();
+          context.push('/settings');
+        },
       ),
     );
   }

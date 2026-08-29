@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/location/location_service.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
 
 /// Live countdown card for the next prayer.
@@ -149,9 +149,21 @@ class _LiveCardState extends State<_LiveCard> {
     // light/dark AppColors.*Soft tokens, which only ever existed as a
     // pre-poppy fallback. FaithPalette.of already resolves the correct
     // brightness, so no isDark branch is needed here.
-    final accentSoft = _imminent
-        ? palette.secondary.withValues(alpha: 0.16)
-        : palette.primary.withValues(alpha: 0.16);
+    //
+    // Pre-blended to an OPAQUE color via Color.alphaBlend rather than
+    // passed as a translucent Color — PoppyCard wraps its fill in an
+    // AnimatedContainer with a (possibly no-op) Transform for the press
+    // animation, and on this device's Impeller/Android GPU combination a
+    // translucent BoxDecoration.color inside a transformed layer composites
+    // incorrectly (renders as a near-opaque, much darker fill instead of
+    // blending against surfaceCard behind it) — verified live on-device.
+    // Pre-blending sidesteps the runtime compositing entirely.
+    final accentSoft = Color.alphaBlend(
+      (_imminent ? palette.secondary : palette.primary).withValues(
+        alpha: 0.16,
+      ),
+      palette.surfaceCard,
+    );
 
     return PoppyCard(
       onTap: () {
@@ -205,24 +217,10 @@ class _LoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final base = theme.colorScheme.outline.withValues(alpha: 0.4);
-    // Matches the fill the loaded PoppyCard uses (surfaceContainer maps to
-    // FaithPalette.surfaceCard in AppTheme) rather than the app-background
-    // `surface`, so the shimmer doesn't flash a visibly different color than
-    // the card it's standing in for.
-    final cardFill = theme.colorScheme.surfaceContainer;
-    return Shimmer.fromColors(
-      baseColor: base,
-      highlightColor: cardFill,
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: cardFill,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-      ),
-    );
+    // Radius stays AppRadius.xl (28), matching every other state of this
+    // card (_LiveCard/_MessageCard) — the deliberate "hero card" distinction
+    // documented on PrayerCountdownCard, not PoppyCard's 24 default.
+    return const PoppySkeleton(height: 180, radius: AppRadius.xl);
   }
 }
 
