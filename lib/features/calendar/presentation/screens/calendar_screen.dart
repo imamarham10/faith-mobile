@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../controllers/calendar_controller.dart';
 import '../widgets/event_tile.dart';
@@ -104,15 +106,11 @@ class _Content extends ConsumerWidget {
         const SectionLabel('Events this month'),
         const Gap(AppSpacing.md),
         if (data.eventsThisMonth.isEmpty)
-          Container(
+          PoppyCard(
+            radius: AppRadius.md,
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.base,
               vertical: AppSpacing.lg,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: theme.colorScheme.outline),
             ),
             child: Text(
               'No major Islamic events this month.',
@@ -304,9 +302,6 @@ class _LoadingShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final base = theme.colorScheme.outline.withValues(alpha: 0.4);
-    final highlight = theme.colorScheme.surface;
     return ListView(
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(
@@ -315,30 +310,10 @@ class _LoadingShimmer extends StatelessWidget {
         AppSpacing.screenEdge,
         AppSpacing.xxl,
       ),
-      children: [
-        Shimmer.fromColors(
-          baseColor: base,
-          highlightColor: highlight,
-          child: Container(
-            height: 60,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-          ),
-        ),
-        const Gap(AppSpacing.lg),
-        Shimmer.fromColors(
-          baseColor: base,
-          highlightColor: highlight,
-          child: Container(
-            height: 320,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-          ),
-        ),
+      children: const [
+        PoppySkeleton(height: 60, radius: AppRadius.md),
+        Gap(AppSpacing.lg),
+        PoppySkeleton(height: 320, radius: AppRadius.lg),
       ],
     );
   }
@@ -376,15 +351,7 @@ class _ErrorView extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
         ),
         const Gap(AppSpacing.lg),
-        Center(
-          child: FilledButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              onRetry();
-            },
-            child: const Text('Try again'),
-          ),
-        ),
+        Center(child: PoppyButton(label: 'Try again', onPressed: onRetry)),
       ],
     );
   }

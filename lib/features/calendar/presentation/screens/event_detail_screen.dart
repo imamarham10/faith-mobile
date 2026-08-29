@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
+import '../../../../shared/widgets/poppy_card.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/islamic_event.dart';
 import '../controllers/calendar_controller.dart';
 
@@ -92,20 +94,10 @@ class _Content extends StatelessWidget {
         AppSpacing.xxl,
       ),
       children: [
-        Container(
+        PoppyCard(
+          radius: AppRadius.xl,
+          color: cs.secondaryContainer.withValues(alpha: 0.4),
           padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                cs.surface,
-                cs.secondaryContainer.withValues(alpha: 0.4),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: cs.outline),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -183,22 +175,9 @@ class _LoadingShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final base = theme.colorScheme.outline.withValues(alpha: 0.4);
-    final highlight = theme.colorScheme.surface;
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.screenEdge),
-      child: Shimmer.fromColors(
-        baseColor: base,
-        highlightColor: highlight,
-        child: Container(
-          height: 220,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
-        ),
-      ),
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.screenEdge),
+      child: PoppySkeleton(height: 220, radius: AppRadius.xl),
     );
   }
 }
@@ -230,10 +209,7 @@ class _NotFoundView extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             const Gap(AppSpacing.lg),
-            FilledButton(
-              onPressed: onBack,
-              child: const Text('Back to calendar'),
-            ),
+            PoppyButton(label: 'Back to calendar', onPressed: onBack),
           ],
         ),
       ),
@@ -266,13 +242,7 @@ class _ErrorView extends StatelessWidget {
             const Gap(AppSpacing.xs),
             Text(message, style: theme.textTheme.bodyMedium),
             const Gap(AppSpacing.lg),
-            FilledButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                onRetry();
-              },
-              child: const Text('Try again'),
-            ),
+            PoppyButton(label: 'Try again', onPressed: onRetry),
           ],
         ),
       ),
