@@ -2,7 +2,6 @@ import 'package:faith_mobile/core/preferences/selected_faith.dart';
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/features/today/presentation/screens/today_screen.dart';
-import 'package:faith_mobile/shared/widgets/mascot_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,27 +12,21 @@ import '../../helpers/fake_selected_faith.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  // TodayScreen (Islam branch) pulls in several network/plugin-backed
-  // providers (prayer times, daily hadith, last-read, server Hijri date) that
-  // never resolve in a widget test — they stay in their loading state
-  // (shimmers) or fail over to the local Hijri fallback, and none of that
-  // is asserted on here. MascotView's idle animation (used on the Hindu
-  // placeholder) also repeats forever, so — matching the bounded-pump
-  // convention already used in faith_selection_screen_test.dart /
-  // onboarding_screen_test.dart — every test below uses a fixed-duration
-  // `pump` instead of `pumpAndSettle`, which would never settle.
+  // TodayScreen pulls in several network/plugin-backed providers on both
+  // branches (Islam: prayer times, daily hadith, last-read, server Hijri
+  // date; Hindu: panchang-today, puja-times/sandhya countdown) that never
+  // resolve in a widget test — they stay in their loading state (shimmers)
+  // or fail over to a local/static fallback, and none of that is asserted
+  // on here. So — matching the bounded-pump convention already used in
+  // faith_selection_screen_test.dart / onboarding_screen_test.dart — every
+  // test below uses a fixed-duration `pump` instead of `pumpAndSettle`,
+  // which would never settle while those providers stay pending.
   //
   // The leading bare `pump()` matters: `_FakeSelectedFaith.build()` is async,
   // so the very first frame renders with `selectedFaithProvider` still
   // loading (TodayScreen's `?? FaithId.islam` fallback applies), then a
   // microtask later the override resolves and TodayScreen rebuilds into the
-  // *other* branch. For the Hindu case that unmounts `_IslamTodayContent`
-  // and mounts a fresh `_HinduTodayPlaceholder`/`MascotView`, whose
-  // `Animate` (flutter_animate) schedules a `Future.delayed` on `initState` —
-  // without this extra pump to flush that consequential rebuild inside the
-  // same synchronous phase, the delayed callback's Timer is still pending
-  // when the test tears down and flutter_test's `!timersPending` invariant
-  // fails.
+  // *other* branch.
   Future<void> pump(WidgetTester tester, FaithId faith) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -112,11 +105,15 @@ void main() {
   });
 
   group('Hindu branch', () {
-    testWidgets('shows the honest "coming soon" placeholder', (tester) async {
+    testWidgets('shows the Hindu greeting and quick actions', (tester) async {
       await pump(tester, FaithId.hindu);
 
-      expect(find.text('Hindu home is coming soon'), findsOneWidget);
-      expect(find.byType(MascotView), findsOneWidget);
+      expect(find.text('Namaste'), findsOneWidget);
+      // SectionLabel uppercases its text.
+      expect(find.text('QUICK'), findsOneWidget);
+      expect(find.text('Japa'), findsOneWidget);
+      expect(find.text('Stotras'), findsOneWidget);
+      expect(find.text('Temples'), findsOneWidget);
     });
 
     testWidgets('does not reuse any Islam-specific copy or widgets', (
