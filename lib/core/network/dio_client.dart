@@ -17,6 +17,20 @@ const String kApiBaseUrl = String.fromEnvironment(
   defaultValue: 'http://localhost:3000',
 );
 
+/// Base URL of the `faith-web-remix` web app — overridable at build time:
+///   --dart-define=WEB_BASE_URL=https://staging.example.com
+///
+/// Some content the API returns is hosted as a path relative to the *web
+/// app's* origin, not the API's (e.g. hindu_scriptures' own audio
+/// narrations live under the web app's `public/audio/`, confirmed via
+/// `unified-faith-service.vercel.app/audio/...` 404ing while
+/// `www.siraat.website/audio/...` 200s). Resolve those against this host,
+/// not [kApiBaseUrl].
+const String kWebBaseUrl = String.fromEnvironment(
+  'WEB_BASE_URL',
+  defaultValue: 'https://www.siraat.website',
+);
+
 /// Builds the project's [Dio] instance.
 ///
 /// Behavior:

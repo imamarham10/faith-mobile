@@ -1,7 +1,10 @@
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/routes.dart';
-import '../../shared/widgets/hindu_coming_soon_placeholder.dart';
+import '../hindu_scriptures/hindu_scriptures_routes.dart';
+import '../hindu_scriptures/presentation/screens/bookmarks_screen.dart'
+    as hindu_scriptures;
+import '../hindu_scriptures/presentation/screens/hindu_scriptures_home_screen.dart';
 import '../shell/faith_tab_router.dart';
 import 'presentation/screens/bookmarks_screen.dart';
 import 'presentation/screens/quran_home_screen.dart';
@@ -12,22 +15,21 @@ import 'presentation/screens/surah_reader_screen.dart';
 ///
 /// Paths:
 /// * `/quran` — surah index + search + last-read resume + bookmarks shortcut
-///   (Islam), or the Hindu scriptures placeholder until Part C's C2 task
-///   lands, switched by [FaithTabRouter].
+///   (Islam), or the scripture text index (Hindu), switched by
+///   [FaithTabRouter].
 /// * `/quran/surah/:id` — continuous reader with audio mini-player.
 ///   Optional query: `?ayah=<n>` jumps to and highlights a specific verse.
-/// * `/quran/bookmarks` — saved verses with swipe-to-delete.
-/// * `/quran/hindu-scripture` — reserved anchor for the `hindu_scriptures`
-///   module's own sub-routes once C2 lands (a relative child segment, not
-///   an independent top-level path — the tab's landing content for both
-///   faiths lives at the single shared `/quran` path above, switched by
-///   [FaithTabRouter]).
+/// * `/quran/bookmarks` — saved verses with swipe-to-delete (Islam), or
+///   saved scripture verses (Hindu), switched by [FaithTabRouter].
+/// * `/quran/hindu-scripture/:slug`, `/quran/hindu-scripture/:slug/:chapter`
+///   — the `hindu_scriptures` module's chapter picker and reader. Relative
+///   child segments, not independent top-level paths.
 final quranRoutes = <RouteBase>[
   GoRoute(
     path: Routes.quran,
     builder: (_, __) => FaithTabRouter(
       islam: (_) => const QuranHomeScreen(),
-      hindu: (_) => const HinduComingSoonPlaceholder(label: 'Scripture'),
+      hindu: (_) => const HinduScripturesHomeScreen(),
     ),
     routes: [
       GoRoute(
@@ -38,12 +40,26 @@ final quranRoutes = <RouteBase>[
           return SurahReaderScreen(surahId: id, initialAyah: ayah);
         },
       ),
-      GoRoute(path: 'bookmarks', builder: (_, __) => const BookmarksScreen()),
+      GoRoute(
+        path: 'bookmarks',
+        builder: (_, __) => FaithTabRouter(
+          islam: (_) => const BookmarksScreen(),
+          hindu: (_) => const hindu_scriptures.HinduScripturesBookmarksScreen(),
+        ),
+      ),
       GoRoute(
         path: Routes.hinduScripture,
-        builder: (_, __) =>
-            const HinduComingSoonPlaceholder(label: 'Scripture'),
-        routes: const <RouteBase>[],
+        // Bare `/quran/hindu-scripture` is never linked to directly — only
+        // its `:slug`/`:slug/:chapter` children are — but GoRoute requires
+        // a builder, pageBuilder, or redirect even so. A `redirect` here
+        // would be the wrong choice: go_router applies a parent route's
+        // redirect to every matched sub-route too ("parent route's redirect
+        // takes priority over sub-route's" — go_router docs), which would
+        // bounce `/quran/hindu-scripture/:slug` back to `/quran` before the
+        // child ever renders. A builder only fires when this exact bare
+        // path is matched, so it's safe as a same-content fallback.
+        builder: (_, __) => const HinduScripturesHomeScreen(),
+        routes: hinduScriptureSubRoutes,
       ),
     ],
   ),

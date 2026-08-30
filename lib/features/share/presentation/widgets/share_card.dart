@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/sanskrit_text.dart';
 import '../../domain/share_card_theme.dart';
 import '../../domain/shareable_content.dart';
 
@@ -141,6 +142,8 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasArabic = (content.arabic ?? '').isNotEmpty;
+    final hasSanskrit = (content.sanskrit ?? '').isNotEmpty;
+    final hasNativeScript = hasArabic || hasSanskrit;
     final hasTranslation = (content.translation ?? '').isNotEmpty;
 
     return Column(
@@ -159,8 +162,18 @@ class _Body extends StatelessWidget {
                 color: theme.textPrimary,
               ),
             ),
+          )
+        else if (hasSanskrit)
+          Text(
+            content.sanskrit!,
+            textAlign: TextAlign.center,
+            style: sanskritTextStyle(
+              fontSize: size * 0.060,
+              height: 2.0,
+              color: theme.textPrimary,
+            ),
           ),
-        if (hasArabic && hasTranslation) ...[
+        if (hasNativeScript && hasTranslation) ...[
           SizedBox(height: size * 0.04),
           Container(
             width: size * 0.06,

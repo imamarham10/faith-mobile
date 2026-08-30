@@ -7,9 +7,15 @@ class ShareableContent {
     this.eyebrow,
     this.title,
     this.arabic,
+    this.sanskrit,
     this.translation,
     this.attribution,
-  });
+  }) : assert(
+         arabic == null || sanskrit == null,
+         'Pass either arabic or sanskrit, not both — they render with '
+         'different direction/font and the card only has room for one '
+         'native-script body block.',
+       );
 
   /// Tiny uppercase label above the title (e.g., "Quran", "Hadith").
   final String? eyebrow;
@@ -19,6 +25,12 @@ class ShareableContent {
 
   /// Arabic body — rendered RTL with the user's selected Arabic script.
   final String? arabic;
+
+  /// Devanagari/Sanskrit body — rendered LTR with a fixed Devanagari font.
+  /// Kept as a separate field from [arabic] rather than reusing it: that
+  /// field is hardcoded to RTL direction + the Arabic-script preference
+  /// font, which would render Sanskrit backwards in the wrong glyphs.
+  final String? sanskrit;
 
   /// Translated body — English (or whichever the verse/hadith stored).
   final String? translation;
