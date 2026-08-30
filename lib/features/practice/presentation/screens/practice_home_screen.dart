@@ -8,16 +8,14 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/gap.dart';
-import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 
 /// Practice tab home.
 ///
-/// Faith-aware: branches on [selectedFaithProvider]. Islam has the full
-/// Dhikr/Duas/Names/Qibla grid (`_IslamPracticeContent`); Hindu doesn't have
-/// a Practice vertical yet (that's Part C — no Hindu feature screens exist
-/// in this app yet at all), so it gets an honest placeholder rather than
-/// linking to Islam-only routes.
+/// Faith-aware: branches on [selectedFaithProvider]. Islam links to Dhikr/
+/// Duas/Names/Qibla (`_IslamPracticeContent`); Hindu links to Japa/Stotras/
+/// Temples (`_HinduPracticeContent`) — both a 2×2-ish grid of the same
+/// `_PracticeTile` shape.
 class PracticeHomeScreen extends ConsumerWidget {
   const PracticeHomeScreen({super.key});
 
@@ -26,7 +24,7 @@ class PracticeHomeScreen extends ConsumerWidget {
     final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
     return switch (faith) {
       FaithId.islam => const _IslamPracticeContent(),
-      FaithId.hindu => const _HinduPracticePlaceholder(),
+      FaithId.hindu => const _HinduPracticeContent(),
     };
   }
 }
@@ -123,42 +121,83 @@ class _IslamPracticeContent extends StatelessWidget {
   }
 }
 
-/// Part C (the Hindu vertical) hasn't been built yet — no Hindu feature
-/// screens exist in this app at all — so there is no real Hindu "Practice"
-/// content to link to. This is a deliberately honest placeholder rather
-/// than either crashing or routing to Islam-only screens.
-class _HinduPracticePlaceholder extends StatelessWidget {
-  const _HinduPracticePlaceholder();
+/// A calm hub linking to Japa, Stotras, and Temples. Mirrors
+/// `_IslamPracticeContent`'s grid shape exactly.
+class _HinduPracticeContent extends StatelessWidget {
+  const _HinduPracticeContent();
+
+  static const _tiles = <_PracticeTileData>[
+    _PracticeTileData(
+      icon: Icons.self_improvement,
+      title: 'Japa',
+      subtitle: 'Mantra counter',
+      route: '/practice/japa',
+    ),
+    _PracticeTileData(
+      icon: Icons.menu_book_outlined,
+      title: 'Stotras',
+      subtitle: 'Deity hymns',
+      route: '/practice/stotras',
+    ),
+    _PracticeTileData(
+      icon: Icons.temple_hindu_outlined,
+      title: 'Temples',
+      subtitle: 'Find & save',
+      route: '/practice/temples',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenEdge,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const MascotView(faith: FaithId.hindu, state: MascotState.idle),
-                const Gap(AppSpacing.lg),
-                Text(
-                  'Hindu practice is coming soon',
-                  style: theme.textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
-                const Gap(AppSpacing.sm),
-                Text(
-                  'We\'re building this out next — check back soon.',
-                  style: theme.textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
           ),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenEdge,
+                AppSpacing.lg,
+                AppSpacing.screenEdge,
+                AppSpacing.xl,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Practice', style: theme.textTheme.headlineMedium),
+                    const Gap(4),
+                    Text(
+                      'Tend your practice.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenEdge,
+                0,
+                AppSpacing.screenEdge,
+                AppSpacing.xxl,
+              ),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  mainAxisExtent: 150,
+                ),
+                itemCount: _tiles.length,
+                itemBuilder: (_, i) => _PracticeTile(data: _tiles[i]),
+              ),
+            ),
+          ],
         ),
       ),
     );
