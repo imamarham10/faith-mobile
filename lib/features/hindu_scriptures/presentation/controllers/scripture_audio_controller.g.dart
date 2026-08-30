@@ -7,7 +7,7 @@ part of 'scripture_audio_controller.dart';
 // **************************************************************************
 
 String _$scriptureAudioControllerHash() =>
-    r'fab9b181a404a1c676bc84a626953b9039bb0cc6';
+    r'19b2906e8376711b6b274e86968c54ea319dab9e';
 
 /// Shared `AudioPlayer` for chapter narration.
 ///
