@@ -7,7 +7,7 @@ part of 'japa_counters_controller.dart';
 // **************************************************************************
 
 String _$suggestedJapaPhrasesHash() =>
-    r'f4680b4471596517cace5c8a90b4552f594caaa4';
+    r'd1ca08b6abc0ba5432ca4d97f8ced96d0c1b370c';
 
 /// Suggested phrases — dictionary entries the user hasn't started yet.
 ///
