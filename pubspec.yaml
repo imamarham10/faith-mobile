@@ -61,6 +61,7 @@ dependencies:
   # Share cards (render-to-image + system share sheet)
   share_plus: ^10.1.2
   path_provider: ^2.1.5
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
