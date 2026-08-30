@@ -4,30 +4,55 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../hindu_feelings/presentation/screens/hindu_mood_result_content.dart';
 import '../../data/dtos/remedy.dart';
 import '../controllers/journal_controller.dart';
 import '../controllers/remedies_controller.dart';
 import '../widgets/mood_chip.dart';
 import '../widgets/remedy_card.dart';
 
-/// `/reflect/feelings/:mood` — single matched remedy + optional journal note.
-class MoodResultScreen extends ConsumerStatefulWidget {
+/// `/reflect/feelings/:mood` — faith-aware: branches on
+/// [selectedFaithProvider]. Islam's matched-remedy content
+/// (`_IslamMoodResultContent`) and Hindu's (`HinduMoodResultContent`) are
+/// genuinely different shapes — Islam shows a single dua/hadith remedy,
+/// Hindu shows every matched Gita verse — so this is a thin router, not a
+/// shared body with faith-flavored copy.
+class MoodResultScreen extends ConsumerWidget {
   const MoodResultScreen({super.key, required this.moodSlug});
 
   final String moodSlug;
 
   @override
-  ConsumerState<MoodResultScreen> createState() => _MoodResultScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
+    return switch (faith) {
+      FaithId.islam => _IslamMoodResultContent(moodSlug: moodSlug),
+      FaithId.hindu => HinduMoodResultContent(moodSlug: moodSlug),
+    };
+  }
 }
 
-class _MoodResultScreenState extends ConsumerState<MoodResultScreen> {
+class _IslamMoodResultContent extends ConsumerStatefulWidget {
+  const _IslamMoodResultContent({required this.moodSlug});
+
+  final String moodSlug;
+
+  @override
+  ConsumerState<_IslamMoodResultContent> createState() =>
+      _IslamMoodResultContentState();
+}
+
+class _IslamMoodResultContentState
+    extends ConsumerState<_IslamMoodResultContent> {
   final _noteController = TextEditingController();
   final _noteFocus = FocusNode();
   bool _saving = false;
