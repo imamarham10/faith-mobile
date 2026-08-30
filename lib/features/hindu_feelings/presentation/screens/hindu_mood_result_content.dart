@@ -11,8 +11,10 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../feelings/data/dtos/journal_entry.dart';
 import '../../../feelings/presentation/controllers/journal_controller.dart';
 import '../../../feelings/presentation/widgets/mood_chip.dart';
+import '../../data/dtos/hindu_remedy.dart';
 import '../controllers/hindu_remedies_controller.dart';
 import '../widgets/hindu_remedy_card.dart';
 
@@ -52,7 +54,7 @@ class _HinduMoodResultContentState
     return raw[0].toUpperCase() + raw.substring(1);
   }
 
-  Future<void> _saveJournalEntry() async {
+  Future<void> _saveJournalEntry(List<HinduRemedy> remedies) async {
     if (_saving) return;
     final text = _noteController.text.trim();
     setState(() => _saving = true);
@@ -60,7 +62,26 @@ class _HinduMoodResultContentState
     try {
       await ref
           .read(journalControllerProvider.notifier)
-          .add(mood: widget.moodSlug, note: text);
+          .add(
+            mood: widget.moodSlug,
+            note: text,
+            remedies: remedies
+                .map(
+                  (r) => JournalRemedySnapshot(
+                    primaryText: r.sanskritText,
+                    script: JournalRemedyScript.sanskrit,
+                    transliteration: r.transliteration,
+                    translation: r.translationText,
+                    reference: r.reference,
+                    note: r.note.trim().isEmpty ? null : r.note,
+                    deepLink: (r.textSlug != null && r.chapterNumber != null)
+                        ? '/quran/hindu-scripture/${r.textSlug}/'
+                              '${r.chapterNumber}?verse=${r.verseNumber}'
+                        : null,
+                  ),
+                )
+                .toList(),
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -143,7 +164,9 @@ class _HinduMoodResultContentState
                 const Gap(AppSpacing.base),
                 PoppyButton(
                   label: _saving ? 'Saving…' : 'Save reflection',
-                  onPressed: _saving ? null : _saveJournalEntry,
+                  onPressed: _saving
+                      ? null
+                      : () => _saveJournalEntry(detail.remedies),
                 ),
               ],
             );

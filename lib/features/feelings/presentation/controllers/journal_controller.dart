@@ -55,12 +55,17 @@ class JournalController extends _$JournalController {
   }
 
   /// Adds a new entry. Returns the entry that was saved.
-  Future<JournalEntry> add({required String mood, required String note}) async {
+  Future<JournalEntry> add({
+    required String mood,
+    required String note,
+    List<JournalRemedySnapshot> remedies = const [],
+  }) async {
     final entry = JournalEntry(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       mood: mood,
       note: note.trim(),
       createdAt: DateTime.now(),
+      remedies: remedies,
     );
     final current =
         state.valueOrNull?.toList(growable: true) ?? <JournalEntry>[];

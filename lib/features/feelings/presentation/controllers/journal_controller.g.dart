@@ -48,7 +48,7 @@ final journalEntriesThisMonthProvider = AutoDisposeProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef JournalEntriesThisMonthRef = AutoDisposeProviderRef<int>;
-String _$journalControllerHash() => r'0e4e899875c3c108ff4256b3cd2df115037237f1';
+String _$journalControllerHash() => r'82856d53f53ec5a919359caeb4d2c2b85ae7d9c5';
 
 /// Persisted reflection journal.
 ///

@@ -14,6 +14,7 @@ import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../hindu_feelings/presentation/screens/hindu_mood_result_content.dart';
+import '../../data/dtos/journal_entry.dart';
 import '../../data/dtos/remedy.dart';
 import '../controllers/journal_controller.dart';
 import '../controllers/remedies_controller.dart';
@@ -70,7 +71,7 @@ class _IslamMoodResultContentState
     return raw[0].toUpperCase() + raw.substring(1);
   }
 
-  Future<void> _saveJournalEntry() async {
+  Future<void> _saveJournalEntry(Remedy? remedy) async {
     if (_saving) return;
     final text = _noteController.text.trim();
     setState(() => _saving = true);
@@ -78,7 +79,21 @@ class _IslamMoodResultContentState
     try {
       await ref
           .read(journalControllerProvider.notifier)
-          .add(mood: widget.moodSlug, note: text);
+          .add(
+            mood: widget.moodSlug,
+            note: text,
+            remedies: remedy == null
+                ? const <JournalRemedySnapshot>[]
+                : [
+                    JournalRemedySnapshot(
+                      primaryText: remedy.arabicText,
+                      script: JournalRemedyScript.arabic,
+                      transliteration: remedy.transliteration,
+                      translation: remedy.translation,
+                      reference: remedy.source,
+                    ),
+                  ],
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -184,7 +199,7 @@ class _IslamMoodResultContentState
                 const Gap(AppSpacing.base),
                 PoppyButton(
                   label: _saving ? 'Saving…' : 'Save reflection',
-                  onPressed: _saving ? null : _saveJournalEntry,
+                  onPressed: _saving ? null : () => _saveJournalEntry(remedy),
                 ),
               ],
             );
