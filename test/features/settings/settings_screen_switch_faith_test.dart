@@ -1,10 +1,14 @@
+import 'package:faith_mobile/core/preferences/selected_faith.dart';
 import 'package:faith_mobile/core/router/routes.dart';
+import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/features/settings/presentation/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/fake_selected_faith.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -78,5 +82,73 @@ void main() {
 
     expect(find.text('PICKER'), findsNothing);
     expect(find.text('Settings'), findsOneWidget);
+  });
+
+  group('faith-aware sections', () {
+    Future<void> pumpWithFaith(WidgetTester tester, FaithId faith) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            selectedFaithProvider.overrideWith(() => FakeSelectedFaith(faith)),
+          ],
+          child: MaterialApp.router(
+            routerConfig: GoRouter(
+              initialLocation: '/settings',
+              routes: [
+                GoRoute(
+                  path: '/settings',
+                  builder: (_, __) => const SettingsScreen(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+    }
+
+    testWidgets(
+      'shows prayer/Arabic-script sections for Islam',
+      (tester) async {
+        await pumpWithFaith(tester, FaithId.islam);
+
+        expect(find.text('Prayer notifications'), findsOneWidget);
+        // Both sections sit below the fold on the default test viewport —
+        // scroll each into view before asserting, same as "Switch faith"
+        // above.
+        await tester.scrollUntilVisible(
+          find.text('Prayer calculation method'),
+          500.0,
+          scrollable: find.byType(Scrollable),
+        );
+        expect(find.text('Prayer calculation method'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('Arabic script'),
+          500.0,
+          scrollable: find.byType(Scrollable),
+        );
+        expect(find.text('Arabic script'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'hides prayer/Arabic-script sections for Hindu — they don\'t apply',
+      (tester) async {
+        await pumpWithFaith(tester, FaithId.hindu);
+
+        expect(find.text('Prayer notifications'), findsNothing);
+        expect(find.text('Prayer calculation method'), findsNothing);
+        expect(find.text('Arabic script'), findsNothing);
+        // Appearance and Faith sections remain — they're faith-neutral.
+        expect(find.text('Appearance'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('Switch faith'),
+          500.0,
+          scrollable: find.byType(Scrollable),
+        );
+        expect(find.text('Switch faith'), findsOneWidget);
+      },
+    );
   });
 }

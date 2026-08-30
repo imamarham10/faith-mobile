@@ -6,15 +6,20 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/preferences/arabic_script.dart';
 import '../../../../core/preferences/notification_preferences.dart';
+import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/preferences/theme_mode.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../core/theme/faith_id.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
 
-/// `/settings` — preferences for the app. Sections, top to bottom:
-/// theme, prayer calculation method, prayer notifications, Arabic script.
+/// `/settings` — preferences for the app. Sections, top to bottom: theme
+/// (faith-neutral, always shown), then — only when the selected faith is
+/// Islam — prayer calculation method, prayer notifications, and Arabic
+/// script, none of which apply to the Hindu vertical (no prayer times, no
+/// Arabic script rendering). Faith and sign-out are always shown last.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -23,6 +28,7 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
+    final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
     final themeMode =
         ref.watch(themeModePrefProvider).valueOrNull ?? ThemeMode.system;
     final calcCode =
@@ -59,89 +65,92 @@ class SettingsScreen extends ConsumerWidget {
                 },
               ),
 
-            _SectionHeader(label: 'Prayer notifications'),
-            ListTile(
-              leading: const Icon(Icons.notifications_active_outlined),
-              title: const Text('Send test notification'),
-              subtitle: const Text(
-                'Asks permission if needed, then fires in ~5s',
+            if (faith == FaithId.islam) ...[
+              _SectionHeader(label: 'Prayer notifications'),
+              ListTile(
+                leading: const Icon(Icons.notifications_active_outlined),
+                title: const Text('Send test notification'),
+                subtitle: const Text(
+                  'Asks permission if needed, then fires in ~5s',
+                ),
+                onTap: () => _sendTest(context),
               ),
-              onTap: () => _sendTest(context),
-            ),
-            ListTile(
-              title: const Text('Lead time'),
-              subtitle: Text(
-                notifPrefs.leadMinutes == 0
-                    ? 'Notify only at prayer time'
-                    : 'Notify ${notifPrefs.leadMinutes} min before each prayer',
+              ListTile(
+                title: const Text('Lead time'),
+                subtitle: Text(
+                  notifPrefs.leadMinutes == 0
+                      ? 'Notify only at prayer time'
+                      : 'Notify ${notifPrefs.leadMinutes} min before each prayer',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () =>
+                    _pickLeadMinutes(context, ref, notifPrefs.leadMinutes),
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _pickLeadMinutes(context, ref, notifPrefs.leadMinutes),
-            ),
-            for (final p in const [
-              ('fajr', 'Fajr'),
-              ('dhuhr', 'Dhuhr'),
-              ('asr', 'ʿAṣr'),
-              ('maghrib', 'Maghrib'),
-              ('isha', 'ʿIshā'),
-            ])
-              SwitchListTile.adaptive(
-                title: Text(p.$2),
-                value: notifPrefs.isEnabledFor(p.$1),
-                onChanged: (v) async {
-                  HapticFeedback.selectionClick();
-                  await ref
-                      .read(notificationPrefsProvider.notifier)
-                      .setEnabled(p.$1, v);
-                  if (v) {
-                    // First toggle-on triggers the OS permission ask.
-                    await NotificationService.instance.requestPermissions();
-                  }
-                },
-              ),
+              for (final p in const [
+                ('fajr', 'Fajr'),
+                ('dhuhr', 'Dhuhr'),
+                ('asr', 'ʿAṣr'),
+                ('maghrib', 'Maghrib'),
+                ('isha', 'ʿIshā'),
+              ])
+                SwitchListTile.adaptive(
+                  title: Text(p.$2),
+                  value: notifPrefs.isEnabledFor(p.$1),
+                  onChanged: (v) async {
+                    HapticFeedback.selectionClick();
+                    await ref
+                        .read(notificationPrefsProvider.notifier)
+                        .setEnabled(p.$1, v);
+                    if (v) {
+                      // First toggle-on triggers the OS permission ask.
+                      await NotificationService.instance.requestPermissions();
+                    }
+                  },
+                ),
 
-            _SectionHeader(label: 'Prayer calculation method'),
-            for (final m in CalcMethod.all)
-              RadioListTile<String>(
-                value: m.code,
-                groupValue: calcCode,
-                title: Text(m.label),
-                onChanged: (v) {
-                  if (v == null) return;
-                  HapticFeedback.selectionClick();
-                  ref.read(calcMethodPrefProvider.notifier).set(v);
-                },
-              ),
+              _SectionHeader(label: 'Prayer calculation method'),
+              for (final m in CalcMethod.all)
+                RadioListTile<String>(
+                  value: m.code,
+                  groupValue: calcCode,
+                  title: Text(m.label),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    HapticFeedback.selectionClick();
+                    ref.read(calcMethodPrefProvider.notifier).set(v);
+                  },
+                ),
 
-            _SectionHeader(label: 'Arabic script'),
-            for (final s in ArabicScript.values)
-              RadioListTile<ArabicScript>(
-                value: s,
-                groupValue: script,
-                onChanged: (v) {
-                  if (v == null) return;
-                  HapticFeedback.selectionClick();
-                  ref.read(arabicScriptControllerProvider.notifier).set(v);
-                },
-                title: Text(s.label),
-                subtitle: Text(s.subtitle),
-                secondary: SizedBox(
-                  width: 48,
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      'بِسْمِ',
-                      textAlign: TextAlign.right,
-                      style: arabicTextStyle(
-                        s,
-                        fontSize: 18,
-                        height: 1.0,
-                        color: cs.onSurface,
+              _SectionHeader(label: 'Arabic script'),
+              for (final s in ArabicScript.values)
+                RadioListTile<ArabicScript>(
+                  value: s,
+                  groupValue: script,
+                  onChanged: (v) {
+                    if (v == null) return;
+                    HapticFeedback.selectionClick();
+                    ref.read(arabicScriptControllerProvider.notifier).set(v);
+                  },
+                  title: Text(s.label),
+                  subtitle: Text(s.subtitle),
+                  secondary: SizedBox(
+                    width: 48,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text(
+                        'بِسْمِ',
+                        textAlign: TextAlign.right,
+                        style: arabicTextStyle(
+                          s,
+                          fontSize: 18,
+                          height: 1.0,
+                          color: cs.onSurface,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+            ],
             const SizedBox(height: AppSpacing.xl),
             _SectionHeader(label: 'Faith'),
             ListTile(
