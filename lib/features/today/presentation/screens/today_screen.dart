@@ -16,6 +16,8 @@ import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../../../hindu_panchang/presentation/controllers/panchang_today_controller.dart';
 import '../../../hindu_puja_times/presentation/widgets/puja_countdown_card.dart';
 import '../widgets/daily_hadith_card.dart';
+import '../widgets/daily_katha_card.dart';
+import '../widgets/daily_shloka_card.dart';
 import '../widgets/mood_prompt.dart';
 import '../widgets/prayer_countdown_card.dart';
 import '../widgets/quick_actions_row.dart';
@@ -115,10 +117,11 @@ class _IslamTodayContent extends ConsumerWidget {
 
 /// The full Hindu "Today" build-out, mirroring `_IslamTodayContent`'s
 /// shape: a panchang-dated greeting (in place of the Hijri date), a sandhya
-/// countdown (in place of the prayer countdown), and quick actions into
-/// Japa/Stotras/Temples (in place of Qibla/Tasbih/Last-read). No hadith-of-
-/// the-day or mood-prompt equivalent — those are Islam-specific copy with
-/// no faith-neutral Hindu counterpart built yet.
+/// countdown (in place of the prayer countdown), a shloka/katha pair (in
+/// place of verse/hadith), and quick actions into Japa/Stotras/Temples (in
+/// place of Qibla/Tasbih/Last-read). No mood-prompt equivalent — that
+/// copy is Islam-specific with no faith-neutral Hindu counterpart built
+/// yet.
 class _HinduTodayContent extends ConsumerWidget {
   const _HinduTodayContent();
 
@@ -151,6 +154,14 @@ class _HinduTodayContent extends ConsumerWidget {
                   PujaCountdownCard(
                     onTap: () => context.push('/today/puja-times'),
                   ),
+                  const Gap(32),
+                  const SectionLabel('Shloka for today'),
+                  const Gap(16),
+                  const DailyShlokaCard(),
+                  const Gap(24),
+                  const SectionLabel('Katha for today'),
+                  const Gap(16),
+                  const DailyKathaCard(),
                   const Gap(32),
                   const SectionLabel('Quick'),
                   const Gap(12),

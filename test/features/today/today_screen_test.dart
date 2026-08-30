@@ -105,11 +105,21 @@ void main() {
   });
 
   group('Hindu branch', () {
-    testWidgets('shows the Hindu greeting and quick actions', (tester) async {
+    testWidgets('shows the Hindu greeting and section content', (
+      tester,
+    ) async {
       await pump(tester, FaithId.hindu);
 
       expect(find.text('Namaste'), findsOneWidget);
       // SectionLabel uppercases its text.
+      expect(find.text('SHLOKA FOR TODAY'), findsOneWidget);
+      expect(find.text('KATHA FOR TODAY'), findsOneWidget);
+
+      // "Quick" + the quick-actions row sit further down the scroll view
+      // than the default test viewport shows — scroll to reveal them rather
+      // than assuming they're already built/painted.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
+      await tester.pump();
       expect(find.text('QUICK'), findsOneWidget);
       expect(find.text('Japa'), findsOneWidget);
       expect(find.text('Stotras'), findsOneWidget);
