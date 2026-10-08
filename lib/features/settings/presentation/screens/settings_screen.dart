@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/notifications/permission_gate.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/preferences/arabic_script.dart';
 import '../../../../core/preferences/notification_preferences.dart';
@@ -73,7 +74,7 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: const Text(
                   'Asks permission if needed, then fires in ~5s',
                 ),
-                onTap: () => _sendTest(context),
+                onTap: () => _sendTest(context, ref),
               ),
               ListTile(
                 title: const Text('Lead time'),
@@ -103,7 +104,9 @@ class SettingsScreen extends ConsumerWidget {
                         .setEnabled(p.$1, v);
                     if (v) {
                       // First toggle-on triggers the OS permission ask.
-                      await NotificationService.instance.requestPermissions();
+                      // Through the gate, so the first prayer log doesn't
+                      // then spend a second prompt on the same question.
+                      await ref.read(permissionGateProvider).askNow();
                     }
                   },
                 ),
@@ -257,9 +260,9 @@ class SettingsScreen extends ConsumerWidget {
     ThemeMode.dark => 'Dark',
   };
 
-  Future<void> _sendTest(BuildContext context) async {
+  Future<void> _sendTest(BuildContext context, WidgetRef ref) async {
     HapticFeedback.lightImpact();
-    final granted = await NotificationService.instance.requestPermissions();
+    final granted = await ref.read(permissionGateProvider).askNow();
     if (!context.mounted) return;
     if (!granted) {
       ScaffoldMessenger.of(context).showSnackBar(

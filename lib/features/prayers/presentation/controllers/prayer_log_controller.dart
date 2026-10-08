@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/notifications/permission_gate.dart';
 import '../../data/dtos/prayer_log.dart';
 import '../../data/dtos/prayer_stats.dart';
 import '../../data/prayers_repository.dart';
@@ -29,6 +32,13 @@ class TodayLogs extends _$TodayLogs {
     final current = state.value ?? const <String, PrayerLog>{};
     state = AsyncValue.data({...current, prayerName.toLowerCase(): created});
     ref.invalidate(prayerStatsControllerProvider);
+
+    // The one moment the notification ask has an obvious reason: the user
+    // has just logged a prayer, so "remind you next time?" explains itself.
+    // Fire-and-forget on purpose — the OS prompt must not delay the success
+    // snackbar, and the gate swallows its own failures so a permission
+    // problem can never surface as "Couldn't log:".
+    unawaited(ref.read(permissionGateProvider).maybeAskAfterFirstLog());
   }
 }
 
