@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/network/dio_client.dart';
 import 'core/notifications/notification_orchestrator.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/preferences/selected_faith.dart';
@@ -13,6 +15,14 @@ import 'core/theme/faith_id.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Backstop to the const assert in dio_client.dart: that one stops the build
+  // when API_BASE_URL was never passed, this one catches a define that was
+  // passed but is unusable in a release binary (loopback host, plain http).
+  // Crashing at boot beats every request failing with an opaque socket error.
+  assertApiBaseUrlIsProductionSafe(
+    url: kApiBaseUrl,
+    isReleaseBuild: kReleaseMode,
+  );
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
