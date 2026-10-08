@@ -51,6 +51,26 @@ If it says `public`, your `.env` is stale — stop and fix it rather than creati
 
 **The backend has no test runner.** `package.json` has `"test": "echo \"Error: no test specified\" && exit 1"` and zero `.spec.ts` files. Task 1.1 installs Jest. Do not attempt TDD on the backend before it.
 
+## Device QA is a gate on every mobile task
+
+No mobile task is complete without evidence from a physical device. Green unit tests are necessary and not sufficient: a test asserting `buildNotificationPlan` returns 60 entries proves the arithmetic, not that Android registered 60 alarms. Those are different claims and only hardware settles the second.
+
+Run `scratchpad/qa/device-qa.sh <label>` before and after each mobile task. It captures runtime permission state, the pending-alarm dump, logcat fatals, and a screenshot.
+
+**Reference device:** OnePlus 9R (LE2101), Android 14 / SDK 34. SDK 34 matters — `POST_NOTIFICATIONS` is a runtime permission from SDK 33+, and exact alarms are restricted from SDK 31+. The manifest has been verified to declare `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM` and `RECEIVE_BOOT_COMPLETED`, plus the boot receiver, so the scheduling work rests on solid ground.
+
+**Baseline captured 2026-10-08, pre-Phase-0** — the defects reproduced on hardware, not inferred from reading code:
+
+| Measure | Baseline | After Phase 0 |
+|---|---|---|
+| Pending alarms | **0** | ~60, furthest ~6 days out |
+| `POST_NOTIFICATIONS` | granted | granted |
+| Verse of the day | At-Talaq 65:2 (hardcoded) | rotating (Phase 1) |
+
+The baseline is damning and worth keeping in mind: the app was displaying *"NEXT · Fajr — 6h 56m"* with notification permission granted and **zero** pending alarms. It knew the prayer was coming and would not have reminded anyone.
+
+If a device check contradicts a green test, the device wins and the test is wrong.
+
 ---
 
 # Phase 0 — Ship-blockers (~1 week)
@@ -97,8 +117,22 @@ void main() {
     expect(days, hasLength(7));
     expect(days.first.date, DateTime(2026, 10, 8));
     expect(days.last.date, DateTime(2026, 10, 14));
-    // Fajr must advance monotonically later across October in Bangalore.
-    expect(days.last.fajr.isAfter(days.first.fajr.add(const Duration(days: 6))), isTrue);
+    // Each day must be computed for its own date — this is what catches the
+    // real bug (seven LocalPrayerDay objects whose `date` advances but whose
+    // times were all computed from `from`).
+    //
+    // CORRECTED 2026-10-08: this line originally asserted that Fajr drifts
+    // later across the week. It cannot. Bangalore is at 12.97°N, where
+    // seasonal daylight variation is minimal, and `adhan` rounds to the
+    // minute — Oct 8 and Oct 14 Fajr are both 04:59:00, so the assertion was
+    // unsatisfiable by any correct implementation. Prefer date-alignment,
+    // which holds at the equator and at 60°N alike.
+    for (final d in days) {
+      expect(d.fajr.year, d.date.year);
+      expect(d.fajr.month, d.date.month);
+      expect(d.fajr.day, d.date.day,
+          reason: 'each day must be computed for its own date');
+    }
   });
 
   test('every day carries all five prayers in chronological order', () {
@@ -174,7 +208,10 @@ class LocalPrayerTimes {
     final params = _paramsFor(method)..madhab = _madhabFor(madhab);
 
     return List.generate(days, (i) {
-      final day = DateTime(from.year, from.month, from.day).add(Duration(days: i));
+      // Calendar-day arithmetic, NOT `.add(Duration(days: i))` — a fixed 24h
+      // across a DST boundary lands on 23:00 or 01:00 of a neighbouring day.
+      // The same wall-clock-vs-instant rule this whole plan is built on.
+      final day = DateTime(from.year, from.month, from.day + i);
       final t = PrayerTimes(coords, DateComponents.from(day), params);
       return LocalPrayerDay(
         date: day,
@@ -186,7 +223,11 @@ class LocalPrayerTimes {
 
   static CalculationParameters _paramsFor(String method) => switch (method.toLowerCase()) {
         'isna' => CalculationMethod.north_america.getParameters(),
-        'egypt' => CalculationMethod.egyptian.getParameters(),
+        // Both spellings: the app's own CalcMethod.all ships the code
+        // 'EGYPTIAN', which lowercases to `egyptian`. Matching only 'egypt'
+        // falls through to the MWL default and silently serves Egyptian-method
+        // users the wrong prayer times, with no error anywhere.
+        'egypt' || 'egyptian' => CalculationMethod.egyptian.getParameters(),
         'makkah' => CalculationMethod.umm_al_qura.getParameters(),
         'karachi' => CalculationMethod.karachi.getParameters(),
         'kuwait' => CalculationMethod.kuwait.getParameters(),
@@ -205,7 +246,9 @@ class LocalPrayerTimes {
 ```bash
 flutter test test/core/prayer/local_prayer_times_test.dart
 ```
-Expected: PASS, 2 tests.
+Expected: PASS, 2 tests. Then run the full suite.
+
+**The baseline is 54 pass / 1 fail, not all-green.** `test/smoke_test.dart:10` asserts `find.text('Faith')` while `splash_screen.dart:101` has rendered `'Siraat'` since the rebrand. Fix that in its own commit, separate from this task — a permanently-red suite makes every later "the suite is green" check worthless and teaches everyone to ignore the runner.
 
 **Step 6: Commit**
 
@@ -839,6 +882,17 @@ Build in design-doc §2 order: streak chip → week strip → goal card → chec
 
 **Also fixes the hardcoded verse** — `today_screen.dart:88-92` has `At-Talaq 65:2` as a string literal. Replace with a `dailyVerseProvider` rotating day-of-year over a curated list, mirroring `dailyHadithProvider`.
 
+**And fixes the hadith card, which is the worst text-heaviness on the screen.** Found on-device 2026-10-08: "Hadith of the day" renders the *isnad* — `حَدَّثَنَا زَكَرِيَّاءُ بْنُ يَحْيَى، حَدَّثَنَا عَبْدُ اللَّهِ بْنُ نُمَيْرٍ...`, the chain of transmission — with the actual teaching below the fold. The most prominent card on the home screen is Arabic provenance boilerplate that means nothing to a casual reader.
+
+The schema has `textArabic`, `textEnglish`, `narratorChain` and `narratorChainArabic` as separate columns, but the raw Bukhari corpus bakes the isnad into `text_arabic`, so the card is faithfully rendering bad data.
+
+This also corrects a rule in the design doc. §2 says *"Arabic/Devanagari scales up; translation collapses behind a tap."* That is right for Qur'an and Gita, where the scripture **is** the point. It is wrong for hadith, where the Arabic opens with boilerplate and the English matn carries the meaning. So:
+
+- **Qur'an / Gita cards:** scripture leads, translation collapses.
+- **Hadith cards:** the English matn leads; Arabic and the narrator chain collapse behind a tap.
+
+Strip or demote the isnad for display rather than mutating stored data — the chain is scholarly provenance and must stay retrievable, just not be the headline.
+
 Golden tests for both faiths, using `FakeSelectedFaith` from `test/helpers/`. Add a `FakeActivityRecorder` helper in the same style so goldens never touch the network.
 
 **Commit:** `feat(today): rebuild around streak, goal and progress for both faiths`
@@ -916,6 +970,6 @@ Remaining `MOBILE_QA_REPORT.md` waves (8 Critical / 18 High, minus the four fixe
 
 1. **Commit after each task**, not at the end of a phase.
 2. **Run `build_runner`** after any provider or DTO change, before running tests.
-3. **Screenshot the real device** for every UI change — project rule, and goldens do not catch a layout that breaks at 320px.
+3. **Device QA gates every mobile task.** Run `device-qa.sh` before and after; attach the alarm count and screenshot to the task's completion. No device evidence, not done. Goldens do not catch a layout that breaks at 320px, and no unit test can prove Android registered an alarm.
 4. **Never weaken a test to make it pass.** A failing streak test is the feature telling you it is wrong.
 5. **Both faiths or neither.** Any shared-engine change that lands for Islam lands for Hindu in the same commit, or the parity test fails.
