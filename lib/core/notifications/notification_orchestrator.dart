@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../location/location_service.dart';
 import '../preferences/notification_preferences.dart';
+import '../preferences/selected_faith.dart';
+import '../theme/faith_id.dart';
 import '../../features/prayers/presentation/controllers/prayer_times_controller.dart';
 import 'notification_schedule.dart';
 import 'notification_service.dart';
@@ -14,11 +16,19 @@ import 'notification_service.dart';
 /// whenever:
 ///   * prayer times update (location change, calc-method change, refresh),
 ///   * notification preferences change (toggle a prayer, change lead time), or
-///   * the app returns to the foreground.
+///   * the app returns to the foreground, or
+///   * the selected faith changes.
 ///
 /// The resume trigger is the one that makes the window a *rolling* one. The
 /// OS only holds [kScheduleWindowDays] days of alarms; without a slide on
 /// every open, the window still expires — just six days later instead of one.
+///
+/// Faith is read as an *input* to the reschedule decision rather than
+/// tracked as an event. That is why there is no cold-start filter here like
+/// the one `AppShell` needs: resetting a navigation branch is destructive
+/// and must not fire spuriously, whereas a reschedule is idempotent and
+/// already runs on three other triggers. A redundant pass just rewrites the
+/// same window — or re-cancels an already empty one.
 ///
 /// Renders [child] verbatim — it's a side-effect carrier, not a layout widget.
 class NotificationOrchestrator extends ConsumerStatefulWidget {
@@ -71,6 +81,9 @@ class _NotificationOrchestratorState
     ref.listen(notificationPrefsProvider, (prev, next) {
       unawaited(_maybeReschedule());
     });
+    ref.listen(selectedFaithProvider, (prev, next) {
+      unawaited(_maybeReschedule());
+    });
     return widget.child;
   }
 
@@ -92,6 +105,26 @@ class _NotificationOrchestratorState
   }
 
   Future<void> _reschedule() async {
+    // Faith is checked first, above every other early return. Prayer
+    // reminders are an Islamic feature and Settings hides the entire
+    // "Prayer notifications" section once the faith is Hindu — so a user
+    // who switches away keeps six days of adhan alarms with no control left
+    // in the UI to stop them. The prefs and location guards below return
+    // early often enough (prefs still loading, location denied) that a gate
+    // placed under them would miss exactly that case.
+    //
+    // Cancellation runs through _maybeReschedule's lock rather than from
+    // the shell, so it can never land between rescheduleWindow's own
+    // cancelAll and its scheduling loop and have 60 alarms written back
+    // behind it. Routing both directions through here is also what makes
+    // the switch *back* to Islam restore the window with no restore logic
+    // of its own: the faith is Islam again, so the normal path runs.
+    final faith = ref.read(selectedFaithProvider).valueOrNull;
+    if (faith != null && faith != FaithId.islam) {
+      await ref.read(prayerNotificationSinkProvider).cancelAll();
+      return;
+    }
+
     final prefs = ref.read(notificationPrefsProvider).valueOrNull;
     if (prefs == null) return;
 
@@ -110,7 +143,7 @@ class _NotificationOrchestratorState
     final method =
         ref.read(calcMethodPrefProvider).valueOrNull ?? CalcMethod.fallbackCode;
 
-    await NotificationService.instance.rescheduleWindow(
+    await ref.read(prayerNotificationSinkProvider).rescheduleWindow(
       latitude: loc.latitude,
       longitude: loc.longitude,
       prefs: prefs,

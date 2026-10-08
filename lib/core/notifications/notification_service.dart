@@ -2,6 +2,8 @@ import 'dart:developer' as developer;
 import 'dart:io' show Platform;
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -10,6 +12,24 @@ import '../../features/prayers/data/dtos/prayer_times.dart';
 import '../../features/prayers/presentation/controllers/prayer_times_controller.dart';
 import 'notification_schedule.dart';
 
+part 'notification_service.g.dart';
+
+/// The slice of [NotificationService] that [NotificationOrchestrator]
+/// drives. Narrow on purpose: it exists so the orchestrator's scheduling
+/// decisions can be asserted without a platform channel, and widening it
+/// would start pulling plugin behaviour into those tests.
+abstract class PrayerNotificationSink {
+  Future<void> rescheduleWindow({
+    required double latitude,
+    required double longitude,
+    required NotificationPreferences prefs,
+    required String method,
+    required String madhab,
+  });
+
+  Future<void> cancelAll();
+}
+
 /// Wraps `flutter_local_notifications` for prayer-time reminders.
 ///
 /// Two notifications per enabled prayer when [NotificationPreferences.leadMinutes]
@@ -17,7 +37,7 @@ import 'notification_schedule.dart';
 /// silently. The plugin survives app process death (alarms live in the OS),
 /// so the user gets reminders without the app open — provided times were
 /// scheduled while the app was last opened.
-class NotificationService {
+class NotificationService implements PrayerNotificationSink {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
 
@@ -107,6 +127,7 @@ class NotificationService {
   /// Prayer times are computed on-device, so this works with no network. The
   /// window slides forward on every call — the orchestrator calls this on
   /// app resume, which is what keeps it from ever expiring.
+  @override
   Future<void> rescheduleWindow({
     required double latitude,
     required double longitude,
@@ -195,6 +216,7 @@ class NotificationService {
     );
   }
 
+  @override
   Future<void> cancelAll() => _plugin.cancelAll();
 
   /// Fires a one-off notification ~5 seconds from now. Used by the Settings
@@ -299,3 +321,7 @@ class NotificationService {
     };
   }
 }
+
+@Riverpod(keepAlive: true)
+PrayerNotificationSink prayerNotificationSink(Ref ref) =>
+    NotificationService.instance;
