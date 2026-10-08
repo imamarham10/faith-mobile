@@ -19,6 +19,7 @@ import '../../features/settings/settings_routes.dart';
 import '../../features/share/share_routes.dart';
 import '../../features/shell/app_shell.dart';
 import '../../features/today/today_routes.dart';
+import 'boot_redirect.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -34,69 +35,23 @@ Future<bool> splashGate(Ref ref) async {
 /// Top-level GoRouter, wired to [AuthController] + [OnboardingDone] so route
 /// guards re-evaluate when either resolves.
 ///
-/// Redirect logic, in priority order:
-///   1. Auth still bootstrapping → stay on /splash.
-///   2. Onboarding pref still resolving → stay on /splash.
-///   3. Onboarding not done → /onboarding (or its faith sub-route).
-///   4. Onboarding done + unauthenticated → /login (allow /register too).
-///   5. Authenticated + on auth/splash/onboarding route → /today.
+/// The redirect decision itself lives in [resolveBootRedirect] — a pure
+/// function, so the boot gate is testable without a widget tree.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
   final notifier = _RouterRefreshNotifier(ref);
   ref.onDispose(notifier.dispose);
 
-  bool isOnboardingPath(String loc) =>
-      loc == Routes.onboarding || loc == Routes.faithSelection;
-
   return GoRouter(
     initialLocation: Routes.splash,
     debugLogDiagnostics: false,
     refreshListenable: notifier,
-    redirect: (context, state) {
-      final auth = ref.read(authControllerProvider);
-      final onboardingAsync = ref.read(onboardingDoneProvider);
-      final splashAsync = ref.read(splashGateProvider);
-      final loc = state.matchedLocation;
-
-      // 1. Boot-time gate: pin the splash until everything resolves AND
-      // the splash min-delay timer has elapsed.
-      final stillBooting = auth.isLoading ||
-          !auth.hasValue ||
-          onboardingAsync.isLoading ||
-          !onboardingAsync.hasValue ||
-          splashAsync.isLoading ||
-          !splashAsync.hasValue;
-      if (stillBooting) {
-        return loc == Routes.splash ? null : Routes.splash;
-      }
-
-      final authState = auth.value!;
-      final onboardingDone = onboardingAsync.value!;
-      final isAuthRoute = loc == Routes.login ||
-          loc == Routes.register ||
-          loc == Routes.splash;
-
-      // 2. First-launch path: drop into onboarding.
-      if (!onboardingDone) {
-        if (isOnboardingPath(loc)) return null;
-        return Routes.onboarding;
-      }
-
-      // 3. Onboarding done but no token → login flow.
-      if (authState is AuthUnauthenticated) {
-        if (isAuthRoute && loc != Routes.splash) return null;
-        if (isOnboardingPath(loc)) return null;
-        return Routes.login;
-      }
-
-      // 4. Authenticated + still on splash/auth/onboarding → home.
-      if (authState is AuthAuthenticated &&
-          (isAuthRoute || isOnboardingPath(loc))) {
-        return Routes.today;
-      }
-
-      return null;
-    },
+    redirect: (context, state) => resolveBootRedirect(
+      auth: ref.read(authControllerProvider),
+      onboarding: ref.read(onboardingDoneProvider),
+      splash: ref.read(splashGateProvider),
+      location: state.matchedLocation,
+    ),
     routes: [
       GoRoute(path: Routes.splash, builder: (_, __) => const SplashScreen()),
       GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
