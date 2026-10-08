@@ -7,6 +7,8 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../preferences/notification_preferences.dart';
 import '../../features/prayers/data/dtos/prayer_times.dart';
+import '../../features/prayers/presentation/controllers/prayer_times_controller.dart';
+import 'notification_schedule.dart';
 
 /// Wraps `flutter_local_notifications` for prayer-time reminders.
 ///
@@ -99,44 +101,98 @@ class NotificationService {
     return false;
   }
 
-  /// Cancels all previously-scheduled prayer notifications and reschedules
-  /// today's enabled ones.
+  /// Cancels every pending prayer notification and reschedules a rolling
+  /// [kScheduleWindowDays]-day window from now.
+  ///
+  /// Prayer times are computed on-device, so this works with no network. The
+  /// window slides forward on every call — the orchestrator calls this on
+  /// app resume, which is what keeps it from ever expiring.
+  Future<void> rescheduleWindow({
+    required double latitude,
+    required double longitude,
+    required NotificationPreferences prefs,
+    required String method,
+    String madhab = kDefaultMadhab,
+  }) async {
+    final now = DateTime.now();
+
+    // Computed before cancelAll: if the maths throws we must not be left
+    // having cancelled the user's existing reminders and scheduled nothing.
+    final days = safePrayerDaysFor(
+      latitude: latitude,
+      longitude: longitude,
+      from: now,
+      days: kScheduleWindowDays,
+      method: method,
+      madhab: madhab,
+    );
+    if (days.isEmpty) {
+      developer.log(
+        'no computable prayer times for $latitude,$longitude — '
+        'keeping existing notifications rather than clearing them',
+        name: 'notifications',
+      );
+      return;
+    }
+
+    final plan = buildNotificationPlan(days: days, prefs: prefs, now: now);
+
+    await _plugin.cancelAll();
+    var accepted = 0;
+    for (final entry in plan) {
+      final name = kPrayerDisplayNames[entry.prayerKey] ?? entry.prayerKey;
+      final ok = await _scheduleOne(
+        id: entry.id,
+        when: entry.when,
+        title: entry.isLead
+            ? '$name in ${prefs.leadMinutes} min'
+            : '$name — time for prayer',
+        body: entry.isLead
+            ? '$name prayer at ${_clock(entry.when.add(Duration(minutes: prefs.leadMinutes)))} — get ready.'
+            : 'It is now time to pray $name.',
+      );
+      if (ok) accepted++;
+    }
+
+    // Counts what the OS took, not what we planned: on Android an ungranted
+    // exact-alarm permission rejects every call, and reporting the plan size
+    // would make a total failure read as a success.
+    developer.log(
+      'scheduled $accepted/${plan.length} notifications '
+      'across ${days.length} days',
+      name: 'notifications',
+    );
+  }
+
+  /// Compatibility shim for the old today-only API. Now schedules the full
+  /// window, taking coordinates from [times] and assuming the default
+  /// calculation method — call [rescheduleWindow] directly to pass the
+  /// user's own method.
+  @Deprecated(
+    'Only today was ever scheduled, so reminders stopped the moment the app '
+    'went unopened for a day. Use rescheduleWindow. Removed next release.',
+  )
   Future<void> rescheduleForToday(
     PrayerTimes times,
     NotificationPreferences prefs,
   ) async {
-    await _plugin.cancelAll();
-
-    final now = DateTime.now();
-    for (final entry in times.entries) {
-      if (!entry.isPrayer) continue; // skip Sunrise
-      if (!prefs.isEnabledFor(entry.key)) continue;
-
-      final at = entry.time;
-      // At-time notification
-      if (at.isAfter(now)) {
-        await _scheduleOne(
-          id: _idFor(entry.key, lead: false),
-          when: at,
-          title: '${entry.displayName} — time for prayer',
-          body: 'It is now time to pray ${entry.displayName}.',
-        );
-      }
-      // Lead-time notification
-      if (prefs.leadMinutes > 0) {
-        final lead = at.subtract(Duration(minutes: prefs.leadMinutes));
-        if (lead.isAfter(now)) {
-          await _scheduleOne(
-            id: _idFor(entry.key, lead: true),
-            when: lead,
-            title: '${entry.displayName} in ${prefs.leadMinutes} min',
-            body:
-                '${entry.displayName} prayer at ${_clock(at)} '
-                '— get ready.',
-          );
-        }
-      }
+    // PrayerTimes.fromJson falls back to 0 for a missing location echo, and
+    // (0, 0) is the Gulf of Guinea — scheduling there is worse than not
+    // scheduling, because the user sees reminders at plausible-looking but
+    // wrong times.
+    if (times.latitude == 0 && times.longitude == 0) {
+      developer.log(
+        'rescheduleForToday: no location on the prayer-times payload',
+        name: 'notifications',
+      );
+      return;
     }
+    await rescheduleWindow(
+      latitude: times.latitude,
+      longitude: times.longitude,
+      prefs: prefs,
+      method: CalcMethod.fallbackCode,
+    );
   }
 
   Future<void> cancelAll() => _plugin.cancelAll();
@@ -174,7 +230,11 @@ class NotificationService {
     );
   }
 
-  Future<void> _scheduleOne({
+  /// Returns whether the OS accepted the schedule. Failures are logged, not
+  /// thrown — one rejected alarm must not abort the rest of the window — but
+  /// the caller needs the count, because a silent 0/60 is the bug this whole
+  /// task exists to catch.
+  Future<bool> _scheduleOne({
     required int id,
     required DateTime when,
     required String title,
@@ -203,28 +263,16 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
+      return true;
     } on Object catch (e, st) {
       developer.log(
         'scheduleOne failed for id=$id at=$when',
+        name: 'notifications',
         error: e,
         stackTrace: st,
       );
+      return false;
     }
-  }
-
-  /// Stable per-prayer ID so repeat reschedules overwrite cleanly.
-  /// Ranges: 100..104 = at-time; 200..204 = lead-time.
-  static int _idFor(String key, {required bool lead}) {
-    final base = lead ? 200 : 100;
-    return base +
-        switch (key) {
-          'fajr' => 0,
-          'dhuhr' => 1,
-          'asr' => 2,
-          'maghrib' => 3,
-          'isha' => 4,
-          _ => 9,
-        };
   }
 
   static String _clock(DateTime t) {
