@@ -4,4 +4,12 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Device QA runs the API on a developer machine over the LAN, which is
+         plain http://. Android has blocked cleartext by default since 9, so
+         without this every request from the phone fails with
+         CLEARTEXT_NOT_PERMITTED. This overlay is debug-only, so release
+         builds never see it and cleartext stays blocked in anything shipped.
+    -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
 </manifest>

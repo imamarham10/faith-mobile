@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DEBUG BUILDS ONLY. Lives in src/debug/, so the release manifest never sees
+  it and cleartext stays blocked in anything shipped to a store.
+
+  Device QA runs the API on a developer machine over the LAN, which is plain
+  http://. Android has blocked cleartext by default since 9 (API 28), so
+  without this every request from the phone fails with CLEARTEXT_NOT_PERMITTED.
+
+  Scoped to specific hosts rather than a blanket cleartextTrafficPermitted,
+  so a debug build still refuses http:// to anywhere else.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- developer machine on the LAN; update to match `ipconfig getifaddr en0` -->
+        <domain includeSubdomains="false">192.168.0.4</domain>
+        <!-- host loopback, and the Android emulator's alias for it -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
