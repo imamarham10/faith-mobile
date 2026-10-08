@@ -723,7 +723,7 @@ POST /api/v1/activity/events
                   "sourceRef": "quran:2:148" } ] }
   → 200 { "accepted": 12, "duplicates": 3 }
 
-GET /api/v1/activity/today?faithId=islam
+GET /api/v1/activity/today?faithId=islam&timezone=Asia/Kolkata   # timezone REQUIRED
   → 200 { "localDay": "2026-10-08",
           "counts": { "quran_verse": 12, "prayer": 5 },
           "goal": { "goalType": "verses", "target": 5, "met": true },
@@ -740,6 +740,10 @@ PUT /api/v1/activity/goal
 **Files:** `prisma/schema.prisma`, new migration
 
 Add `ActivityEvent`, `DailyRollup`, `UserGoal`, `StreakState` exactly as specified in the design doc §4. Follow the house convention visible in `DhikrCounter`: camelCase fields, `@map` to snake_case, `@@map` to a plural snake_case table name.
+
+**`UserGoal` must be effective-dated and append-only** — `effectiveFrom`, nullable `effectiveTo`, never an in-place update. This is the one thing in Task 1.3 that cannot be fixed later without a data migration. A single mutable row makes replay impossible: recomputing a past day would use *today's* target, so a user lowering their goal to 1 retroactively manufactures a 90-day streak, and the Task 1.5 test this plan calls "the property that justifies event sourcing" — delete the rollups, replay, get identical state — is false by construction. Rollup and replay must read the goal in force on the day being computed. Invisible to the mobile track; no request or response shape changes.
+
+The frozen contract at `docs/contracts/activity-api.md` (backend repo, commit `1766218`) is binding — read it before writing the schema.
 
 ```bash
 npx prisma migrate dev --name add_activity_engine
@@ -777,7 +781,7 @@ describe('ActivityService.ingest', () => {
 
 The `@@unique([userId, clientEventId])` constraint does the real work; the service catches `P2002` and counts it as a duplicate rather than failing the batch. A phone retrying a flaky upload must never double-count a user's verses.
 
-The ±1 day validation is the only defence against a broken device clock inflating history, and ±1 (not ±0) is deliberate: a user genuinely 14 hours ahead of UTC is not cheating.
+The validation is `|localDay - dateOf(occurredAt, UTC)| <= 1`, derived from the event's **own** `occurredAt` and never from the server's wall clock at the moment of arrival. Validating against arrival time would reject every event the offline queue exists to carry, since a batch may flush days late. +/-1 rather than 0 is exactly the slack covering UTC-12...UTC+14 — a user genuinely 14 hours ahead is not cheating.
 
 **Commit:** `feat(activity): idempotent event ingest with local-day validation`
 
