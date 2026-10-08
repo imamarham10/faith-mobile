@@ -28,6 +28,12 @@ extension PujaStatusX on PujaStatus {
     PujaStatus.late_ => 'Late',
     PujaStatus.missed => 'Missed',
   };
+
+  /// Whether this status records a sandhya actually performed. Mirrors
+  /// `PrayerStatusX.countsAsPractised` so a streak means the same thing in
+  /// both faiths; here it is also exactly the rule the backend already
+  /// applies in `puja-log.service.ts` when it computes `currentStreak`.
+  bool get countsAsPractised => this != PujaStatus.missed;
 }
 
 /// `POST /log` request + response shape, mirrors the `PujaLog` Prisma model.

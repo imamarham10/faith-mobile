@@ -31,4 +31,5 @@ const _$PrayerStatusEnumMap = {
   PrayerStatus.onTime: 'on_time',
   PrayerStatus.late: 'late',
   PrayerStatus.qada: 'qada',
+  PrayerStatus.missed: 'missed',
 };

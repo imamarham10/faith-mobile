@@ -26,17 +26,13 @@ final splashGateProvider = FutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SplashGateRef = FutureProviderRef<bool>;
-String _$appRouterHash() => r'e16b4b18ccc78d6c2de7d1f8fb3f6874afa1d4f0';
+String _$appRouterHash() => r'36c1287b5b98829f7a98dad51aa3696fe8219bfe';
 
 /// Top-level GoRouter, wired to [AuthController] + [OnboardingDone] so route
 /// guards re-evaluate when either resolves.
 ///
-/// Redirect logic, in priority order:
-///   1. Auth still bootstrapping → stay on /splash.
-///   2. Onboarding pref still resolving → stay on /splash.
-///   3. Onboarding not done → /onboarding (or its faith sub-route).
-///   4. Onboarding done + unauthenticated → /login (allow /register too).
-///   5. Authenticated + on auth/splash/onboarding route → /today.
+/// The redirect decision itself lives in [resolveBootRedirect] — a pure
+/// function, so the boot gate is testable without a widget tree.
 ///
 /// Copied from [appRouter].
 @ProviderFor(appRouter)
