@@ -18,10 +18,10 @@ import '../../../hindu_puja_times/presentation/widgets/puja_countdown_card.dart'
 import '../widgets/daily_hadith_card.dart';
 import '../widgets/daily_katha_card.dart';
 import '../widgets/daily_shloka_card.dart';
+import '../widgets/daily_verse_card.dart';
 import '../widgets/mood_prompt.dart';
 import '../widgets/prayer_countdown_card.dart';
 import '../widgets/quick_actions_row.dart';
-import '../widgets/verse_card.dart';
 
 /// The first impression — sets the brand tone and the architectural pattern
 /// Phase 1 feature agents will mirror.
@@ -87,13 +87,7 @@ class _IslamTodayContent extends ConsumerWidget {
                   const Gap(32),
                   const SectionLabel('Verse for today'),
                   const Gap(16),
-                  VerseCard(
-                    arabic: 'وَمَن يَتَّقِ ٱللَّهَ يَجْعَل لَّهُۥ مَخْرَجًا',
-                    translation:
-                        'And whoever fears Allah — He will make for him a way out.',
-                    reference: 'At-Talaq 65:2',
-                    onTap: () => context.push('/quran/surah/65?ayah=2'),
-                  ),
+                  const DailyVerseCard(),
                   const Gap(24),
                   const SectionLabel('Hadith of the day'),
                   const Gap(16),

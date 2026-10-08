@@ -53,10 +53,10 @@ void main() {
       // SectionLabel uppercases its text.
       expect(find.text('VERSE FOR TODAY'), findsOneWidget);
       expect(find.text('HADITH OF THE DAY'), findsOneWidget);
-      expect(
-        find.text('وَمَن يَتَّقِ ٱللَّهَ يَجْعَل لَّهُۥ مَخْرَجًا'),
-        findsOneWidget,
-      );
+      // The verse itself is no longer asserted here: it is fetched from the
+      // corpus and rotates by day-of-year, so there is no fixed string to
+      // match. `daily_verse_test.dart` owns the rotation; re-pinning a
+      // literal here would recreate exactly the bug that was just removed.
 
       // "Quick" + the quick-actions row sit further down the scroll view
       // than the default test viewport shows — scroll to reveal them rather
