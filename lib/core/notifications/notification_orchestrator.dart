@@ -133,24 +133,23 @@ class _NotificationOrchestratorState
     // location echo, which would schedule for the Gulf of Guinea.
     final loc = await ref.read(locationServiceProvider).currentPosition();
     if (loc == null) {
-      developer.log(
-        'reschedule skipped — no location',
-        name: 'notifications',
-      );
+      developer.log('reschedule skipped — no location', name: 'notifications');
       return;
     }
 
     final method =
         ref.read(calcMethodPrefProvider).valueOrNull ?? CalcMethod.fallbackCode;
 
-    await ref.read(prayerNotificationSinkProvider).rescheduleWindow(
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      prefs: prefs,
-      method: method,
-      // No madhab setting exists yet; kDefaultMadhab matches what the
-      // backend computes for the times shown on screen.
-      madhab: kDefaultMadhab,
-    );
+    await ref
+        .read(prayerNotificationSinkProvider)
+        .rescheduleWindow(
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          prefs: prefs,
+          method: method,
+          // No madhab setting exists yet; kDefaultMadhab matches what the
+          // backend computes for the times shown on screen.
+          madhab: kDefaultMadhab,
+        );
   }
 }

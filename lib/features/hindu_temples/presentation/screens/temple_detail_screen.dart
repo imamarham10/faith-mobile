@@ -119,20 +119,27 @@ class _DetailContent extends ConsumerWidget {
                 const Gap(2),
                 Text(
                   locationLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
                 ),
               ],
               if (temple.deityKey != null) ...[
                 const Gap(AppSpacing.base),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.primaryContainer,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     temple.deityKey!,
-                    style: theme.textTheme.labelMedium?.copyWith(color: cs.primary),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: cs.primary,
+                    ),
                   ),
                 ),
               ],
@@ -262,7 +269,10 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(icon, size: 22, color: color),
             const SizedBox(height: 4),
-            Text(label, style: theme.textTheme.labelMedium?.copyWith(color: color)),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(color: color),
+            ),
           ],
         ),
       ),
@@ -309,7 +319,10 @@ class _ErrorPanel extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             const Gap(AppSpacing.md),
-            Text('We couldn\'t load this temple.', style: theme.textTheme.bodyLarge),
+            Text(
+              'We couldn\'t load this temple.',
+              style: theme.textTheme.bodyLarge,
+            ),
             const Gap(AppSpacing.lg),
             PoppyButton(label: 'Try again', onPressed: onRetry),
           ],

@@ -56,11 +56,7 @@ class AudioMiniPlayer extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               alignment: Alignment.center,
-              child: Icon(
-                Icons.menu_book_rounded,
-                size: 20,
-                color: cs.primary,
-              ),
+              child: Icon(Icons.menu_book_rounded, size: 20, color: cs.primary),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -129,8 +125,7 @@ class AudioMiniPlayer extends ConsumerWidget {
             ),
             _IconBtn(
               icon: Icons.close_rounded,
-              onTap: () =>
-                  ref.read(audioControllerProvider.notifier).stop(),
+              onTap: () => ref.read(audioControllerProvider.notifier).stop(),
             ),
           ],
         ),
@@ -173,9 +168,7 @@ class AudioMiniPlayer extends ConsumerWidget {
                         : null,
                     onTap: () {
                       HapticFeedback.selectionClick();
-                      ref
-                          .read(audioControllerProvider.notifier)
-                          .setSpeed(s);
+                      ref.read(audioControllerProvider.notifier).setSpeed(s);
                       Navigator.of(sheetContext).pop();
                     },
                   ),

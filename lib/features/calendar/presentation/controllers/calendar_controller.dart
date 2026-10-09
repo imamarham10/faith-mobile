@@ -244,10 +244,12 @@ Future<CalendarMonthData> calendarMonth(Ref ref) async {
   // Hijri mode: the anchor itself IS the Hijri (year, month) being viewed —
   // no need to derive it. Gregorian mode: derive it from gregFirst's info.
   final gregFirstInfo = resolve(gregFirst);
-  final viewHijriMonth =
-      anchor.mode == CalendarMode.hijri ? anchor.month : gregFirstInfo.hijriMonth;
-  final viewHijriYear =
-      anchor.mode == CalendarMode.hijri ? anchor.year : gregFirstInfo.hijriYear;
+  final viewHijriMonth = anchor.mode == CalendarMode.hijri
+      ? anchor.month
+      : gregFirstInfo.hijriMonth;
+  final viewHijriYear = anchor.mode == CalendarMode.hijri
+      ? anchor.year
+      : gregFirstInfo.hijriYear;
 
   final cells = <HijriDayCell>[];
   for (final date in gridDates) {

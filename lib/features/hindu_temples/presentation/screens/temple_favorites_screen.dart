@@ -54,7 +54,10 @@ class TempleFavoritesScreen extends ConsumerWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const Gap(AppSpacing.md),
-                      Text('No favorites yet', style: theme.textTheme.titleLarge),
+                      Text(
+                        'No favorites yet',
+                        style: theme.textTheme.titleLarge,
+                      ),
                       const Gap(AppSpacing.xs),
                       Text(
                         'Tap the heart on any temple to save it here.',

@@ -16,9 +16,7 @@ void main() {
   testWidgets('renders label and fires onPressed', (tester) async {
     var pressed = false;
     await tester.pumpWidget(
-      harness(
-        PoppyButton(label: 'Continue', onPressed: () => pressed = true),
-      ),
+      harness(PoppyButton(label: 'Continue', onPressed: () => pressed = true)),
     );
     expect(find.text('Continue'), findsOneWidget);
     await tester.tap(find.text('Continue'));
@@ -52,21 +50,20 @@ void main() {
     },
   );
 
-  testWidgets(
-    'exposes disabled state to accessibility services',
-    (tester) async {
-      final handle = tester.ensureSemantics();
-      await tester.pumpWidget(
-        harness(const PoppyButton(label: 'Disabled', onPressed: null)),
-      );
-      final node = tester.getSemantics(find.byType(PoppyButton));
-      expect(node.flagsCollection.isButton, isTrue);
-      expect(node.flagsCollection.isEnabled, isNot(Tristate.none));
-      expect(node.flagsCollection.isEnabled, Tristate.isFalse);
-      expect(node.label, 'Disabled');
-      handle.dispose();
-    },
-  );
+  testWidgets('exposes disabled state to accessibility services', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      harness(const PoppyButton(label: 'Disabled', onPressed: null)),
+    );
+    final node = tester.getSemantics(find.byType(PoppyButton));
+    expect(node.flagsCollection.isButton, isTrue);
+    expect(node.flagsCollection.isEnabled, isNot(Tristate.none));
+    expect(node.flagsCollection.isEnabled, Tristate.isFalse);
+    expect(node.label, 'Disabled');
+    handle.dispose();
+  });
 
   testWidgets(
     // Regression guard: excludeSemantics: true on the wrapping Semantics
@@ -127,7 +124,9 @@ void main() {
       ),
     );
     final before = tester.getTopLeft(find.byKey(siblingKey));
-    final gesture = await tester.startGesture(tester.getCenter(find.text('Tap')));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Tap')),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     final duringPress = tester.getTopLeft(find.byKey(siblingKey));

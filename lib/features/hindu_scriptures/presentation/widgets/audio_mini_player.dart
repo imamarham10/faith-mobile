@@ -55,11 +55,7 @@ class AudioMiniPlayer extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               alignment: Alignment.center,
-              child: Icon(
-                Icons.menu_book_rounded,
-                size: 20,
-                color: cs.primary,
-              ),
+              child: Icon(Icons.menu_book_rounded, size: 20, color: cs.primary),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

@@ -260,32 +260,35 @@ void main() {
   });
 
   group('the real timezone source', () {
-    test('a recorder with no overrides still queues a well-formed zone', () async {
-      // Every other case in this file pins `timezoneName`, so none of them
-      // exercises the default — which, since Task 1.9, reaches a method
-      // channel through `DeviceTimezone`. There is no plugin under
-      // `flutter_test`, so this is the fallback path running for real:
-      // `getLocalTimezone()` raises `MissingPluginException`,
-      // `DeviceTimezone` catches it and answers from the abbreviation
-      // table instead. The assertion is that this is a *fallback* and not
-      // a throw — if it threw, Task 1.12's first call site would be where
-      // anyone found out.
-      final recorder = ActivityRecorder(
-        queue: Future.value(_queue),
-        now: () => DateTime(2026, 10, 9, 14, 3, 22),
-        newId: () => 'default-tz',
-      );
+    test(
+      'a recorder with no overrides still queues a well-formed zone',
+      () async {
+        // Every other case in this file pins `timezoneName`, so none of them
+        // exercises the default — which, since Task 1.9, reaches a method
+        // channel through `DeviceTimezone`. There is no plugin under
+        // `flutter_test`, so this is the fallback path running for real:
+        // `getLocalTimezone()` raises `MissingPluginException`,
+        // `DeviceTimezone` catches it and answers from the abbreviation
+        // table instead. The assertion is that this is a *fallback* and not
+        // a throw — if it threw, Task 1.12's first call site would be where
+        // anyone found out.
+        final recorder = ActivityRecorder(
+          queue: Future.value(_queue),
+          now: () => DateTime(2026, 10, 9, 14, 3, 22),
+          newId: () => 'default-tz',
+        );
 
-      expect(await recorder.record(ActivityType.quranVerse), isTrue);
+        expect(await recorder.record(ActivityType.quranVerse), isTrue);
 
-      final event = (await _queue.peek()).single;
-      // §1.5 — `Region/City`, or exactly `UTC`/`GMT`. Never an
-      // abbreviation, which the server rejects permanently.
-      expect(
-        event.timezone,
-        anyOf(contains('/'), equals('UTC'), equals('GMT')),
-      );
-    });
+        final event = (await _queue.peek()).single;
+        // §1.5 — `Region/City`, or exactly `UTC`/`GMT`. Never an
+        // abbreviation, which the server rejects permanently.
+        expect(
+          event.timezone,
+          anyOf(contains('/'), equals('UTC'), equals('GMT')),
+        );
+      },
+    );
   });
 
   group('faith routing', () {

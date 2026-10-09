@@ -157,22 +157,16 @@ class _PrayerArcPainter extends CustomPainter {
         .map((l) => l.dotX.clamp(l.tp.width / 2, size.width - l.tp.width / 2))
         .toList(growable: false)
         .cast<double>();
-    final widths = layouts
-        .map((l) => l.tp.width)
-        .toList(growable: false);
+    final widths = layouts.map((l) => l.tp.width).toList(growable: false);
 
     for (var i = 1; i < positions.length; i++) {
-      final minX = positions[i - 1] +
-          widths[i - 1] / 2 +
-          minGap +
-          widths[i] / 2;
+      final minX =
+          positions[i - 1] + widths[i - 1] / 2 + minGap + widths[i] / 2;
       if (positions[i] < minX) positions[i] = minX;
     }
     for (var i = positions.length - 2; i >= 0; i--) {
-      final maxX = positions[i + 1] -
-          widths[i + 1] / 2 -
-          minGap -
-          widths[i] / 2;
+      final maxX =
+          positions[i + 1] - widths[i + 1] / 2 - minGap - widths[i] / 2;
       if (positions[i] > maxX) positions[i] = maxX;
     }
     for (var i = 0; i < layouts.length; i++) {

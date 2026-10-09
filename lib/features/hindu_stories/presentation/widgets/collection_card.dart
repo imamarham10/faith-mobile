@@ -10,7 +10,11 @@ import '../../data/dtos/story_collection.dart';
 /// the author/premium-pill treatment — story collections aren't attributed
 /// to a compiler and aren't premium-gated today.
 class CollectionCard extends StatelessWidget {
-  const CollectionCard({super.key, required this.collection, required this.onTap});
+  const CollectionCard({
+    super.key,
+    required this.collection,
+    required this.onTap,
+  });
 
   final StoryCollection collection;
   final VoidCallback onTap;
@@ -43,7 +47,11 @@ class CollectionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             alignment: Alignment.center,
-            child: Icon(Icons.auto_stories_outlined, size: 18, color: cs.primary),
+            child: Icon(
+              Icons.auto_stories_outlined,
+              size: 18,
+              color: cs.primary,
+            ),
           ),
           const Spacer(),
           Text(

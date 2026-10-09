@@ -27,6 +27,5 @@ abstract class ScriptureAudioState with _$ScriptureAudioState {
   const ScriptureAudioState._();
 
   /// Convenience: is anything currently loaded into the player?
-  bool get hasTrack =>
-      currentTextSlug != null && currentChapterNumber != null;
+  bool get hasTrack => currentTextSlug != null && currentChapterNumber != null;
 }

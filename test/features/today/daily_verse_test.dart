@@ -42,9 +42,9 @@ void main() {
     test('advances by exactly one across a month boundary', () {
       final before = verseRefForDay(DateTime(2026, 10, 31));
       final after = verseRefForDay(DateTime(2026, 11, 1));
-      final expected = curatedDailyVerses[(curatedDailyVerses.indexOf(before) +
-              1) %
-          curatedDailyVerses.length];
+      final expected =
+          curatedDailyVerses[(curatedDailyVerses.indexOf(before) + 1) %
+              curatedDailyVerses.length];
       expect(after, expected);
     });
 
@@ -68,7 +68,10 @@ void main() {
     });
 
     test('is unaffected by the time of day', () {
-      expect(dayOfYear(DateTime(2026, 3, 29, 0, 1)), dayOfYear(DateTime(2026, 3, 29, 23, 59)));
+      expect(
+        dayOfYear(DateTime(2026, 3, 29, 0, 1)),
+        dayOfYear(DateTime(2026, 3, 29, 23, 59)),
+      );
     });
   });
 }

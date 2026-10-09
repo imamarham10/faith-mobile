@@ -17,14 +17,8 @@ import 'presentation/screens/story_search_screen.dart';
 /// * `collection/:slug` — a collection's story list.
 /// * `:id` — a single story, addressed by UUID.
 final hinduStoriesSubRoutes = <RouteBase>[
-  GoRoute(
-    path: 'favorites',
-    builder: (_, __) => const StoryFavoritesScreen(),
-  ),
-  GoRoute(
-    path: 'search',
-    builder: (_, __) => const StorySearchScreen(),
-  ),
+  GoRoute(path: 'favorites', builder: (_, __) => const StoryFavoritesScreen()),
+  GoRoute(path: 'search', builder: (_, __) => const StorySearchScreen()),
   GoRoute(
     path: 'collection/:slug',
     builder: (_, state) =>

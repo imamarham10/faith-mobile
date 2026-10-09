@@ -121,8 +121,7 @@ class _ActivityFlushScopeState extends ConsumerState<ActivityFlushScope>
 
   void _onConnectivity(List<ConnectivityResult> results) {
     final online =
-        results.isNotEmpty &&
-        results.any((r) => r != ConnectivityResult.none);
+        results.isNotEmpty && results.any((r) => r != ConnectivityResult.none);
     final returned = online && !_wasOnline;
     _wasOnline = online;
     if (returned) _flush('connectivity');

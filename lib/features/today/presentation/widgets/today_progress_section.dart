@@ -11,6 +11,7 @@ import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../domain/today_dashboard.dart';
 import '../controllers/today_dashboard_controller.dart';
 import 'goal_card.dart';
+import 'goal_sheet.dart';
 import 'practice_checklist.dart';
 import 'stat_tile_row.dart';
 import 'week_strip.dart';
@@ -49,6 +50,7 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final goal = dashboard.goal;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -56,12 +58,21 @@ class _Content extends StatelessWidget {
         const Gap(AppSpacing.xl),
         PoppyCard(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: GoalCard(goal: dashboard.goal),
+          child: GoalCard(
+            goal: goal,
+            pack: dashboard.pack,
+            onEdit: () => showGoalSheet(
+              context,
+              pack: dashboard.pack,
+              current: goal?.goalType,
+              currentTarget: goal?.target,
+            ),
+          ),
         ),
         const Gap(AppSpacing.md),
         PracticeChecklist(items: dashboard.checklist),
         const Gap(AppSpacing.xl),
-        StatTileRow(stats: dashboard.stats, streak: dashboard.streak),
+        StatTileRow(stats: dashboard.stats),
       ],
     );
   }

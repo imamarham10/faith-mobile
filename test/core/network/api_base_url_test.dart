@@ -45,7 +45,11 @@ void main() {
           isReleaseBuild: true,
         ),
         throwsA(
-          isA<StateError>().having((e) => e.message, 'message', contains('https')),
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('https'),
+          ),
         ),
       );
     });
@@ -57,8 +61,11 @@ void main() {
           isReleaseBuild: true,
         ),
         throwsA(
-          isA<StateError>()
-              .having((e) => e.message, 'message', contains('loopback')),
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('loopback'),
+          ),
         ),
       );
     });
@@ -110,8 +117,11 @@ void main() {
           isReleaseBuild: true,
         ),
         throwsA(
-          isA<StateError>()
-              .having((e) => e.message, 'message', contains('API_BASE_URL')),
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('API_BASE_URL'),
+          ),
         ),
       );
     });

@@ -18,10 +18,7 @@ class SplashScreen extends ConsumerWidget {
       backgroundColor: const Color(0xFF101A2C),
       body: const Stack(
         fit: StackFit.expand,
-        children: [
-          _BackgroundGlow(),
-          _BrandReveal(),
-        ],
+        children: [_BackgroundGlow(), _BrandReveal()],
       ),
     );
   }
@@ -35,27 +32,28 @@ class _BackgroundGlow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
-            width: 420,
-            height: 420,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  Color(0x33C9A95F), // soft gold
-                  Color(0x00101A2C),
-                ],
-              ),
-            ),
-          )
-          .animate(onPlay: (c) => c.repeat(reverse: true))
-          .scaleXY(
-            begin: 0.92,
-            end: 1.06,
-            duration: 2400.ms,
-            curve: Curves.easeInOutSine,
-          )
-          .fade(begin: 0.7, end: 1.0, duration: 2400.ms),
+      child:
+          Container(
+                width: 420,
+                height: 420,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      Color(0x33C9A95F), // soft gold
+                      Color(0x00101A2C),
+                    ],
+                  ),
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(
+                begin: 0.92,
+                end: 1.06,
+                duration: 2400.ms,
+                curve: Curves.easeInOutSine,
+              )
+              .fade(begin: 0.7, end: 1.0, duration: 2400.ms),
     );
   }
 }
@@ -74,11 +72,7 @@ class _BrandReveal extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Logo: scale-in with a brief overshoot, then a quiet floating idle.
-          Image.asset(
-                'assets/brand/siraat_logo.png',
-                width: 132,
-                height: 132,
-              )
+          Image.asset('assets/brand/siraat_logo.png', width: 132, height: 132)
               .animate()
               .fadeIn(duration: 600.ms, curve: Curves.easeOut)
               .scaleXY(
@@ -118,15 +112,13 @@ class _BrandReveal extends StatelessWidget {
           const SizedBox(height: 10),
           // Tagline: last to arrive, slowest to bloom.
           Text(
-                'A path home',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: gold.withValues(alpha: 0.85),
-                  letterSpacing: 4,
-                ),
-              )
-              .animate()
-              .fadeIn(delay: 1000.ms, duration: 700.ms),
+            'A path home',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: gold.withValues(alpha: 0.85),
+              letterSpacing: 4,
+            ),
+          ).animate().fadeIn(delay: 1000.ms, duration: 700.ms),
         ],
       ),
     );

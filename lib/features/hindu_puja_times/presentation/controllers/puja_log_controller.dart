@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 
 import '../../../today/presentation/controllers/today_dashboard_controller.dart';
 import '../../data/dtos/puja_log.dart';
@@ -21,13 +26,25 @@ class TodayPujaLogs extends _$TodayPujaLogs {
   /// Logs a sandhya and invalidates stats so the summary stays in sync.
   /// No qada-equivalent coupling exists here (see `PujaStatus`'s doc
   /// comment) — this is the only cross-controller invalidation needed.
-  Future<void> log({required String sandhya, required PujaStatus status}) async {
+  Future<void> log({
+    required String sandhya,
+    required PujaStatus status,
+  }) async {
     final repo = ref.read(hinduPujaTimesRepositoryProvider);
     final created = await repo.logPuja(sandhya: sandhya, status: status);
     final current = state.valueOrNull ?? const <String, PujaLog>{};
     state = AsyncValue.data({...current, sandhya: created});
     ref.invalidate(pujaStatsControllerProvider);
-    // Parity with the Islam side — see `TodayLogs.log`.
+
+    // Parity with the Islam side, line for line — see `TodayLogs.log`.
+    // A `missed` sandhya is not an act of worship and is not recorded.
+    if (status.countsAsPractised) {
+      unawaited(
+        ref
+            .read(activityRecorderProvider)
+            .record(ActivityType.sandhya, sourceRef: 'sandhya:$sandhya'),
+      );
+    }
     ref.invalidate(todayDashboardProvider);
   }
 }

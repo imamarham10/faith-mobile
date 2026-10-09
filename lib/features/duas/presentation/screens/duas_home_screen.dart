@@ -233,7 +233,8 @@ class _CategoriesShimmer extends StatelessWidget {
           mainAxisExtent: 164,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => const PoppySkeleton(height: 164, radius: AppRadius.lg),
+        itemBuilder: (_, __) =>
+            const PoppySkeleton(height: 164, radius: AppRadius.lg),
       ),
     );
   }

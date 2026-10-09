@@ -39,7 +39,8 @@ String? resolveBootRedirect({
   // it genuinely is still booting. AuthController never emits it today, but
   // handling it explicitly keeps it from falling through to `return null`,
   // which on /splash would be a second permanent pin.
-  final stillBooting = !_resolved(auth) ||
+  final stillBooting =
+      !_resolved(auth) ||
       authState is AuthInitializing ||
       !_resolved(onboarding) ||
       !_resolved(splash);
@@ -51,7 +52,8 @@ String? resolveBootRedirect({
   // was completed. Assume it was not: the cost is a repeated onboarding pass,
   // against a splash that never ends.
   final onboardingDone = onboarding.valueOrNull ?? false;
-  final isAuthRoute = location == Routes.login ||
+  final isAuthRoute =
+      location == Routes.login ||
       location == Routes.register ||
       location == Routes.splash;
 

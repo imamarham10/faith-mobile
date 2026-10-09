@@ -239,9 +239,7 @@ void main() {
       // The ambiguous case named in §4.8: the write may or may not have
       // landed. Acknowledging on the strength of a body we cannot parse
       // would lose events; resending costs a duplicate and nothing else.
-      await expectWholeBatchKept(
-        (_, __) async => _json(200, {'ok': true}),
-      );
+      await expectWholeBatchKept((_, __) async => _json(200, {'ok': true}));
     });
 
     test('a 200 whose counts do not add up keeps everything', () async {

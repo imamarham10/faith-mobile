@@ -3,6 +3,8 @@ import 'dart:developer' as developer;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 import '../../data/dtos/japa_counter.dart';
 import '../../data/hindu_japa_repository.dart';
 import 'japa_counters_controller.dart';
@@ -19,9 +21,19 @@ part 'japa_counter_controller.g.dart';
 class JapaCounterController extends _$JapaCounterController {
   static const Duration _syncDebounce = Duration(seconds: 5);
 
+  /// Beads in one mala. The engine counts **completed malas**
+  /// (`japa_mala`, §1.2), not beads, so this is the conversion.
+  static const int _beadsPerMala = 108;
+
   Timer? _syncTimer;
   bool _dirty = false;
   bool _disposed = false;
+
+  /// Malas already recorded for this counter, so a mala is never counted
+  /// twice. Seeded from the count this screen opened on: those malas were
+  /// told to the engine when they happened, possibly on another day, and
+  /// re-recording them on every reopen would inflate today's total.
+  int? _recordedMalas;
 
   @override
   Future<JapaCounter> build(String id) async {
@@ -64,6 +76,8 @@ class JapaCounterController extends _$JapaCounterController {
     state = AsyncValue.data(updated);
     ref.read(japaCountersControllerProvider.notifier).patchLocal(updated);
 
+    _recordCompletedMalas(from: current.count, to: next);
+
     _dirty = true;
     _scheduleSync();
 
@@ -82,6 +96,9 @@ class JapaCounterController extends _$JapaCounterController {
     ref.read(japaCountersControllerProvider.notifier).patchLocal(updated);
     _dirty = false;
     _syncTimer?.cancel();
+    // The malas already recorded stay recorded — resetting the bead count
+    // starts a new round, it does not undo the rounds already turned.
+    _recordedMalas = 0;
 
     try {
       final synced = await ref
@@ -149,6 +166,30 @@ class JapaCounterController extends _$JapaCounterController {
       // resending the same local count is idempotent.
       _dirty = true;
     }
+  }
+
+  /// Records one `japa_mala` per mala newly completed between [from] and
+  /// [to].
+  ///
+  /// Recorded the moment the bead crosses 108 rather than on the debounced
+  /// sync, because a mala is a discrete act with a moment, where dhikr
+  /// repetitions are a running tally. The recorder is a local queue write
+  /// and this fires at most once per 108 taps.
+  void _recordCompletedMalas({required int from, required int to}) {
+    _recordedMalas ??= from ~/ _beadsPerMala;
+    final completed = to ~/ _beadsPerMala;
+    final newly = completed - _recordedMalas!;
+    if (newly <= 0) return;
+    _recordedMalas = completed;
+    unawaited(
+      ref
+          .read(activityRecorderProvider)
+          .record(
+            ActivityType.japaMala,
+            quantity: newly,
+            sourceRef: 'japa:$id',
+          ),
+    );
   }
 
   bool _isMilestone(int count, int target) {

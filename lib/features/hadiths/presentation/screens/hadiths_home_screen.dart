@@ -198,7 +198,8 @@ class _BooksShimmer extends StatelessWidget {
           mainAxisExtent: 172,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => const PoppySkeleton(height: 172, radius: AppRadius.lg),
+        itemBuilder: (_, __) =>
+            const PoppySkeleton(height: 172, radius: AppRadius.lg),
       ),
     );
   }

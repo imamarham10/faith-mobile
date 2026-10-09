@@ -120,7 +120,8 @@ class _CategoryShimmer extends StatelessWidget {
       ),
       itemCount: 8,
       separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-      itemBuilder: (_, __) => const PoppySkeleton(height: 72, radius: AppRadius.lg),
+      itemBuilder: (_, __) =>
+          const PoppySkeleton(height: 72, radius: AppRadius.lg),
     );
   }
 }

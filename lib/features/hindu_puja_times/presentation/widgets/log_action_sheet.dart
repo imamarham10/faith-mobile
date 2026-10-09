@@ -26,7 +26,8 @@ Future<PujaStatus?> showPujaLogActionSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
-    builder: (_) => _LogActionSheetContent(sandhyaDisplayName: sandhyaDisplayName),
+    builder: (_) =>
+        _LogActionSheetContent(sandhyaDisplayName: sandhyaDisplayName),
   );
 }
 
@@ -58,7 +59,10 @@ class _LogActionSheetContent extends StatelessWidget {
             style: theme.textTheme.headlineMedium,
           ),
           const Gap(AppSpacing.xs),
-          Text('How did your puja go today?', style: theme.textTheme.bodyMedium),
+          Text(
+            'How did your puja go today?',
+            style: theme.textTheme.bodyMedium,
+          ),
           const Gap(AppSpacing.xl),
           _ActionTile(
             icon: Icons.check_circle_outline,

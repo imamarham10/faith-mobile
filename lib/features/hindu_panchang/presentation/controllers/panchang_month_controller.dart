@@ -32,10 +32,7 @@ class PanchangDayCell {
 }
 
 class PanchangMonthGridData {
-  const PanchangMonthGridData({
-    required this.cells,
-    required this.monthLabel,
-  });
+  const PanchangMonthGridData({required this.cells, required this.monthLabel});
 
   final List<PanchangDayCell> cells;
   final String monthLabel;
@@ -75,8 +72,18 @@ class PanchangAnchorController extends _$PanchangAnchorController {
 }
 
 const _monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 /// Builds the 42-cell (Sunday-leading) month grid for a given (year, month).

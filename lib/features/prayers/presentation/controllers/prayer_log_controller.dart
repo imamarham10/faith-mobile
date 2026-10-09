@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/notifications/permission_gate.dart';
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 import '../../../today/presentation/controllers/today_dashboard_controller.dart';
 import '../../data/dtos/prayer_log.dart';
 import '../../data/dtos/prayer_stats.dart';
@@ -33,11 +35,23 @@ class TodayLogs extends _$TodayLogs {
     final current = state.value ?? const <String, PrayerLog>{};
     state = AsyncValue.data({...current, prayerName.toLowerCase(): created});
     ref.invalidate(prayerStatsControllerProvider);
-    // Closes the loop. The Today branch stays mounted in the shell's
-    // indexed stack, so without this the user logs a prayer, returns to
-    // Today, and the ring, the goal and the checklist all still show the
-    // old numbers — which is the whole feature failing silently.
-    // Task 1.12's `record()` call site replaces this.
+
+    // One line, and the feature knows nothing about streaks or goals.
+    // Only a status that actually counts as practised: a `missed` log is
+    // an honest record of a prayer *not* made, and feeding it to the
+    // engine would let a user build a streak out of missing prayers.
+    if (status.countsAsPractised) {
+      unawaited(
+        ref
+            .read(activityRecorderProvider)
+            .record(ActivityType.prayer, sourceRef: 'prayer:$prayerName'),
+      );
+    }
+
+    // Closes the loop for the checklist, which still reads the prayer log
+    // — `/today`'s `counts` gives `prayer: 3`, a sum, and cannot say which
+    // three. The goal, week strip and streak update on their own: the
+    // recorder pokes the counter `todayDashboard` watches.
     ref.invalidate(todayDashboardProvider);
 
     // The one moment the notification ask has an obvious reason: the user

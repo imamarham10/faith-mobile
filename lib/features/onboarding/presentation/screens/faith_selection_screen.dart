@@ -56,10 +56,7 @@ class _FaithSelectionScreenState extends ConsumerState<FaithSelectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Choose your path',
-                    style: theme.textTheme.displaySmall,
-                  ),
+                  Text('Choose your path', style: theme.textTheme.displaySmall),
                   const SizedBox(height: 6),
                   Text(
                     widget.standalone

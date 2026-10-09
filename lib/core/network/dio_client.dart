@@ -43,15 +43,15 @@ const String kApiBaseUrl = String.fromEnvironment(
 /// default. Inspecting the value is [assertApiBaseUrlIsProductionSafe]'s job.
 class _ReleaseApiBaseUrlGuard {
   const _ReleaseApiBaseUrlGuard()
-      : assert(
-          !kReleaseMode || _apiBaseUrlWasProvided,
-          'Release build compiled without --dart-define=API_BASE_URL. It '
-          'would ship pointing at $kDevApiBaseUrl — the device\'s own '
-          'loopback — and every request would fail with an opaque connection '
-          'error. Build it as:\n'
-          '  flutter build apk --release '
-          '--dart-define=API_BASE_URL=https://your.api.host',
-        );
+    : assert(
+        !kReleaseMode || _apiBaseUrlWasProvided,
+        'Release build compiled without --dart-define=API_BASE_URL. It '
+        'would ship pointing at $kDevApiBaseUrl — the device\'s own '
+        'loopback — and every request would fail with an opaque connection '
+        'error. Build it as:\n'
+        '  flutter build apk --release '
+        '--dart-define=API_BASE_URL=https://your.api.host',
+      );
 }
 
 /// Nothing reads this and nothing needs to: const field initializers are
@@ -102,10 +102,12 @@ void assertApiBaseUrlIsProductionSafe({
   if (uri == null || host.isEmpty || (scheme != 'http' && scheme != 'https')) {
     problem = 'is not an absolute http(s) URL';
   } else if (_loopbackHosts.contains(host)) {
-    problem = 'points at loopback ("$host"), which on a real device is the '
+    problem =
+        'points at loopback ("$host"), which on a real device is the '
         'device itself';
   } else if (scheme != 'https') {
-    problem = 'uses plain http, which release builds cannot send — cleartext '
+    problem =
+        'uses plain http, which release builds cannot send — cleartext '
         'is debug-only on Android and blocked by ATS on iOS';
   } else {
     return;

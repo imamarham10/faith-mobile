@@ -23,7 +23,8 @@ class TempleStateScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final templesAsync = ref.watch(templesByStateProvider(state));
-    final favorites = ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
+    final favorites =
+        ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
     final favsCtrl = ref.read(templeFavoritesControllerProvider.notifier);
 
     return Scaffold(

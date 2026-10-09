@@ -36,9 +36,8 @@ void main() {
                   routes: [
                     GoRoute(
                       path: 'surah/:id',
-                      builder: (_, state) => Text(
-                        'SURAH_${state.pathParameters['id']}',
-                      ),
+                      builder: (_, state) =>
+                          Text('SURAH_${state.pathParameters['id']}'),
                     ),
                   ],
                 ),
@@ -52,9 +51,8 @@ void main() {
                   routes: [
                     GoRoute(
                       path: ':id',
-                      builder: (_, state) => Text(
-                        'HADITH_DETAIL_${state.pathParameters['id']}',
-                      ),
+                      builder: (_, state) =>
+                          Text('HADITH_DETAIL_${state.pathParameters['id']}'),
                     ),
                   ],
                 ),
@@ -116,9 +114,7 @@ void main() {
     return (router, notifier);
   }
 
-  testWidgets('shows Quran/Hadiths labels when faith is islam', (
-    tester,
-  ) async {
+  testWidgets('shows Quran/Hadiths labels when faith is islam', (tester) async {
     await pump(tester, FaithId.islam);
 
     expect(find.text('Today'), findsOneWidget);
@@ -232,35 +228,32 @@ void main() {
     },
   );
 
-  testWidgets(
-    'a deep link into a stale branch survives the pending reset',
-    (tester) async {
-      final (router, faith) = await pumpMutable(tester, FaithId.islam);
-
-      await tester.tap(find.text('Hadiths'));
-      await tester.pumpAndSettle();
-      router.push('/hadiths/4122');
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Today'));
-      await tester.pumpAndSettle();
-      await faith.set(FaithId.hindu);
-      await tester.pumpAndSettle();
-
-      // Something outside the shell (a notification tap, a deep link)
-      // routes into a branch that is still marked stale. That navigation
-      // builds a fresh stack, so the pending reset must stand down rather
-      // than bounce the user to the branch root.
-      router.go('/quran/surah/18');
-      await tester.pumpAndSettle();
-
-      expect(find.text('SURAH_18'), findsOneWidget);
-    },
-  );
-
-  testWidgets('an unchanged faith leaves a pushed route alone', (
+  testWidgets('a deep link into a stale branch survives the pending reset', (
     tester,
   ) async {
+    final (router, faith) = await pumpMutable(tester, FaithId.islam);
+
+    await tester.tap(find.text('Hadiths'));
+    await tester.pumpAndSettle();
+    router.push('/hadiths/4122');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Today'));
+    await tester.pumpAndSettle();
+    await faith.set(FaithId.hindu);
+    await tester.pumpAndSettle();
+
+    // Something outside the shell (a notification tap, a deep link)
+    // routes into a branch that is still marked stale. That navigation
+    // builds a fresh stack, so the pending reset must stand down rather
+    // than bounce the user to the branch root.
+    router.go('/quran/surah/18');
+    await tester.pumpAndSettle();
+
+    expect(find.text('SURAH_18'), findsOneWidget);
+  });
+
+  testWidgets('an unchanged faith leaves a pushed route alone', (tester) async {
     final (router, faith) = await pumpMutable(tester, FaithId.islam);
 
     await tester.tap(find.text('Hadiths'));

@@ -23,9 +23,8 @@ final hinduStotrasSubRoutes = <RouteBase>[
       ),
       GoRoute(
         path: 'category/:slug',
-        builder: (_, state) => StotraCategoryScreen(
-          categorySlug: state.pathParameters['slug']!,
-        ),
+        builder: (_, state) =>
+            StotraCategoryScreen(categorySlug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: ':slug',

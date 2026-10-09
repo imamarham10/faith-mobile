@@ -8,8 +8,5 @@ import 'presentation/screens/puja_times_screen.dart';
 ///
 /// Paths (relative): `puja-times`.
 final hinduPujaTimesSubRoutes = <RouteBase>[
-  GoRoute(
-    path: 'puja-times',
-    builder: (_, __) => const PujaTimesScreen(),
-  ),
+  GoRoute(path: 'puja-times', builder: (_, __) => const PujaTimesScreen()),
 ];

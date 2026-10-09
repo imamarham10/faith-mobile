@@ -13,7 +13,11 @@ import '../controllers/hindu_emotions_controller.dart';
 /// (Hindu has "angry"/"fearful"/"grieving"/"guilty"/"restless"/
 /// "unmotivated"; Islam has "hopeful"/"lost"/"tested"/"joyful"/"searching").
 class HinduMoodChipRow extends ConsumerWidget {
-  const HinduMoodChipRow({super.key, required this.onSelected, this.selectedSlug});
+  const HinduMoodChipRow({
+    super.key,
+    required this.onSelected,
+    this.selectedSlug,
+  });
 
   final void Function(String slug) onSelected;
   final String? selectedSlug;

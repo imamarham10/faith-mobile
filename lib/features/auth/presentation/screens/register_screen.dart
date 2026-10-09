@@ -161,10 +161,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.givenName],
                         textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(labelText: 'First name'),
+                        decoration: const InputDecoration(
+                          labelText: 'First name',
+                        ),
                         validator: _validateName,
-                        onFieldSubmitted: (_) =>
-                            _lastNameFocus.requestFocus(),
+                        onFieldSubmitted: (_) => _lastNameFocus.requestFocus(),
                       ),
                     ),
                     const Gap.h(12),
@@ -175,7 +176,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.familyName],
                         textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(labelText: 'Last name'),
+                        decoration: const InputDecoration(
+                          labelText: 'Last name',
+                        ),
                         validator: _validateName,
                         onFieldSubmitted: (_) => _emailFocus.requestFocus(),
                       ),

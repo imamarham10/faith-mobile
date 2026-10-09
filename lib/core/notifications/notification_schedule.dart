@@ -94,7 +94,11 @@ List<ScheduledNotification> buildNotificationPlan({
         if (lead.isAfter(now)) {
           plan.add(
             ScheduledNotification(
-              id: notificationId(dayIndex: dayIndex, prayerKey: key, lead: true),
+              id: notificationId(
+                dayIndex: dayIndex,
+                prayerKey: key,
+                lead: true,
+              ),
               when: lead,
               prayerKey: key,
               isLead: true,

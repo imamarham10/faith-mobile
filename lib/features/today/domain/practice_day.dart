@@ -1,5 +1,4 @@
-/// Wall-clock calendar-day arithmetic for everything the Today screen
-/// counts.
+/// Wall-clock calendar-day arithmetic for the Today screen's log reads.
 ///
 /// A streak is a day-boundary bug waiting to happen, and this project has
 /// already paid for the lesson once — the Hindu panchang bug compared a real
@@ -8,6 +7,24 @@
 /// compared as strings (ISO dates sort correctly) and stepped with
 /// `DateTime(y, m, d - n)`, which Dart normalises and which cannot be
 /// shifted by a DST transition the way `subtract(Duration(days: 1))` can.
+///
+/// ## `deriveStreak` and `PracticeStreak` were removed here — Task 1.12
+///
+/// They counted **days with any logged activity**. The retention engine
+/// counts **goal-met days** (§2.5). Those are two different measurements of
+/// the same word, and until Task 1.12 the app computed both: this one for
+/// Islam, and `PujaStats.currentStreak` — the server's own any-activity
+/// count — for Hindu. Wiring `/today` without removing them would have put
+/// two different streak numbers on one screen, which does not read as a
+/// discrepancy to a user. It reads as the app not knowing, about the single
+/// number the whole feature exists to show.
+///
+/// So they went in the same change that introduced the replacement, not
+/// after it. What survives here is the day arithmetic the prayer and puja
+/// **log** reads still need for the checklist; the streak's own day
+/// stepping lives in `streak_engine.dart`, goes through UTC, and is
+/// deliberately not shared with this file — a 25-hour day in Europe/London
+/// is a bug in one representation and correct in the other.
 library;
 
 /// The `yyyy-MM-dd` key for a local wall-clock date.
@@ -40,66 +57,3 @@ String dayKeyOfDateColumn(String isoDate) =>
 String dayKeyOfDateTimeColumn(DateTime value) => dayKeyOf(
   DateTime(value.toUtc().year, value.toUtc().month, value.toUtc().day),
 );
-
-/// A practice streak, and whether the number can be trusted as exact.
-class PracticeStreak {
-  const PracticeStreak({required this.days, this.isFloor = false});
-
-  final int days;
-
-  /// True when the run reached the oldest day the data can speak to, so the
-  /// real streak may be longer. Rendered as `12+` rather than `12` — an
-  /// understated streak reads as a bug to the person who earned it.
-  final bool isFloor;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PracticeStreak && days == other.days && isFloor == other.isFloor;
-
-  @override
-  int get hashCode => Object.hash(days, isFloor);
-
-  @override
-  String toString() => 'PracticeStreak($days${isFloor ? '+' : ''})';
-}
-
-/// Consecutive days, ending today or yesterday, on which at least one act of
-/// worship was logged.
-///
-/// **Today not yet practised does not break the run** — the day is not over,
-/// and a streak that resets at midnight and un-resets at Fajr is the single
-/// most trust-destroying behaviour this feature could have. A full missed
-/// day does break it.
-///
-/// This mirrors, deliberately and exactly, the rule the backend already
-/// applies to the Hindu side in `puja-log.service.ts`. The two faiths' chips
-/// have to mean the same thing or they are not comparable, and no test
-/// catches a parity break in a number's *definition*.
-///
-/// [earliestKnownDay] is the oldest day the caller's data covers. The walk
-/// stops there and reports [PracticeStreak.isFloor], rather than pretending
-/// the run ended at the edge of a query window.
-PracticeStreak deriveStreak({
-  required Set<String> practisedDays,
-  required DateTime today,
-  required DateTime earliestKnownDay,
-}) {
-  if (practisedDays.isEmpty) return const PracticeStreak(days: 0);
-
-  final edgeKey = dayKeyOf(earliestKnownDay);
-  var cursor = practisedDays.contains(dayKeyOf(today))
-      ? today
-      : shiftDays(today, -1);
-
-  var days = 0;
-  while (practisedDays.contains(dayKeyOf(cursor))) {
-    days++;
-    final previous = shiftDays(cursor, -1);
-    if (dayKeyOf(previous).compareTo(edgeKey) < 0) {
-      return PracticeStreak(days: days, isFloor: true);
-    }
-    cursor = previous;
-  }
-  return PracticeStreak(days: days);
-}

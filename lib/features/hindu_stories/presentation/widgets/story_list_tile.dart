@@ -70,14 +70,24 @@ class _Excerpt extends StatelessWidget {
     final term = highlightTerm?.trim() ?? '';
 
     if (term.isEmpty) {
-      return Text(text, style: base, maxLines: 2, overflow: TextOverflow.ellipsis);
+      return Text(
+        text,
+        style: base,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
     }
 
     final lower = text.toLowerCase();
     final needle = term.toLowerCase();
     final idx = lower.indexOf(needle);
     if (idx < 0) {
-      return Text(text, style: base, maxLines: 2, overflow: TextOverflow.ellipsis);
+      return Text(
+        text,
+        style: base,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
     }
 
     return Text.rich(
@@ -87,7 +97,10 @@ class _Excerpt extends StatelessWidget {
           TextSpan(text: text.substring(0, idx)),
           TextSpan(
             text: text.substring(idx, idx + term.length),
-            style: base?.copyWith(color: accentText, fontWeight: FontWeight.w600),
+            style: base?.copyWith(
+              color: accentText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           TextSpan(text: text.substring(idx + term.length)),
         ],

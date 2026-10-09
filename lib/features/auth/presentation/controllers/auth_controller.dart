@@ -25,10 +25,7 @@ class AuthController extends _$AuthController {
   }
 
   /// Email + password sign in. Persists tokens and flips state on success.
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncValue.loading();
     try {
       final repo = ref.read(authRepositoryProvider);

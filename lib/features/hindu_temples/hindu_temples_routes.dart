@@ -23,10 +23,7 @@ final hinduTemplesSubRoutes = <RouteBase>[
         path: 'favorites',
         builder: (_, __) => const TempleFavoritesScreen(),
       ),
-      GoRoute(
-        path: 'search',
-        builder: (_, __) => const TempleSearchScreen(),
-      ),
+      GoRoute(path: 'search', builder: (_, __) => const TempleSearchScreen()),
       GoRoute(
         path: 'state/:state',
         builder: (_, state) =>

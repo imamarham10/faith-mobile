@@ -80,7 +80,9 @@ class _DetailContent extends ConsumerWidget {
         eyebrow: story.collection?.name ?? 'Story',
         title: story.title,
         translation: story.summary,
-        attribution: story.collection != null ? '— ${story.collection!.name}' : null,
+        attribution: story.collection != null
+            ? '— ${story.collection!.name}'
+            : null,
       ),
     );
   }
@@ -140,7 +142,9 @@ class _DetailContent extends ConsumerWidget {
                         ),
                         child: Text(
                           c,
-                          style: theme.textTheme.labelSmall?.copyWith(color: cs.onSurface),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: cs.onSurface,
+                          ),
                         ),
                       ),
                   ],
@@ -150,7 +154,10 @@ class _DetailContent extends ConsumerWidget {
               PoppyCard(
                 radius: AppRadius.lg,
                 padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Text(story.body, style: theme.textTheme.bodyLarge?.copyWith(height: 1.7)),
+                child: Text(
+                  story.body,
+                  style: theme.textTheme.bodyLarge?.copyWith(height: 1.7),
+                ),
               ),
             ],
           ),
@@ -255,7 +262,10 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(icon, size: 22, color: color),
             const SizedBox(height: 4),
-            Text(label, style: theme.textTheme.labelMedium?.copyWith(color: color)),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(color: color),
+            ),
           ],
         ),
       ),
@@ -302,7 +312,10 @@ class _ErrorPanel extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             const Gap(AppSpacing.md),
-            Text('We couldn\'t load this story.', style: theme.textTheme.bodyLarge),
+            Text(
+              'We couldn\'t load this story.',
+              style: theme.textTheme.bodyLarge,
+            ),
             const Gap(AppSpacing.lg),
             PoppyButton(label: 'Try again', onPressed: onRetry),
           ],

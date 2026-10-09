@@ -170,9 +170,7 @@ class AudioController extends _$AudioController {
   /// Cycles to the next preset in [kPlaybackSpeeds].
   Future<void> cycleSpeed() async {
     final current = state.speed;
-    final idx = kPlaybackSpeeds.indexWhere(
-      (s) => (s - current).abs() < 0.001,
-    );
+    final idx = kPlaybackSpeeds.indexWhere((s) => (s - current).abs() < 0.001);
     final next = kPlaybackSpeeds[(idx + 1) % kPlaybackSpeeds.length];
     await setSpeed(next);
   }

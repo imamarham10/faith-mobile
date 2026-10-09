@@ -84,7 +84,9 @@ class TempleListTile extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               '${temple.distanceKm!.toStringAsFixed(1)} km',
-              style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
             ),
           ],
           if (onToggleFavorite != null)

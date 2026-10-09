@@ -159,9 +159,7 @@ class _LiveCardState extends State<_LiveCard> {
     // blending against surfaceCard behind it) — verified live on-device.
     // Pre-blending sidesteps the runtime compositing entirely.
     final accentSoft = Color.alphaBlend(
-      (_imminent ? palette.secondary : palette.primary).withValues(
-        alpha: 0.16,
-      ),
+      (_imminent ? palette.secondary : palette.primary).withValues(alpha: 0.16),
       palette.surfaceCard,
     );
 
@@ -181,7 +179,10 @@ class _LiveCardState extends State<_LiveCard> {
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: accent,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -253,7 +254,10 @@ class _MessageCard extends StatelessWidget {
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
               Text(

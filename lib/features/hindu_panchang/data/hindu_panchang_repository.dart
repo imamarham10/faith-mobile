@@ -28,7 +28,10 @@ class HinduPanchangRepository {
   final Dio _dio;
 
   /// `GET /today?lat&lng` — today's panchang for a location.
-  Future<PanchangDay> getToday({required double lat, required double lng}) async {
+  Future<PanchangDay> getToday({
+    required double lat,
+    required double lng,
+  }) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '$_base/today',

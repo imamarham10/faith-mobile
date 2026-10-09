@@ -57,10 +57,8 @@ class PanchangMonthGrid extends StatelessWidget {
             crossAxisSpacing: 4,
             childAspectRatio: 0.95,
           ),
-          itemBuilder: (_, i) => _DayCell(
-            cell: cells[i],
-            onTap: () => onDayTap(cells[i]),
-          ),
+          itemBuilder: (_, i) =>
+              _DayCell(cell: cells[i], onTap: () => onDayTap(cells[i])),
         ),
       ],
     );

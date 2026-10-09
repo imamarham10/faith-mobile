@@ -202,7 +202,10 @@ class _Content extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Auspicious & inauspicious windows', style: theme.textTheme.titleMedium),
+              Text(
+                'Auspicious & inauspicious windows',
+                style: theme.textTheme.titleMedium,
+              ),
               const Gap(AppSpacing.base),
               _WindowRow(
                 label: 'Brahma Muhurta',
@@ -307,7 +310,11 @@ class _Divider extends StatelessWidget {
 }
 
 class _TimeStat extends StatelessWidget {
-  const _TimeStat({required this.icon, required this.label, required this.time});
+  const _TimeStat({
+    required this.icon,
+    required this.label,
+    required this.time,
+  });
 
   final IconData icon;
   final String label;
@@ -326,7 +333,9 @@ class _TimeStat extends StatelessWidget {
           children: [
             Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
             ),
             Text(
               time != null ? DateFormat.jm().format(time!.toLocal()) : '—',
@@ -340,7 +349,11 @@ class _TimeStat extends StatelessWidget {
 }
 
 class _WindowRow extends StatelessWidget {
-  const _WindowRow({required this.label, required this.good, required this.window});
+  const _WindowRow({
+    required this.label,
+    required this.good,
+    required this.window,
+  });
 
   final String label;
   final bool good;

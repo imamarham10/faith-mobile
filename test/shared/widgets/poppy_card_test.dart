@@ -11,9 +11,7 @@ void main() {
   );
 
   testWidgets('renders child content', (tester) async {
-    await tester.pumpWidget(
-      harness(const PoppyCard(child: Text('hello'))),
-    );
+    await tester.pumpWidget(harness(const PoppyCard(child: Text('hello'))));
     expect(find.text('hello'), findsOneWidget);
   });
 

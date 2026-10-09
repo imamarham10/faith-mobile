@@ -28,7 +28,8 @@ class StoryFavoritesScreen extends ConsumerWidget {
       body: SafeArea(
         top: false,
         child: favs.when(
-          loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+          loading: () =>
+              const Center(child: CircularProgressIndicator.adaptive()),
           error: (_, __) => Center(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
@@ -52,7 +53,10 @@ class StoryFavoritesScreen extends ConsumerWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const Gap(AppSpacing.md),
-                      Text('No favorites yet', style: theme.textTheme.titleLarge),
+                      Text(
+                        'No favorites yet',
+                        style: theme.textTheme.titleLarge,
+                      ),
                       const Gap(AppSpacing.xs),
                       Text(
                         'Tap the heart on any story to save it here.',
@@ -80,7 +84,8 @@ class StoryFavoritesScreen extends ConsumerWidget {
                 final story = list[i];
                 return StoryListTile(
                   story: story,
-                  onTap: () => context.push('/hadiths/hindu-stories/${story.id}'),
+                  onTap: () =>
+                      context.push('/hadiths/hindu-stories/${story.id}'),
                 );
               },
             );

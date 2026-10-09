@@ -213,6 +213,41 @@ class LocalEventQueue {
     return removed;
   }
 
+  /// Events for [faith] filed under a day in `[from, to]` inclusive.
+  ///
+  /// The optimistic overlay reads this: anything still here is something
+  /// the server has not seen, so the Today screen adds it on top of what
+  /// `/today` and `/history` reported. That is what makes a verse read in a
+  /// basement move the goal ring immediately.
+  ///
+  /// Filtered in SQL rather than by reading the queue and discarding:
+  /// this runs on every dashboard rebuild, and the cap is 5000 rows.
+  ///
+  /// Undecodable rows are skipped — but **not deleted**, unlike [peek].
+  /// This is a read for display, and a display path that silently destroys
+  /// data is a much worse bargain than one that renders slightly low.
+  Future<List<ActivityEvent>> pendingBetween({
+    required ActivityFaith faith,
+    required String from,
+    required String to,
+  }) async {
+    final rows = await _db.query(
+      _table,
+      where: 'faith_id = ? AND local_day >= ? AND local_day <= ?',
+      whereArgs: [faith.wireValue, from, to],
+      orderBy: 'row_id ASC',
+    );
+    final events = <ActivityEvent>[];
+    for (final row in rows) {
+      try {
+        events.add(ActivityEvent.fromRow(row));
+      } on Object {
+        continue;
+      }
+    }
+    return List.unmodifiable(events);
+  }
+
   /// How many events are waiting.
   Future<int> count() async =>
       Sqflite.firstIntValue(

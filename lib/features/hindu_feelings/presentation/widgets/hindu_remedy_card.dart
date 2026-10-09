@@ -56,7 +56,11 @@ class HinduRemedyCard extends StatelessWidget {
           ],
           Text(
             remedy.sanskritText,
-            style: sanskritTextStyle(fontSize: 20, height: 1.7, color: cs.onSurface),
+            style: sanskritTextStyle(
+              fontSize: 20,
+              height: 1.7,
+              color: cs.onSurface,
+            ),
           ),
           const SizedBox(height: 20),
           Container(

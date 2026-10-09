@@ -27,10 +27,7 @@ void main() {
   ) async {
     final islam = AppTheme.light(FaithId.islam);
     final hindu = AppTheme.light(FaithId.hindu);
-    expect(
-      islam.colorScheme.primary,
-      isNot(equals(hindu.colorScheme.primary)),
-    );
+    expect(islam.colorScheme.primary, isNot(equals(hindu.colorScheme.primary)));
   });
 
   // Regression guard: nothing else in this file asserts contrast ratios, so a
@@ -65,7 +62,9 @@ void main() {
           reason: 'onError vs error failed for $label',
         );
 
-        final textButtonForeground = theme.textButtonTheme.style!
+        final textButtonForeground = theme
+            .textButtonTheme
+            .style!
             .foregroundColor!
             .resolve(<WidgetState>{});
         expect(

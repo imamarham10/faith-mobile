@@ -7,19 +7,24 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_card.dart';
-import '../../domain/practice_day.dart';
 import '../../domain/today_dashboard.dart';
 
 /// Window selector plus the stat tiles beneath it.
 ///
-/// Tiles carry real units — prayers, dhikr, sandhya, japa — never "points".
-/// The streak tile is appended here rather than coming from [TodayDashboard.
-/// stats] because it is the one number a window does not apply to.
+/// Tiles carry real units — verses, prayers, dhikr, shlokas, sandhya, japa
+/// — never "points". Every label comes from the active faith pack.
+///
+/// **No streak tile.** It used to append one, which put the streak on
+/// screen twice: once here and once in [StreakChip] in the header. While
+/// both read the same number that was merely redundant; once Task 1.12 gave
+/// the two sources different definitions it was actively wrong. There is
+/// one streak number in this app and it lives in the header.
 class StatTileRow extends StatefulWidget {
-  const StatTileRow({super.key, required this.stats, this.streak});
+  /// Builds the row.
+  const StatTileRow({super.key, required this.stats});
 
+  /// The tiles, in display order.
   final List<StatSeries> stats;
-  final PracticeStreak? streak;
 
   @override
   State<StatTileRow> createState() => _StatTileRowState();
@@ -38,23 +43,9 @@ class _StatTileRowState extends State<StatTileRow> {
   /// would shift the row off-centre whenever a tile is omitted for lack of
   /// honest data, which is a thing that happens here by design.
   List<Widget> _tiles() {
-    final streak = widget.streak;
     final cells = <Widget>[
       for (final stat in widget.stats)
         _Tile(label: stat.label, value: '${stat.valueFor(_window)}'),
-      // `days > 0`, not just non-null: the local derivation returns a
-      // zero streak rather than null for a user with no history, and a
-      // tile reading "0 / Day streak" on a fresh install is a daily
-      // reminder of failure. StreakChip hides on the same condition —
-      // the two must agree or the header and the row contradict.
-      if (streak != null && streak.days > 0)
-        _Tile(
-          label: 'Day streak',
-          // "12+" when the run reaches the edge of the history the server
-          // will return — an understated streak reads as a bug to the
-          // person who earned it.
-          value: '${streak.days}${streak.isFloor ? '+' : ''}',
-        ),
     ];
     return <Widget>[
       for (var i = 0; i < cells.length; i++) ...[
@@ -66,9 +57,7 @@ class _StatTileRowState extends State<StatTileRow> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.stats.isEmpty && widget.streak == null) {
-      return const SizedBox.shrink();
-    }
+    if (widget.stats.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

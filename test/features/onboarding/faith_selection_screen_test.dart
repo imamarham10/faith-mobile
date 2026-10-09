@@ -29,10 +29,7 @@ void main() {
                 path: '/onboarding/faith',
                 builder: (_, __) => const FaithSelectionScreen(),
               ),
-              GoRoute(
-                path: '/login',
-                builder: (_, __) => const Text('LOGIN'),
-              ),
+              GoRoute(path: '/login', builder: (_, __) => const Text('LOGIN')),
             ],
           ),
         ),
@@ -74,10 +71,7 @@ void main() {
                 path: '/onboarding/faith',
                 builder: (_, __) => const FaithSelectionScreen(),
               ),
-              GoRoute(
-                path: '/login',
-                builder: (_, __) => const Text('LOGIN'),
-              ),
+              GoRoute(path: '/login', builder: (_, __) => const Text('LOGIN')),
             ],
           ),
         ),

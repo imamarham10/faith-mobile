@@ -15,7 +15,11 @@ import '../../data/dtos/festival_occurrence.dart';
 /// (no local ephemeris probe needed the way calendar derives a Hijri
 /// event's Gregorian date from a throwaway `HijriCalendar`).
 class FestivalTile extends StatelessWidget {
-  const FestivalTile({super.key, required this.occurrence, required this.onTap});
+  const FestivalTile({
+    super.key,
+    required this.occurrence,
+    required this.onTap,
+  });
 
   final FestivalOccurrence occurrence;
   final VoidCallback onTap;
@@ -48,7 +52,9 @@ class FestivalTile extends StatelessWidget {
               children: [
                 Text(
                   '${occurrence.date.day}',
-                  style: theme.textTheme.titleLarge?.copyWith(color: accentText),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: accentText,
+                  ),
                 ),
                 Text(
                   DateFormat.MMM().format(occurrence.date),

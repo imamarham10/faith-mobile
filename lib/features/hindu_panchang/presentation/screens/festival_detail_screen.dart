@@ -38,7 +38,8 @@ class FestivalDetailScreen extends ConsumerWidget {
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+        loading: () =>
+            const Center(child: CircularProgressIndicator.adaptive()),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.xl),
@@ -99,7 +100,10 @@ class _Content extends StatelessWidget {
                 const Gap(AppSpacing.xs),
                 Text(
                   festival.nameSanskrit!,
-                  style: sanskritTextStyle(fontSize: 20, color: cs.onSurfaceVariant),
+                  style: sanskritTextStyle(
+                    fontSize: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
                 ),
               ],
               if (festival.regions.isNotEmpty) ...[

@@ -45,7 +45,10 @@ class HinduStoriesRepository {
 
   /// `GET ?collection=&deity=` — stories filtered by collection slug and/or
   /// deity key.
-  Future<List<HinduStory>> getStories({String? collection, String? deity}) async {
+  Future<List<HinduStory>> getStories({
+    String? collection,
+    String? deity,
+  }) async {
     try {
       final res = await _dio.get<dynamic>(
         _base,

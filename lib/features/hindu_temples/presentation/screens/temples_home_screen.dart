@@ -45,7 +45,10 @@ class TemplesHomeScreen extends ConsumerWidget {
           children: [
             Text('Temples', style: theme.textTheme.displaySmall),
             const SizedBox(height: 4),
-            Text('Find and save sacred places.', style: theme.textTheme.bodyMedium),
+            Text(
+              'Find and save sacred places.',
+              style: theme.textTheme.bodyMedium,
+            ),
             const Gap(AppSpacing.lg),
             _SearchTrigger(
               onTap: () {
@@ -100,7 +103,9 @@ class _SearchTrigger extends StatelessWidget {
           Expanded(
             child: Text(
               'Search temples',
-              style: theme.textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
             ),
           ),
         ],
@@ -168,8 +173,11 @@ class _NearbySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(nearbyTemplesControllerProvider);
-    final favoritesController = ref.watch(templeFavoritesControllerProvider.notifier);
-    final favorites = ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
+    final favoritesController = ref.watch(
+      templeFavoritesControllerProvider.notifier,
+    );
+    final favorites =
+        ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
 
     return async.when(
       loading: () => const PoppySkeleton(height: 96, radius: AppRadius.lg),
@@ -185,9 +193,13 @@ class _NearbySection extends ConsumerWidget {
         if (temples == null) {
           return _LocationDeniedPanel(
             onEnable: () async {
-              final granted = await ref.read(locationServiceProvider).ensurePermission();
+              final granted = await ref
+                  .read(locationServiceProvider)
+                  .ensurePermission();
               if (granted) {
-                await ref.read(nearbyTemplesControllerProvider.notifier).refresh();
+                await ref
+                    .read(nearbyTemplesControllerProvider.notifier)
+                    .refresh();
               }
             },
           );

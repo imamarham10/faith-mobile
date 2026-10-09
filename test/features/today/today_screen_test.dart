@@ -74,9 +74,7 @@ void main() {
   }
 
   group('Islam branch', () {
-    testWidgets('shows the Islam greeting and section content', (
-      tester,
-    ) async {
+    testWidgets('shows the Islam greeting and section content', (tester) async {
       await pump(tester, FaithId.islam);
 
       expect(find.text('As-salāmu ʿalaykum'), findsOneWidget);
@@ -145,9 +143,7 @@ void main() {
   });
 
   group('Hindu branch', () {
-    testWidgets('shows the Hindu greeting and section content', (
-      tester,
-    ) async {
+    testWidgets('shows the Hindu greeting and section content', (tester) async {
       await pump(tester, FaithId.hindu);
 
       expect(find.text('Namaste'), findsOneWidget);

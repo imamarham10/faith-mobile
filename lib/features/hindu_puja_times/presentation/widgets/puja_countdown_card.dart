@@ -44,7 +44,9 @@ class PujaCountdownCard extends ConsumerWidget {
             body: 'For accurate puja times',
             onTap: () async {
               HapticFeedback.lightImpact();
-              final ok = await ref.read(locationServiceProvider).ensurePermission();
+              final ok = await ref
+                  .read(locationServiceProvider)
+                  .ensurePermission();
               if (ok) {
                 await ref.read(pujaTimesControllerProvider.notifier).refresh();
               }
@@ -151,7 +153,10 @@ class _LiveCardState extends State<_LiveCard> {
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: accent,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -192,7 +197,11 @@ class _LoadingCard extends StatelessWidget {
 }
 
 class _MessageCard extends StatelessWidget {
-  const _MessageCard({required this.title, required this.body, required this.onTap});
+  const _MessageCard({
+    required this.title,
+    required this.body,
+    required this.onTap,
+  });
 
   final String title;
   final String body;
@@ -214,7 +223,10 @@ class _MessageCard extends StatelessWidget {
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -230,7 +242,11 @@ class _MessageCard extends StatelessWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              Icon(Icons.touch_app_outlined, size: 16, color: cs.onSurfaceVariant),
+              Icon(
+                Icons.touch_app_outlined,
+                size: 16,
+                color: cs.onSurfaceVariant,
+              ),
               const SizedBox(width: 6),
               Text('Tap to continue', style: theme.textTheme.bodySmall),
             ],
@@ -242,7 +258,11 @@ class _MessageCard extends StatelessWidget {
 }
 
 class _DayArc extends StatelessWidget {
-  const _DayArc({required this.progress, required this.accent, required this.rest});
+  const _DayArc({
+    required this.progress,
+    required this.accent,
+    required this.rest,
+  });
 
   final double progress;
   final Color accent;
@@ -258,7 +278,11 @@ class _DayArc extends StatelessWidget {
 }
 
 class _DayArcPainter extends CustomPainter {
-  _DayArcPainter({required this.progress, required this.accent, required this.rest});
+  _DayArcPainter({
+    required this.progress,
+    required this.accent,
+    required this.rest,
+  });
 
   static const _bars = 24;
   final double progress;

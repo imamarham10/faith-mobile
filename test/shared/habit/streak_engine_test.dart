@@ -93,27 +93,26 @@ void main() {
       expect(twelve.met, isTrue);
     });
 
-    test('counts only the activity type the goalType names, but reports all', () {
-      final counts = sumCounts([
-        event(localDay: '2026-10-08', quantity: 40),
-        event(
-          localDay: '2026-10-08',
-          type: ActivityType.prayer,
-          quantity: 3,
-        ),
-        event(localDay: '2026-10-08', type: ActivityType.dhikr, quantity: 33),
-      ]);
+    test(
+      'counts only the activity type the goalType names, but reports all',
+      () {
+        final counts = sumCounts([
+          event(localDay: '2026-10-08', quantity: 40),
+          event(localDay: '2026-10-08', type: ActivityType.prayer, quantity: 3),
+          event(localDay: '2026-10-08', type: ActivityType.dhikr, quantity: 33),
+        ]);
 
-      final progress = dayProgress(
-        counts: counts,
-        goal: DailyGoal(goalType: GoalType.prayers, target: 5),
-      );
+        final progress = dayProgress(
+          counts: counts,
+          goal: DailyGoal(goalType: GoalType.prayers, target: 5),
+        );
 
-      // §5.3 — every non-zero type is a key; zero totals are absent.
-      expect(progress.counts, {'quran_verse': 40, 'prayer': 3, 'dhikr': 33});
-      expect(progress.progress, 3);
-      expect(progress.met, isFalse); // 3 prayers < 5, despite 40 verses
-    });
+        // §5.3 — every non-zero type is a key; zero totals are absent.
+        expect(progress.counts, {'quran_verse': 40, 'prayer': 3, 'dhikr': 33});
+        expect(progress.progress, 3);
+        expect(progress.met, isFalse); // 3 prayers < 5, despite 40 verses
+      },
+    );
 
     test('a goal with no events is an empty ring, not a missing goal', () {
       // §2.4 / §5.4 — `goal: null` means no UserGoal row is in force, never
@@ -161,32 +160,51 @@ void main() {
   // ================================================= §2.5, §2.6  the streak
 
   group('streak projection (§2.5, §2.6)', () {
-    test('keeps the streak when the user flies Asia/Kolkata to Europe/London', () {
-      // `localDay` is stamped by the device (§2.1) and `timezone` is stored
-      // but never consulted (§2.2), so a zone change mid-run is simply
-      // three consecutive local days. This is the guard against anyone
-      // "improving" the day arithmetic into a timezone conversion, at which
-      // point the Oct 9 boundary would move and the run would split.
-      final days = metDaysOf({
-        '2026-10-08': [
-          event(localDay: '2026-10-08', quantity: 5, timezone: 'Asia/Kolkata'),
-        ],
-        '2026-10-09': [
-          event(localDay: '2026-10-09', quantity: 2, timezone: 'Asia/Kolkata'),
-          event(localDay: '2026-10-09', quantity: 3, timezone: 'Europe/London'),
-        ],
-        '2026-10-10': [
-          event(localDay: '2026-10-10', quantity: 5, timezone: 'Europe/London'),
-        ],
-      }, goal5);
+    test(
+      'keeps the streak when the user flies Asia/Kolkata to Europe/London',
+      () {
+        // `localDay` is stamped by the device (§2.1) and `timezone` is stored
+        // but never consulted (§2.2), so a zone change mid-run is simply
+        // three consecutive local days. This is the guard against anyone
+        // "improving" the day arithmetic into a timezone conversion, at which
+        // point the Oct 9 boundary would move and the run would split.
+        final days = metDaysOf({
+          '2026-10-08': [
+            event(
+              localDay: '2026-10-08',
+              quantity: 5,
+              timezone: 'Asia/Kolkata',
+            ),
+          ],
+          '2026-10-09': [
+            event(
+              localDay: '2026-10-09',
+              quantity: 2,
+              timezone: 'Asia/Kolkata',
+            ),
+            event(
+              localDay: '2026-10-09',
+              quantity: 3,
+              timezone: 'Europe/London',
+            ),
+          ],
+          '2026-10-10': [
+            event(
+              localDay: '2026-10-10',
+              quantity: 5,
+              timezone: 'Europe/London',
+            ),
+          ],
+        }, goal5);
 
-      expect(days, ['2026-10-08', '2026-10-09', '2026-10-10']);
+        expect(days, ['2026-10-08', '2026-10-09', '2026-10-10']);
 
-      final streak = computeStreak(days, '2026-10-10');
-      expect(streak.current, 3);
-      expect(streak.lastGoalMetDay, '2026-10-10');
-      expect(streak.freezesLeft, 2);
-    });
+        final streak = computeStreak(days, '2026-10-10');
+        expect(streak.current, 3);
+        expect(streak.lastGoalMetDay, '2026-10-10');
+        expect(streak.freezesLeft, 2);
+      },
+    );
 
     test('does not drop a day across the Europe/London DST transition', () {
       // 2026-10-25 is when British Summer Time ENDS: the clocks go back and
@@ -250,36 +268,39 @@ void main() {
       expect(streak.lastGoalMetDay, '2026-10-11');
     });
 
-    test('breaks when two consecutive days are missed and one freeze remains', () {
-      // Oct 02 met, Oct 03 met, Oct 04 MISSED (freeze #1 bridges it),
-      // Oct 05 met, Oct 06 met, Oct 07 + Oct 08 MISSED (needs two, one
-      // left), Oct 09 met, Oct 10 met. Today is Oct 10.
-      final streak = computeStreak([
-        '2026-10-02',
-        '2026-10-03',
-        '2026-10-05',
-        '2026-10-06',
-        '2026-10-09',
-        '2026-10-10',
-      ], '2026-10-10');
+    test(
+      'breaks when two consecutive days are missed and one freeze remains',
+      () {
+        // Oct 02 met, Oct 03 met, Oct 04 MISSED (freeze #1 bridges it),
+        // Oct 05 met, Oct 06 met, Oct 07 + Oct 08 MISSED (needs two, one
+        // left), Oct 09 met, Oct 10 met. Today is Oct 10.
+        final streak = computeStreak([
+          '2026-10-02',
+          '2026-10-03',
+          '2026-10-05',
+          '2026-10-06',
+          '2026-10-09',
+          '2026-10-10',
+        ], '2026-10-10');
 
-      // The run Oct 02..Oct 06 is four met days bridged by one freeze. The
-      // two-day gap cannot be paid for, so the streak restarts at Oct 09.
-      expect(streak.current, 2);
-      expect(streak.longest, 4);
-      expect(streak.lastGoalMetDay, '2026-10-10');
+        // The run Oct 02..Oct 06 is four met days bridged by one freeze. The
+        // two-day gap cannot be paid for, so the streak restarts at Oct 09.
+        expect(streak.current, 2);
+        expect(streak.longest, 4);
+        expect(streak.lastGoalMetDay, '2026-10-10');
 
-      // The contrast that proves the freeze count is what broke it: the
-      // same day sequence with a full allowance bridges straight through.
-      final withBothFreezes = computeStreak([
-        '2026-10-05',
-        '2026-10-06',
-        '2026-10-09',
-        '2026-10-10',
-      ], '2026-10-10');
-      expect(withBothFreezes.current, 4);
-      expect(withBothFreezes.freezesLeft, 0);
-    });
+        // The contrast that proves the freeze count is what broke it: the
+        // same day sequence with a full allowance bridges straight through.
+        final withBothFreezes = computeStreak([
+          '2026-10-05',
+          '2026-10-06',
+          '2026-10-09',
+          '2026-10-10',
+        ], '2026-10-10');
+        expect(withBothFreezes.current, 4);
+        expect(withBothFreezes.freezesLeft, 0);
+      },
+    );
 
     test('a failed bridge charges nothing', () {
       // Server-pinned and unstated in the contract. Paying for a gap is
@@ -361,26 +382,32 @@ void main() {
       );
     });
 
-    test('reproduces the contract worked example on both sides of the goal', () {
-      // §2.6's table, which is the test for lazy consumption:
-      //   morning of Oct 27, goal not yet met  -> current 25, freezesLeft 2
-      //   Oct 27 after the goal is met         -> current 26, freezesLeft 1
-      // The eager implementation shows freezesLeft 1 all morning, and §2.7
-      // then overrides it on the next sync — the user watches their freeze
-      // count change for no reason.
-      final oct1to25 = run('2026-10-01', '2026-10-25'); // Oct 26 absent
+    test(
+      'reproduces the contract worked example on both sides of the goal',
+      () {
+        // §2.6's table, which is the test for lazy consumption:
+        //   morning of Oct 27, goal not yet met  -> current 25, freezesLeft 2
+        //   Oct 27 after the goal is met         -> current 26, freezesLeft 1
+        // The eager implementation shows freezesLeft 1 all morning, and §2.7
+        // then overrides it on the next sync — the user watches their freeze
+        // count change for no reason.
+        final oct1to25 = run('2026-10-01', '2026-10-25'); // Oct 26 absent
 
-      final morning = computeStreak(oct1to25, '2026-10-27');
-      expect(morning.current, 25);
-      expect(morning.freezesLeft, 2);
-      expect(morning.lastGoalMetDay, '2026-10-25');
+        final morning = computeStreak(oct1to25, '2026-10-27');
+        expect(morning.current, 25);
+        expect(morning.freezesLeft, 2);
+        expect(morning.lastGoalMetDay, '2026-10-25');
 
-      final evening = computeStreak([...oct1to25, '2026-10-27'], '2026-10-27');
-      // 25 + today, NOT 27 — Oct 26 bridges, it does not count.
-      expect(evening.current, 26);
-      expect(evening.freezesLeft, 1);
-      expect(evening.lastGoalMetDay, '2026-10-27');
-    });
+        final evening = computeStreak([
+          ...oct1to25,
+          '2026-10-27',
+        ], '2026-10-27');
+        // 25 + today, NOT 27 — Oct 26 bridges, it does not count.
+        expect(evening.current, 26);
+        expect(evening.freezesLeft, 1);
+        expect(evening.lastGoalMetDay, '2026-10-27');
+      },
+    );
 
     test('includes today if and only if the goal is met today (§2.5)', () {
       final met = ['2026-10-06', '2026-10-07', '2026-10-08'];
@@ -390,31 +417,37 @@ void main() {
       expect(computeStreak([...met, '2026-10-09'], '2026-10-09').current, 4);
     });
 
-    test('is zero once the last met day is further back than freezes reach', () {
-      // §2.5's closing sentence. The trailing gap is TESTED for payability
-      // but never CHARGED (§2.6) — which is why `freezesLeft` is still 2.
-      final met = ['2026-10-01', '2026-10-02', '2026-10-03'];
+    test(
+      'is zero once the last met day is further back than freezes reach',
+      () {
+        // §2.5's closing sentence. The trailing gap is TESTED for payability
+        // but never CHARGED (§2.6) — which is why `freezesLeft` is still 2.
+        final met = ['2026-10-01', '2026-10-02', '2026-10-03'];
 
-      // Oct 4 and Oct 5 missed: two freezes would cover them, so alive —
-      // and testing that payability must not spend them. An eager
-      // implementation reports 0 here and is overridden on the next sync.
-      final alive = computeStreak(met, '2026-10-06');
-      expect(alive.current, 3);
-      expect(alive.freezesLeft, 2);
+        // Oct 4 and Oct 5 missed: two freezes would cover them, so alive —
+        // and testing that payability must not spend them. An eager
+        // implementation reports 0 here and is overridden on the next sync.
+        final alive = computeStreak(met, '2026-10-06');
+        expect(alive.current, 3);
+        expect(alive.freezesLeft, 2);
 
-      // Oct 4, 5 and 6 missed: three days, two freezes. Dead.
-      final dead = computeStreak(met, '2026-10-07');
-      expect(dead.current, 0);
-      expect(dead.longest, 3); // the record survives
-      expect(dead.lastGoalMetDay, '2026-10-03'); // still reported
-      expect(dead.freezesLeft, 2); // the trailing gap charged nothing
+        // Oct 4, 5 and 6 missed: three days, two freezes. Dead.
+        final dead = computeStreak(met, '2026-10-07');
+        expect(dead.current, 0);
+        expect(dead.longest, 3); // the record survives
+        expect(dead.lastGoalMetDay, '2026-10-03'); // still reported
+        expect(dead.freezesLeft, 2); // the trailing gap charged nothing
 
-      // And a user who last met their goal in 2024 is not shown a streak.
-      final ancient = computeStreak(run('2024-01-01', '2024-03-01'), '2026-10-09');
-      expect(ancient.current, 0);
-      expect(ancient.longest, 61);
-      expect(ancient.lastGoalMetDay, '2024-03-01');
-    });
+        // And a user who last met their goal in 2024 is not shown a streak.
+        final ancient = computeStreak(
+          run('2024-01-01', '2024-03-01'),
+          '2026-10-09',
+        );
+        expect(ancient.current, 0);
+        expect(ancient.longest, 61);
+        expect(ancient.lastGoalMetDay, '2024-03-01');
+      },
+    );
 
     test('gives a user with no goal-met days a zero-valued projection', () {
       expect(
@@ -429,18 +462,21 @@ void main() {
       );
     });
 
-    test('ignores met days after today, so a tampered clock cannot anchor it', () {
-      // §2.2 accepts a self-consistent tampered pair deliberately, so the
-      // projection has to be the thing that refuses to count forward.
-      final streak = computeStreak([
-        '2026-10-07',
-        '2026-10-08',
-        '2027-05-01',
-      ], '2026-10-08');
+    test(
+      'ignores met days after today, so a tampered clock cannot anchor it',
+      () {
+        // §2.2 accepts a self-consistent tampered pair deliberately, so the
+        // projection has to be the thing that refuses to count forward.
+        final streak = computeStreak([
+          '2026-10-07',
+          '2026-10-08',
+          '2027-05-01',
+        ], '2026-10-08');
 
-      expect(streak.current, 2);
-      expect(streak.lastGoalMetDay, '2026-10-08');
-    });
+        expect(streak.current, 2);
+        expect(streak.lastGoalMetDay, '2026-10-08');
+      },
+    );
 
     test('normalises its input, so duplicate and unsorted days are safe', () {
       // The client assembles met days from two sources — /history for
@@ -453,23 +489,22 @@ void main() {
           '2026-10-07',
           '2026-10-08',
         ], '2026-10-08'),
-        computeStreak([
-          '2026-10-06',
-          '2026-10-07',
-          '2026-10-08',
-        ], '2026-10-08'),
+        computeStreak(['2026-10-06', '2026-10-07', '2026-10-08'], '2026-10-08'),
       );
     });
 
-    test('longest is the computed run, and the caller owns "never decreases"', () {
-      // §2.5's "longest never decreases" is `max(computed, persisted)` and
-      // belongs to whoever holds the last /today response: a client that
-      // has only fetched a 92-day window cannot know about a longer run
-      // behind it, so inventing the max here would be a lie.
-      final full = run('2026-10-01', '2026-10-05');
-      expect(computeStreak(full, '2026-10-05').longest, 5);
-      expect(computeStreak(full, '2026-10-02').longest, 2);
-    });
+    test(
+      'longest is the computed run, and the caller owns "never decreases"',
+      () {
+        // §2.5's "longest never decreases" is `max(computed, persisted)` and
+        // belongs to whoever holds the last /today response: a client that
+        // has only fetched a 92-day window cannot know about a longer run
+        // behind it, so inventing the max here would be a lie.
+        final full = run('2026-10-01', '2026-10-05');
+        expect(computeStreak(full, '2026-10-05').longest, 5);
+        expect(computeStreak(full, '2026-10-02').longest, 2);
+      },
+    );
 
     test('freezeResetOn rolls the year over', () {
       expect(
@@ -497,10 +532,14 @@ void main() {
       final instant = DateTime.utc(2026, 10, 8, 12);
       expect(localDayIn('Pacific/Kiritimati', instant), '2026-10-09');
       expect(localDayIn('Pacific/Niue', instant), '2026-10-08');
-      expect(localDayIn('Pacific/Kiritimati', DateTime.utc(2026, 10, 8, 23)),
-          '2026-10-09');
-      expect(localDayIn('Pacific/Niue', DateTime.utc(2026, 10, 9, 3)),
-          '2026-10-08');
+      expect(
+        localDayIn('Pacific/Kiritimati', DateTime.utc(2026, 10, 8, 23)),
+        '2026-10-09',
+      );
+      expect(
+        localDayIn('Pacific/Niue', DateTime.utc(2026, 10, 9, 3)),
+        '2026-10-08',
+      );
     });
 
     test('follows Europe/London across the end of British Summer Time', () {

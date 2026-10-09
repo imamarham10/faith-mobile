@@ -65,7 +65,9 @@ class PanchangScreen extends ConsumerWidget {
           const _TodaySummaryCard(),
           const Gap(AppSpacing.xl),
           _MonthHeader(
-            label: gridAsync.valueOrNull?.monthLabel ?? '${anchor.month}/${anchor.year}',
+            label:
+                gridAsync.valueOrNull?.monthLabel ??
+                '${anchor.month}/${anchor.year}',
             onPrev: () {
               HapticFeedback.selectionClick();
               ref.read(panchangAnchorControllerProvider.notifier).previous();
@@ -77,7 +79,8 @@ class PanchangScreen extends ConsumerWidget {
           ),
           const Gap(AppSpacing.lg),
           gridAsync.when(
-            loading: () => const PoppySkeleton(height: 320, radius: AppRadius.lg),
+            loading: () =>
+                const PoppySkeleton(height: 320, radius: AppRadius.lg),
             error: (e, _) => _ErrorPanel(
               message: e.toString(),
               onRetry: () => ref.invalidate(
@@ -188,10 +191,7 @@ class _PanchangSummary extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _Stat(
-                  label: 'Nakshatra',
-                  value: day.nakshatra.name,
-                ),
+                child: _Stat(label: 'Nakshatra', value: day.nakshatra.name),
               ),
               Expanded(
                 child: _Stat(label: 'Yoga', value: day.yoga.name),
@@ -316,8 +316,9 @@ class _UpcomingFestivalsList extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: FestivalTile(
                   occurrence: occ,
-                  onTap: () =>
-                      context.push('/today/panchang/festival/${occ.festival.slug}'),
+                  onTap: () => context.push(
+                    '/today/panchang/festival/${occ.festival.slug}',
+                  ),
                 ),
               ),
           ],
@@ -387,7 +388,9 @@ class _ChevronButton extends StatelessWidget {
         height: 44,
         child: Material(
           color: theme.colorScheme.surface,
-          shape: CircleBorder(side: BorderSide(color: theme.colorScheme.outline)),
+          shape: CircleBorder(
+            side: BorderSide(color: theme.colorScheme.outline),
+          ),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onPressed,
@@ -459,7 +462,10 @@ class _ErrorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Couldn\'t load the calendar', style: theme.textTheme.titleMedium),
+          Text(
+            'Couldn\'t load the calendar',
+            style: theme.textTheme.titleMedium,
+          ),
           const Gap(6),
           Text(message, style: theme.textTheme.bodySmall),
           const Gap(12),

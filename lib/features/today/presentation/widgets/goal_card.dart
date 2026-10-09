@@ -1,26 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/habit/faith_habit_pack.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/poppy_button.dart';
 import '../../domain/today_dashboard.dart';
 
-/// "Today's goal — 1 / 5 prayers", with a bar.
+/// "Today's goal — 1 / 5 verses", with a bar — or the invitation to set one.
 ///
 /// The number carries a real unit, never a synthetic currency. Points exist
 /// in the design only so a cross-activity leaderboard is possible; they are
 /// never what a user is shown.
+///
+/// A null [goal] is **not** a goal of zero. §5.4 returns `goal: null` only
+/// when the user has never set one, precisely so this card can tell that
+/// apart from a goal sitting at `progress: 0`, and §2.4 is emphatic that no
+/// day can be met until the user has agreed to a target. The first renders
+/// as an invitation, the second as an empty ring; collapsing them would
+/// leave every new user looking at `0 / 0` with no way to start a streak.
 class GoalCard extends StatelessWidget {
-  const GoalCard({super.key, required this.goal});
+  /// Builds the card.
+  const GoalCard({
+    super.key,
+    required this.goal,
+    required this.pack,
+    required this.onEdit,
+  });
 
-  final GoalProgress goal;
+  /// Today's goal, or null when none has ever been set.
+  final GoalProgress? goal;
+
+  /// The active faith's pack — supplies the prompt copy.
+  final FaithHabitPack pack;
+
+  /// Opens the picker.
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = theme.extension<FaithThemeExtension>()!.palette;
+    final goal = this.goal;
+
+    if (goal == null) {
+      return _GoalPrompt(prompt: pack.goalPrompt, onTap: onEdit);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,6 +77,28 @@ class GoalCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              )
+            else
+              Semantics(
+                button: true,
+                label: 'Change daily goal',
+                excludeSemantics: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onEdit();
+                  },
+                  // 44pt tap target around a 16pt glyph.
+                  child: const SizedBox(
+                    width: 44,
+                    height: 24,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(Icons.tune, size: 16),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),
@@ -76,6 +126,44 @@ class GoalCard extends StatelessWidget {
         ),
         const Gap(AppSpacing.md),
         _GoalBar(fraction: goal.fraction),
+      ],
+    );
+  }
+}
+
+/// §5.4's never-set-a-goal state: an invitation, not a zero.
+class _GoalPrompt extends StatelessWidget {
+  const _GoalPrompt({required this.prompt, required this.onTap});
+
+  final String prompt;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          "TODAY'S GOAL",
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const Gap(AppSpacing.sm),
+        Text(prompt, style: theme.textTheme.titleMedium),
+        const Gap(AppSpacing.md),
+        SizedBox(
+          width: double.infinity,
+          child: PoppyButton(
+            label: 'Set a goal',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              onTap();
+            },
+          ),
+        ),
       ],
     );
   }

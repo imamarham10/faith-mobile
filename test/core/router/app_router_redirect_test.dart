@@ -4,9 +4,7 @@ import 'package:faith_mobile/features/auth/domain/auth_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _authed = AsyncData<AuthState>(
-  AuthAuthenticated(accessToken: 'token'),
-);
+const _authed = AsyncData<AuthState>(AuthAuthenticated(accessToken: 'token'));
 const _anon = AsyncData<AuthState>(AuthUnauthenticated());
 const _onboarded = AsyncData(true);
 const _splashElapsed = AsyncData(true);

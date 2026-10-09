@@ -64,7 +64,11 @@ class HinduTemplesRepository {
   /// Note the query param is `deity`, not `deityKey` — the backend silently
   /// ignores an unrecognized param name rather than 400ing, so this is easy
   /// to get wrong without noticing.
-  Future<List<Temple>> getTemples({String? state, String? deity, String? q}) async {
+  Future<List<Temple>> getTemples({
+    String? state,
+    String? deity,
+    String? q,
+  }) async {
     try {
       final res = await _dio.get<dynamic>(
         _base,
@@ -121,7 +125,10 @@ class HinduTemplesRepository {
   /// `POST /favorites` — add a temple to favorites server-side. Best-effort.
   Future<void> addFavorite(String templeId) async {
     try {
-      await _dio.post<dynamic>('$_base/favorites', data: {'templeId': templeId});
+      await _dio.post<dynamic>(
+        '$_base/favorites',
+        data: {'templeId': templeId},
+      );
     } on DioException {
       // Local mirror remains canonical.
     }

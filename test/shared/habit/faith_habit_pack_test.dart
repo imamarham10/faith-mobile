@@ -138,7 +138,8 @@ void main() {
                 // A choice above the cap is not a cosmetic bug: the server
                 // rejects the PUT as `invalid_target` and the user's goal
                 // silently fails to save.
-                reason: '${goal.wireValue} offers $choice, max ${goal.maxTarget}',
+                reason:
+                    '${goal.wireValue} offers $choice, max ${goal.maxTarget}',
               );
             }
           }

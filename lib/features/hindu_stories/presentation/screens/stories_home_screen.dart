@@ -134,7 +134,9 @@ class _SearchTrigger extends StatelessWidget {
           Expanded(
             child: Text(
               'Search stories',
-              style: theme.textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
             ),
           ),
         ],
@@ -144,7 +146,10 @@ class _SearchTrigger extends StatelessWidget {
 }
 
 class _CollectionsGrid extends StatelessWidget {
-  const _CollectionsGrid({required this.collections, required this.favoritesCount});
+  const _CollectionsGrid({
+    required this.collections,
+    required this.favoritesCount,
+  });
 
   final List<StoryCollection> collections;
   final int favoritesCount;
@@ -155,7 +160,8 @@ class _CollectionsGrid extends StatelessWidget {
       for (final c in collections)
         CollectionCard(
           collection: c,
-          onTap: () => context.push('/hadiths/hindu-stories/collection/${c.slug}'),
+          onTap: () =>
+              context.push('/hadiths/hindu-stories/collection/${c.slug}'),
         ),
       _FavoritesCard(
         count: favoritesCount,
@@ -237,7 +243,8 @@ class _CollectionsShimmer extends StatelessWidget {
           mainAxisExtent: 172,
         ),
         itemCount: 4,
-        itemBuilder: (_, __) => const PoppySkeleton(height: 172, radius: AppRadius.lg),
+        itemBuilder: (_, __) =>
+            const PoppySkeleton(height: 172, radius: AppRadius.lg),
       ),
     );
   }
@@ -261,7 +268,10 @@ class _ErrorPanel extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
           const Gap(AppSpacing.md),
-          Text('We couldn\'t load the collections.', style: theme.textTheme.titleMedium),
+          Text(
+            'We couldn\'t load the collections.',
+            style: theme.textTheme.titleMedium,
+          ),
           const Gap(AppSpacing.lg),
           PoppyButton(label: 'Retry', onPressed: onRetry),
         ],

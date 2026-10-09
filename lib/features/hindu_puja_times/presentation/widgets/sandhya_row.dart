@@ -117,6 +117,9 @@ class _StatusBadge extends StatelessWidget {
       );
     }
 
-    return Text('—', style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant));
+    return Text(
+      '—',
+      style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
+    );
   }
 }

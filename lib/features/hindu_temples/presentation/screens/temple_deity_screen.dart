@@ -24,7 +24,8 @@ class TempleDeityScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final templesAsync = ref.watch(templesByDeityProvider(deity));
-    final favorites = ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
+    final favorites =
+        ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
     final favsCtrl = ref.read(templeFavoritesControllerProvider.notifier);
 
     return Scaffold(

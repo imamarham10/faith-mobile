@@ -110,8 +110,7 @@ class DeviceTimezone with WidgetsBindingObserver {
   /// before this file existed. Both are run through
   /// [normaliseActivityTimezone], so the result is always a value §1.5
   /// accepts.
-  String get current =>
-      _resolved ?? normaliseActivityTimezone(_abbreviation());
+  String get current => _resolved ?? normaliseActivityTimezone(_abbreviation());
 
   /// Reads the zone from the platform and starts watching for changes.
   ///
@@ -136,10 +135,7 @@ class DeviceTimezone with WidgetsBindingObserver {
       final raw = await _readPlatformZone();
       final zone = normaliseActivityTimezone(raw);
       if (zone != _resolved) {
-        developer.log(
-          'device timezone: $raw -> $zone',
-          name: 'core.time',
-        );
+        developer.log('device timezone: $raw -> $zone', name: 'core.time');
       }
       _resolved = zone;
     } on Object catch (e, st) {

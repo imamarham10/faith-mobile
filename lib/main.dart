@@ -42,7 +42,6 @@ Future<void> main() async {
   runApp(const ProviderScope(child: FaithApp()));
 }
 
-
 class FaithApp extends ConsumerWidget {
   const FaithApp({super.key});
 

@@ -70,7 +70,10 @@ class JapaHomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Tend your japa', style: theme.textTheme.headlineMedium),
+                      Text(
+                        'Tend your japa',
+                        style: theme.textTheme.headlineMedium,
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Counters, goals, and quiet returns.',
@@ -284,7 +287,11 @@ class _EmptyCounters extends StatelessWidget {
             style: theme.textTheme.bodyMedium,
           ),
           const Gap(16),
-          PoppyButton(label: 'New counter', icon: Icons.add, onPressed: onCreate),
+          PoppyButton(
+            label: 'New counter',
+            icon: Icons.add,
+            onPressed: onCreate,
+          ),
         ],
       ),
     );

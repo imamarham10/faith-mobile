@@ -298,7 +298,8 @@ class _LoadingShimmer extends StatelessWidget {
       sliver: SliverList.separated(
         itemCount: 5,
         separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-        itemBuilder: (_, __) => const PoppySkeleton(height: 76, radius: AppRadius.lg),
+        itemBuilder: (_, __) =>
+            const PoppySkeleton(height: 76, radius: AppRadius.lg),
       ),
     );
   }

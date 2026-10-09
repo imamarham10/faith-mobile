@@ -74,7 +74,9 @@ class _TempleSearchScreenState extends ConsumerState<TempleSearchScreen> {
             focusedBorder: InputBorder.none,
             filled: false,
             contentPadding: EdgeInsets.zero,
-            hintStyle: theme.textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
+            hintStyle: theme.textTheme.bodyLarge?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
           ),
           style: theme.textTheme.bodyLarge,
         ),
@@ -112,7 +114,11 @@ class _Body extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_outlined, size: 36, color: theme.colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.search_outlined,
+                size: 36,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const Gap(AppSpacing.md),
               Text('Search for a temple.', style: theme.textTheme.bodyLarge),
               const Gap(AppSpacing.xs),
@@ -128,7 +134,8 @@ class _Body extends ConsumerWidget {
     }
 
     final resultsAsync = ref.watch(templesSearchProvider(query));
-    final favorites = ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
+    final favorites =
+        ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
     final favsCtrl = ref.read(templeFavoritesControllerProvider.notifier);
 
     return resultsAsync.when(

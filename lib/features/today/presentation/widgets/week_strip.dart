@@ -28,7 +28,9 @@ class WeekStrip extends StatelessWidget {
         for (final day in week)
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs / 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xs / 2,
+              ),
               child: _DayRing(day: day, isToday: day == week.last),
             ),
           ),

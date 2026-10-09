@@ -85,7 +85,10 @@ class VerseView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                _VerseMedallion(number: verse.verseNumber, isPlaying: isPlaying),
+                _VerseMedallion(
+                  number: verse.verseNumber,
+                  isPlaying: isPlaying,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 if (isBookmarked)
                   Icon(Icons.bookmark, size: 16, color: accentText),

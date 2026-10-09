@@ -33,7 +33,8 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode =
         ref.watch(themeModePrefProvider).valueOrNull ?? ThemeMode.system;
     final calcCode =
-        ref.watch(calcMethodPrefProvider).valueOrNull ?? CalcMethod.fallbackCode;
+        ref.watch(calcMethodPrefProvider).valueOrNull ??
+        CalcMethod.fallbackCode;
     final notifPrefs =
         ref.watch(notificationPrefsProvider).valueOrNull ??
         const NotificationPreferences();
@@ -236,9 +237,7 @@ class SettingsScreen extends ConsumerWidget {
                   RadioListTile<int>(
                     value: m,
                     groupValue: current,
-                    title: Text(
-                      m == 0 ? 'No early reminder' : '$m min before',
-                    ),
+                    title: Text(m == 0 ? 'No early reminder' : '$m min before'),
                     onChanged: (v) {
                       if (v == null) return;
                       Navigator.of(sheet).pop(v);

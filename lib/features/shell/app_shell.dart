@@ -129,11 +129,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final faith = resolvedFaith ?? FaithId.islam;
     final (tab2Icon, tab2SelectedIcon, tab2Label) = switch (faith) {
-      FaithId.islam => (
-        Icons.menu_book_outlined,
-        Icons.menu_book,
-        'Quran',
-      ),
+      FaithId.islam => (Icons.menu_book_outlined, Icons.menu_book, 'Quran'),
       FaithId.hindu => (
         Icons.auto_stories_outlined,
         Icons.auto_stories,

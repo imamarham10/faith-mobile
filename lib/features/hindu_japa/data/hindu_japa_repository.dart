@@ -123,7 +123,10 @@ class HinduJapaRepository {
       final res = await _dio.get<dynamic>(
         '$_base/mantras',
         queryParameters: {
-          if (deity != null) 'deity': deity else if (category != null) 'category': category,
+          if (deity != null)
+            'deity': deity
+          else if (category != null)
+            'category': category,
         },
       );
       final data = res.data;

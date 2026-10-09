@@ -1,5 +1,6 @@
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
+import 'package:faith_mobile/features/hindu/habit_pack.dart';
 import 'package:faith_mobile/features/today/domain/today_dashboard.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/today_dashboard_controller.dart';
 import 'package:faith_mobile/features/today/presentation/widgets/practice_checklist.dart';
@@ -17,6 +18,9 @@ import '../../helpers/fake_today_dashboard.dart';
 /// Phone-shaped, and the narrowest width the project supports.
 const _phone = Size(390, 844);
 const _narrow = Size(320, 640);
+
+/// Any day that is not today, for the pure [DayProgress] assertions.
+final _aClosedDay = DateTime(2026, 10, 5);
 
 void main() {
   /// Pins the viewport so a golden is a layout assertion rather than a
@@ -121,12 +125,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('31'), findsOneWidget); // prayers this week
+      expect(find.text('64'), findsOneWidget); // verses this week
       expect(find.text('892'), findsOneWidget); // dhikr this week
     });
   });
 
   group('honesty', () {
-    testWidgets('omits the streak tile when there is no streak', (
+    testWidgets('the stat row never carries a streak tile at all', (
       tester,
     ) async {
       await pumpSection(
@@ -141,17 +146,125 @@ void main() {
       expect(find.text('Prayers'), findsOneWidget);
     });
 
-    testWidgets('marks a streak that reaches the edge of known history', (
+    testWidgets('renders the server streak exactly, never a floor', (
       tester,
     ) async {
+      // The old local derivation could only see its query window and so
+      // reported `20+`. `/today`'s `streak.current` is exact however few
+      // days of history the client fetched, and §6.2 caps that at 92 — so
+      // a 200-day run must render as `200` beside a seven-ring strip, and
+      // the `+` suffix is gone with the derivation that needed it.
       await pumpSection(
         tester,
         faith: FaithId.islam,
-        dashboard: FakeTodayDashboard.flooredStreak(),
+        dashboard: FakeTodayDashboard.longServerStreak(),
       );
 
-      expect(find.text('20+'), findsOneWidget);
-      expect(find.text('20'), findsNothing);
+      expect(find.byType(MilestoneRing), findsNWidgets(7));
+      expect(find.textContaining('+'), findsNothing);
+    });
+
+    testWidgets('puts exactly one streak number on the screen', (tester) async {
+      // The regression this guards is the reason `deriveStreak` and the
+      // Hindu `PujaStats.currentStreak` read were retired in the same
+      // change that wired the engine. Two sources with two definitions put
+      // two different numbers in front of the user, which does not read as
+      // a discrepancy — it reads as the app not knowing.
+      for (final (faith, dashboard) in [
+        (FaithId.islam, FakeTodayDashboard.islam()),
+        (FaithId.hindu, FakeTodayDashboard.hindu()),
+      ]) {
+        useViewport(tester, _phone);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              todayDashboardProvider.overrideWith((ref) async => dashboard),
+            ],
+            child: MaterialApp(
+              theme: AppTheme.light(faith),
+              home: const Scaffold(
+                body: SingleChildScrollView(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    children: [StreakChip(), TodayProgressSection()],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The streak appears once, in the chip, and the stat row carries
+        // no streak tile to contradict it.
+        expect(find.byIcon(Icons.local_fire_department), findsOneWidget);
+        expect(find.text('Day streak'), findsNothing);
+        expect(
+          find.descendant(
+            of: find.byType(StreakChip),
+            matching: find.text('12'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('12'), findsOneWidget);
+      }
+    });
+
+    testWidgets('a never-set goal prompts instead of showing 0 / 0', (
+      tester,
+    ) async {
+      // §5.4 — `goal: null` is "never set one", and is categorically not a
+      // goal sitting at zero. Every user passes through this state exactly
+      // once, on the screen that forms their first impression, and until
+      // they leave it §7.4 means no day can ever be met.
+      await pumpSection(
+        tester,
+        faith: FaithId.islam,
+        dashboard: FakeTodayDashboard.noGoal(),
+      );
+
+      expect(find.text('Set a goal'), findsOneWidget);
+      expect(find.textContaining('/ 0'), findsNothing);
+    });
+
+    testWidgets('the goal prompt is there for Hindu too', (tester) async {
+      await pumpSection(
+        tester,
+        faith: FaithId.hindu,
+        dashboard: FakeTodayDashboard.noGoal(pack: hinduHabitPack),
+      );
+
+      expect(find.text('Set a goal'), findsOneWidget);
+    });
+
+    testWidgets('a closed day fills from goalMet, not from done/target', (
+      tester,
+    ) async {
+      // §6.3 — the strip reads `goalMet`; it does not re-derive one. A
+      // closed day scored against the goal in force *then* can legitimately
+      // be met on 2 of a target that now reads 5, and re-deriving would
+      // both contradict the server and backdate a goal change (§7.4).
+      final closed = DayProgress(
+        day: _aClosedDay,
+        done: 2,
+        target: 5,
+        goalMet: true,
+        isToday: false,
+      );
+      expect(closed.fraction, 1.0);
+      expect(closed.isComplete, isTrue);
+
+      // ...and the open day is the one day that may show a fraction,
+      // because it is the one day §7.4 re-evaluates.
+      final open = DayProgress(
+        day: _aClosedDay,
+        done: 2,
+        target: 5,
+        goalMet: false,
+        isToday: true,
+      );
+      expect(open.fraction, closeTo(0.4, 0.001));
+      expect(open.isComplete, isFalse);
     });
 
     testWidgets('the chip draws nothing without a streak', (tester) async {

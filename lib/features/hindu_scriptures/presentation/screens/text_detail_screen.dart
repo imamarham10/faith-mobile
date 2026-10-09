@@ -35,9 +35,7 @@ class TextDetailScreen extends ConsumerWidget {
             if (context.canPop()) context.pop();
           },
         ),
-        title: Text(
-          asyncDetail.valueOrNull?.nameEnglish ?? '',
-        ),
+        title: Text(asyncDetail.valueOrNull?.nameEnglish ?? ''),
       ),
       body: asyncDetail.when(
         data: (detail) => _ChapterList(slug: slug, chapters: detail.chapters),
@@ -85,7 +83,9 @@ class _ChapterList extends StatelessWidget {
           chapter: chapter,
           onTap: () {
             HapticFeedback.lightImpact();
-            context.push('/quran/hindu-scripture/$slug/${chapter.chapterNumber}');
+            context.push(
+              '/quran/hindu-scripture/$slug/${chapter.chapterNumber}',
+            );
           },
         );
       },

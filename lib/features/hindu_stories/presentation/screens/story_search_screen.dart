@@ -75,7 +75,9 @@ class _StorySearchScreenState extends ConsumerState<StorySearchScreen> {
             focusedBorder: InputBorder.none,
             filled: false,
             contentPadding: EdgeInsets.zero,
-            hintStyle: theme.textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
+            hintStyle: theme.textTheme.bodyLarge?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
           ),
           style: theme.textTheme.bodyLarge,
         ),
@@ -113,9 +115,16 @@ class _Body extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_outlined, size: 36, color: theme.colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.search_outlined,
+                size: 36,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const Gap(AppSpacing.md),
-              Text('Search the story collection.', style: theme.textTheme.bodyLarge),
+              Text(
+                'Search the story collection.',
+                style: theme.textTheme.bodyLarge,
+              ),
               const Gap(AppSpacing.xs),
               Text(
                 'Type at least 2 characters.',

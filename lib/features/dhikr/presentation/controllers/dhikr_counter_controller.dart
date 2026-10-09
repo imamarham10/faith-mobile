@@ -3,6 +3,8 @@ import 'dart:developer' as developer;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 import '../../data/dhikr_repository.dart';
 import '../../data/dtos/dhikr_counter.dart';
 import 'dhikr_counters_controller.dart';
@@ -149,6 +151,22 @@ class DhikrCounterController extends _$DhikrCounterController {
     if (_pendingDelta <= 0) return;
     final delta = _pendingDelta;
     _pendingDelta = 0;
+
+    // One event carrying the whole delta, not `delta` events of one. The
+    // server sums `quantity` (§2.4), so 33 taps are one queue row instead
+    // of thirty-three — and the recorder's own doc calls this out as the
+    // reason `quantity` exists. Recorded here rather than in `increment()`
+    // for the same reason the sync is debounced: a tap handler at
+    // 5 taps/second must not do a SQLite write per tap.
+    //
+    // Deliberately recorded even if the repository call below fails. The
+    // dhikr *was* said; whether this app's counter table caught up with it
+    // is a different question, and the engine's queue is the durable one.
+    unawaited(
+      ref
+          .read(activityRecorderProvider)
+          .record(ActivityType.dhikr, quantity: delta, sourceRef: 'dhikr:$id'),
+    );
     try {
       final synced = await ref
           .read(dhikrRepositoryProvider)

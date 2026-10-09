@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -38,6 +40,10 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
   Timer? _scrollDebounce;
   int _visibleAyah = 1;
   bool _initialJumpDone = false;
+
+  /// Ayahs already told to the activity engine this session, so scrolling
+  /// back up a surah cannot count a verse twice.
+  final _recordedAyahs = <int>{};
 
   @override
   void initState() {
@@ -70,6 +76,32 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
     ref
         .read(lastReadControllerProvider.notifier)
         .save(surahId: widget.surahId, verseNumber: ayah);
+    _recordAyah(ayah);
+  }
+
+  /// Records one `quran_verse` the first time [ayah] settles at the top of
+  /// the reader.
+  ///
+  /// Hung off the existing 350ms scroll debounce, which means a verse
+  /// counts once the reader has come to rest on it — not merely because it
+  /// flew past during a fling. A fast scroll therefore **under**-counts,
+  /// and that is the direction to err: overstating someone's worship back
+  /// to them is the one thing this feature must never do.
+  ///
+  /// Fire-and-forget. `record()` never throws and never touches the
+  /// network — it is a local queue write — so a verse read with no signal
+  /// counts exactly like one read on wifi, and nothing here can turn a
+  /// scroll into an error dialog.
+  void _recordAyah(int ayah) {
+    if (!_recordedAyahs.add(ayah)) return;
+    unawaited(
+      ref
+          .read(activityRecorderProvider)
+          .record(
+            ActivityType.quranVerse,
+            sourceRef: 'quran:${widget.surahId}:$ayah',
+          ),
+    );
   }
 
   int? _topMostVisibleAyah() {

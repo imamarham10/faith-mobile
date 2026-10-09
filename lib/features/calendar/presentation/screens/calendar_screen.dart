@@ -351,7 +351,9 @@ class _ErrorView extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
         ),
         const Gap(AppSpacing.lg),
-        Center(child: PoppyButton(label: 'Try again', onPressed: onRetry)),
+        Center(
+          child: PoppyButton(label: 'Try again', onPressed: onRetry),
+        ),
       ],
     );
   }

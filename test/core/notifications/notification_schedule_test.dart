@@ -5,9 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final days = LocalPrayerTimes.forRange(
-    latitude: 12.9716, longitude: 77.5946,
-    from: DateTime(2026, 10, 8), days: 6,
-    method: 'MWL', madhab: 'shafi',
+    latitude: 12.9716,
+    longitude: 77.5946,
+    from: DateTime(2026, 10, 8),
+    days: 6,
+    method: 'MWL',
+    madhab: 'shafi',
   );
 
   test('never exceeds the iOS 64-notification ceiling', () {
@@ -25,9 +28,15 @@ void main() {
       prefs: const NotificationPreferences(leadMinutes: 0),
       now: DateTime(2026, 10, 8, 23, 59),
     );
-    expect(plan.every((e) => e.when.isAfter(DateTime(2026, 10, 8, 23, 59))), isTrue);
-    expect(plan.any((e) => e.when.day == 9), isTrue,
-        reason: 'late on day 1 we should still hold future days');
+    expect(
+      plan.every((e) => e.when.isAfter(DateTime(2026, 10, 8, 23, 59))),
+      isTrue,
+    );
+    expect(
+      plan.any((e) => e.when.day == 9),
+      isTrue,
+      reason: 'late on day 1 we should still hold future days',
+    );
   });
 
   test('allocates unique ids so later days do not overwrite earlier ones', () {
@@ -62,9 +71,12 @@ void extra() {
       late List<LocalPrayerDay> days;
       expect(
         () => days = safePrayerDaysFor(
-          latitude: 69.6492, longitude: 18.9553,
-          from: DateTime(2026, 12, 15), days: kScheduleWindowDays,
-          method: 'MWL', madhab: kDefaultMadhab,
+          latitude: 69.6492,
+          longitude: 18.9553,
+          from: DateTime(2026, 12, 15),
+          days: kScheduleWindowDays,
+          method: 'MWL',
+          madhab: kDefaultMadhab,
         ),
         returnsNormally,
       );
@@ -82,9 +94,12 @@ void extra() {
       // Same coordinates in October compute fine — the failure is seasonal,
       // so we must not blanket-disable high latitudes.
       final days = safePrayerDaysFor(
-        latitude: 69.6492, longitude: 18.9553,
-        from: DateTime(2026, 10, 8), days: kScheduleWindowDays,
-        method: 'MWL', madhab: kDefaultMadhab,
+        latitude: 69.6492,
+        longitude: 18.9553,
+        from: DateTime(2026, 10, 8),
+        days: kScheduleWindowDays,
+        method: 'MWL',
+        madhab: kDefaultMadhab,
       );
       expect(days, hasLength(kScheduleWindowDays));
 
@@ -101,9 +116,12 @@ void extra() {
       // Tromso 8 Oct: Isha falls at 00:17 on the 9th. A day-level date
       // filter would drop it; a per-entry one keeps it.
       final days = safePrayerDaysFor(
-        latitude: 69.6492, longitude: 18.9553,
-        from: DateTime(2026, 10, 8), days: 1,
-        method: 'MWL', madhab: kDefaultMadhab,
+        latitude: 69.6492,
+        longitude: 18.9553,
+        from: DateTime(2026, 10, 8),
+        days: 1,
+        method: 'MWL',
+        madhab: kDefaultMadhab,
       );
       final plan = buildNotificationPlan(
         days: days,
@@ -118,9 +136,12 @@ void extra() {
 
   group('planner rules', () {
     final days = LocalPrayerTimes.forRange(
-      latitude: 12.9716, longitude: 77.5946,
-      from: DateTime(2026, 10, 8), days: kScheduleWindowDays,
-      method: 'MWL', madhab: kDefaultMadhab,
+      latitude: 12.9716,
+      longitude: 77.5946,
+      from: DateTime(2026, 10, 8),
+      days: kScheduleWindowDays,
+      method: 'MWL',
+      madhab: kDefaultMadhab,
     );
 
     test('a disabled prayer is never scheduled', () {
@@ -158,9 +179,12 @@ void extra() {
     test('on overflow it keeps the soonest and drops the furthest', () {
       // 12 days x 5 x 2 = 120 candidates, trimmed to the ceiling.
       final wide = LocalPrayerTimes.forRange(
-        latitude: 12.9716, longitude: 77.5946,
-        from: DateTime(2026, 10, 8), days: 12,
-        method: 'MWL', madhab: kDefaultMadhab,
+        latitude: 12.9716,
+        longitude: 77.5946,
+        from: DateTime(2026, 10, 8),
+        days: 12,
+        method: 'MWL',
+        madhab: kDefaultMadhab,
       );
       final plan = buildNotificationPlan(
         days: wide,

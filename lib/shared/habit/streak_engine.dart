@@ -168,13 +168,8 @@ class StreakProjection {
           freezeResetOn == other.freezeResetOn;
 
   @override
-  int get hashCode => Object.hash(
-    current,
-    longest,
-    lastGoalMetDay,
-    freezesLeft,
-    freezeResetOn,
-  );
+  int get hashCode =>
+      Object.hash(current, longest, lastGoalMetDay, freezesLeft, freezeResetOn);
 
   @override
   String toString() =>
@@ -291,8 +286,9 @@ DayProgress dayProgress({
 StreakProjection computeStreak(Iterable<String> metDays, String today) {
   final freezeResetOn = firstDayOfNextMonth(today);
 
-  final days = metDays.where((day) => day.compareTo(today) <= 0).toSet().toList()
-    ..sort();
+  final days =
+      metDays.where((day) => day.compareTo(today) <= 0).toSet().toList()
+        ..sort();
 
   if (days.isEmpty) {
     return StreakProjection(

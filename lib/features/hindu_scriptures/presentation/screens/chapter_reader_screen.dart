@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -47,6 +49,9 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
   int _visibleVerse = 1;
   bool _initialJumpDone = false;
 
+  /// Verses already told to the activity engine this session.
+  final _recordedVerses = <int>{};
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +87,34 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
           chapterNumber: widget.chapterNumber,
           verseNumber: verse,
         );
+    _recordVerse(verse);
+  }
+
+  /// Records one `gita_shloka` the first time [verse] settles at the top.
+  ///
+  /// The Islam reader's twin — same debounce, same once-per-session set,
+  /// same deliberate under-count on a fling. Parity in the *definition* of
+  /// what counts is what makes the two faiths' streaks comparable, and no
+  /// test catches a parity break in a definition.
+  ///
+  /// **`sourceRef` is omitted for any text other than the Gita**, and that
+  /// is a gap in the frozen contract rather than a choice. §1.6 fixes the
+  /// shape as `gita:<chapter>:<verse>` with no room for *which* text, so a
+  /// Ramayana verse has no expressible reference. §1.6 permits omitting the
+  /// field when there is genuinely no reference; inventing a fourth segment
+  /// would be a silent contract change, and Phase 2 derives challenge
+  /// progress from these strings by matching that exact shape.
+  void _recordVerse(int verse) {
+    if (!_recordedVerses.add(verse)) return;
+    final isGita = widget.textSlug.toLowerCase().contains('gita');
+    unawaited(
+      ref
+          .read(activityRecorderProvider)
+          .record(
+            ActivityType.gitaShloka,
+            sourceRef: isGita ? 'gita:${widget.chapterNumber}:$verse' : null,
+          ),
+    );
   }
 
   int? _topMostVisibleVerse() {
@@ -216,8 +249,7 @@ class _ReaderBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audio = ref.watch(scriptureAudioControllerProvider);
     final bookmarks =
-        ref.watch(scriptureBookmarksControllerProvider).valueOrNull ??
-        const [];
+        ref.watch(scriptureBookmarksControllerProvider).valueOrNull ?? const [];
     final chapterTitle =
         chapter.nameEnglish ?? 'Chapter ${chapter.chapterNumber}';
     final isChapterPlaying =
@@ -279,9 +311,7 @@ class _ReaderBody extends ConsumerWidget {
             itemBuilder: (context, index) {
               final verse = chapter.verses[index];
               final isPlaying = isChapterPlaying && audio.isPlaying;
-              final isBookmarked = bookmarks.any(
-                (b) => b.verseId == verse.id,
-              );
+              final isBookmarked = bookmarks.any((b) => b.verseId == verse.id);
               return KeyedSubtree(
                 key: verseKeys[verse.verseNumber],
                 child: VerseView(

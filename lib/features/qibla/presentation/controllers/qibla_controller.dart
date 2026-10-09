@@ -83,8 +83,7 @@ Stream<QiblaSnapshot> qiblaStream(Ref ref) async* {
     // null. Treat null/negative as "we don't know" (don't flag), and only
     // flag when we explicitly have a poor reading (> 25°). raw == null below
     // is the real "no heading yet" signal.
-    final needsCalibration =
-        accuracy != null && accuracy >= 0 && accuracy > 25;
+    final needsCalibration = accuracy != null && accuracy >= 0 && accuracy > 25;
 
     if (raw == null) {
       yield QiblaSnapshot(

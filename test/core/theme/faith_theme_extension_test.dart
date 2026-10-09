@@ -34,9 +34,7 @@ void main() {
     expect(islam.lerp(hindu, 0.99).faithId, FaithId.hindu);
   });
 
-  testWidgets('is retrievable via Theme.of(context).extension', (
-    tester,
-  ) async {
+  testWidgets('is retrievable via Theme.of(context).extension', (tester) async {
     final ext = FaithThemeExtension.of(
       FaithId.islam,
       FaithPalette.of(FaithId.islam, Brightness.light),

@@ -121,9 +121,9 @@ class DhikrHomeScreen extends ConsumerWidget {
       context.push('/practice/dhikr/counter/${created.id}');
     } on Object catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Couldn\'t add counter: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Couldn\'t add counter: $e')));
     }
   }
 }
@@ -216,9 +216,9 @@ class _ContentSlivers extends ConsumerWidget {
       context.push('/practice/dhikr/counter/${created.id}');
     } on Object catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Couldn\'t add counter: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Couldn\'t add counter: $e')));
     }
   }
 }

@@ -214,7 +214,8 @@ class _BookShimmer extends StatelessWidget {
       ),
       itemCount: 8,
       separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-      itemBuilder: (_, __) => const PoppySkeleton(height: 88, radius: AppRadius.lg),
+      itemBuilder: (_, __) =>
+          const PoppySkeleton(height: 88, radius: AppRadius.lg),
     );
   }
 }

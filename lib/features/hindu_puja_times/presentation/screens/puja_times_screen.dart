@@ -54,7 +54,8 @@ class PujaTimesScreen extends ConsumerWidget {
           loading: () => const _LoadingShimmer(),
           error: (e, _) => _ErrorView(
             message: e.toString(),
-            onRetry: () => ref.read(pujaTimesControllerProvider.notifier).refresh(),
+            onRetry: () =>
+                ref.read(pujaTimesControllerProvider.notifier).refresh(),
           ),
           data: (data) {
             if (data == null) {
@@ -250,9 +251,15 @@ class _ErrorView extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const Gap(AppSpacing.xs),
-        Text(message, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium,
+        ),
         const Gap(AppSpacing.lg),
-        Center(child: PoppyButton(label: 'Try again', onPressed: onRetry)),
+        Center(
+          child: PoppyButton(label: 'Try again', onPressed: onRetry),
+        ),
       ],
     );
   }

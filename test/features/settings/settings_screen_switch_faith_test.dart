@@ -108,29 +108,28 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets(
-      'shows prayer/Arabic-script sections for Islam',
-      (tester) async {
-        await pumpWithFaith(tester, FaithId.islam);
+    testWidgets('shows prayer/Arabic-script sections for Islam', (
+      tester,
+    ) async {
+      await pumpWithFaith(tester, FaithId.islam);
 
-        expect(find.text('Prayer notifications'), findsOneWidget);
-        // Both sections sit below the fold on the default test viewport —
-        // scroll each into view before asserting, same as "Switch faith"
-        // above.
-        await tester.scrollUntilVisible(
-          find.text('Prayer calculation method'),
-          500.0,
-          scrollable: find.byType(Scrollable),
-        );
-        expect(find.text('Prayer calculation method'), findsOneWidget);
-        await tester.scrollUntilVisible(
-          find.text('Arabic script'),
-          500.0,
-          scrollable: find.byType(Scrollable),
-        );
-        expect(find.text('Arabic script'), findsOneWidget);
-      },
-    );
+      expect(find.text('Prayer notifications'), findsOneWidget);
+      // Both sections sit below the fold on the default test viewport —
+      // scroll each into view before asserting, same as "Switch faith"
+      // above.
+      await tester.scrollUntilVisible(
+        find.text('Prayer calculation method'),
+        500.0,
+        scrollable: find.byType(Scrollable),
+      );
+      expect(find.text('Prayer calculation method'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Arabic script'),
+        500.0,
+        scrollable: find.byType(Scrollable),
+      );
+      expect(find.text('Arabic script'), findsOneWidget);
+    });
 
     testWidgets(
       'hides prayer/Arabic-script sections for Hindu — they don\'t apply',

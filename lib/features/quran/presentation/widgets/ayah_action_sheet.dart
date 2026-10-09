@@ -145,8 +145,7 @@ class AyahActionSheet extends ConsumerWidget {
                   '/share',
                   extra: ShareableContent(
                     eyebrow: 'Quran',
-                    title:
-                        '$surahName · ${verse.surahId}:${verse.verseNumber}',
+                    title: '$surahName · ${verse.surahId}:${verse.verseNumber}',
                     arabic: verse.textArabic,
                     translation: translation,
                     attribution:

@@ -11,7 +11,11 @@ import '../../data/dtos/japa_counter.dart';
 /// A counter row on the Japa home screen. Mirrors `DhikrCounterTile`
 /// structurally, swapping RTL Arabic for LTR Devanagari.
 class JapaCounterTile extends StatelessWidget {
-  const JapaCounterTile({super.key, required this.counter, required this.onTap});
+  const JapaCounterTile({
+    super.key,
+    required this.counter,
+    required this.onTap,
+  });
 
   final JapaCounter counter;
   final VoidCallback onTap;
@@ -75,7 +79,10 @@ class JapaCounterTile extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
-                _CountPill(count: counter.count, target: counter.targetCount ?? 0),
+                _CountPill(
+                  count: counter.count,
+                  target: counter.targetCount ?? 0,
+                ),
               ],
             ),
           ),

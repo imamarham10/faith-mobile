@@ -62,16 +62,19 @@ void main() {
       expect(tz.current, 'Asia/Karachi');
     });
 
-    test('still stands when the platform call fails, without throwing', () async {
-      final tz = build(
-        platform: () async => throw StateError('MissingPluginException'),
-        abbreviation: 'WIB',
-      );
+    test(
+      'still stands when the platform call fails, without throwing',
+      () async {
+        final tz = build(
+          platform: () async => throw StateError('MissingPluginException'),
+          abbreviation: 'WIB',
+        );
 
-      await expectLater(tz.refresh(), completes);
-      expect(tz.isResolved, isFalse);
-      expect(tz.current, 'Asia/Jakarta');
-    });
+        await expectLater(tz.refresh(), completes);
+        expect(tz.isResolved, isFalse);
+        expect(tz.current, 'Asia/Jakarta');
+      },
+    );
 
     test('is live, so an unresolved reader follows the device clock', () {
       var abbreviation = 'IST';

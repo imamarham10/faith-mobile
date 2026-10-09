@@ -140,7 +140,10 @@ class _DetailContentState extends ConsumerState<_DetailContent> {
               const Gap(AppSpacing.xs),
               Text(
                 stotra.titleSanskrit,
-                style: sanskritTextStyle(fontSize: 18, color: cs.onSurfaceVariant),
+                style: sanskritTextStyle(
+                  fontSize: 18,
+                  color: cs.onSurfaceVariant,
+                ),
               ),
               const Gap(AppSpacing.lg),
               PoppyCard(
@@ -227,7 +230,10 @@ class _RepeatCounter extends StatelessWidget {
               const Gap.h(AppSpacing.md),
               SizedBox(
                 width: 160,
-                child: PoppyButton(label: 'Tap to count', onPressed: onIncrement),
+                child: PoppyButton(
+                  label: 'Tap to count',
+                  onPressed: onIncrement,
+                ),
               ),
             ],
           ),
@@ -318,7 +324,10 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(icon, size: 22, color: tint),
             const SizedBox(height: 4),
-            Text(label, style: theme.textTheme.labelMedium?.copyWith(color: tint)),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(color: tint),
+            ),
           ],
         ),
       ),
@@ -367,7 +376,10 @@ class _ErrorPanel extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             const Gap(AppSpacing.md),
-            Text('We couldn\'t load this stotra.', style: theme.textTheme.bodyLarge),
+            Text(
+              'We couldn\'t load this stotra.',
+              style: theme.textTheme.bodyLarge,
+            ),
             const Gap(AppSpacing.lg),
             PoppyButton(label: 'Try again', onPressed: onRetry),
           ],

@@ -69,9 +69,7 @@ class HinduScripturesRepository {
       );
       final data = res.data;
       if (data == null) {
-        throw const ApiException(
-          message: 'Empty chapter response. Try again.',
-        );
+        throw const ApiException(message: 'Empty chapter response. Try again.');
       }
       return ChapterDetail.fromJson(data);
     } on DioException catch (e) {
@@ -122,7 +120,10 @@ class HinduScripturesRepository {
   }
 
   /// `GET /search?q=&lang=` — verse search across all texts.
-  Future<List<ScriptureVerse>> search(String query, {String lang = 'en'}) async {
+  Future<List<ScriptureVerse>> search(
+    String query, {
+    String lang = 'en',
+  }) async {
     try {
       final res = await _dio.get<dynamic>(
         '$_base/search',

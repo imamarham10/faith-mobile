@@ -70,7 +70,10 @@ class HinduStotrasRepository {
   }
 
   /// `GET /:slug?lang=` — full stotra with verses.
-  Future<StotraDetail> getStotraBySlug(String slug, {String lang = 'en'}) async {
+  Future<StotraDetail> getStotraBySlug(
+    String slug, {
+    String lang = 'en',
+  }) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '$_base/$slug',
@@ -126,7 +129,10 @@ class HinduStotrasRepository {
   /// `POST /favorites` — add a stotra to favorites server-side. Best-effort.
   Future<void> addFavorite(String stotraId) async {
     try {
-      await _dio.post<dynamic>('$_base/favorites', data: {'stotraId': stotraId});
+      await _dio.post<dynamic>(
+        '$_base/favorites',
+        data: {'stotraId': stotraId},
+      );
     } on DioException {
       // Local mirror remains canonical.
     }

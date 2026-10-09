@@ -95,8 +95,7 @@ class StotraCategoryScreen extends ConsumerWidget {
                 return StotraListTile(
                   stotra: stotra,
                   isFavorite: isFav,
-                  onTap: () =>
-                      context.push('/practice/stotras/${stotra.slug}'),
+                  onTap: () => context.push('/practice/stotras/${stotra.slug}'),
                   onToggleFavorite: () => favsCtrl.toggle(stotra),
                 );
               },

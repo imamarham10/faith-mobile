@@ -60,7 +60,10 @@ class _ErrorCard extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
           const Gap(AppSpacing.sm),
-          Text("Couldn't load today's verse.", style: theme.textTheme.bodyLarge),
+          Text(
+            "Couldn't load today's verse.",
+            style: theme.textTheme.bodyLarge,
+          ),
           const Gap(AppSpacing.md),
           PoppyButton(label: 'Try again', onPressed: onRetry),
         ],

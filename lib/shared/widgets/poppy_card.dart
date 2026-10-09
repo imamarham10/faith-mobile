@@ -66,12 +66,7 @@ class _PoppyCardState extends State<PoppyCard> {
         border: Border.all(color: border, width: ext.cardOutlineWidth),
         boxShadow: offset == 0
             ? const []
-            : [
-                BoxShadow(
-                  color: palette.shadow,
-                  offset: Offset(0, offset),
-                ),
-              ],
+            : [BoxShadow(color: palette.shadow, offset: Offset(0, offset))],
       ),
       padding: widget.padding,
       child: widget.child,

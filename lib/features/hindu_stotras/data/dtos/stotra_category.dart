@@ -24,8 +24,10 @@ abstract class StotraCategory with _$StotraCategory {
 /// Minimal category reference nested on stotra list/detail payloads.
 @freezed
 abstract class StotraCategoryRef with _$StotraCategoryRef {
-  const factory StotraCategoryRef({required String slug, required String name}) =
-      _StotraCategoryRef;
+  const factory StotraCategoryRef({
+    required String slug,
+    required String name,
+  }) = _StotraCategoryRef;
 
   factory StotraCategoryRef.fromJson(Map<String, dynamic> json) =>
       _$StotraCategoryRefFromJson(json);

@@ -67,7 +67,11 @@ class ScriptureBookmarksController extends _$ScriptureBookmarksController {
       await _writeLocal(merged);
       state = AsyncValue.data(merged);
     } on Object catch (e, st) {
-      developer.log('Scripture bookmark merge failed', error: e, stackTrace: st);
+      developer.log(
+        'Scripture bookmark merge failed',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 

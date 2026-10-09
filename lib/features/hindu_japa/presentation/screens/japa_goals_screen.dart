@@ -286,7 +286,10 @@ class _NewGoalSheetState extends ConsumerState<_NewGoalSheet> {
             const Gap(8),
             SegmentedButton<JapaGoalPeriod>(
               segments: const [
-                ButtonSegment(value: JapaGoalPeriod.daily, label: Text('Daily')),
+                ButtonSegment(
+                  value: JapaGoalPeriod.daily,
+                  label: Text('Daily'),
+                ),
                 ButtonSegment(
                   value: JapaGoalPeriod.weekly,
                   label: Text('Weekly'),

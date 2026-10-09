@@ -35,8 +35,10 @@ class PoppyIcon extends StatelessWidget {
     // because the tint and glyph share the same hue. Accepted as a minor,
     // non-blocking limitation: shape/silhouette reads via hue+chroma
     // separation, and every current usage pairs the icon with adjacent text.
-    final resolvedBackground = background ?? palette.primary.withValues(alpha: 0.16);
-    final resolvedForeground = foreground ??
+    final resolvedBackground =
+        background ?? palette.primary.withValues(alpha: 0.16);
+    final resolvedForeground =
+        foreground ??
         (background != null
             ? _bestContrastColor(palette.primary, resolvedBackground)
             : palette.primary);
@@ -49,11 +51,7 @@ class PoppyIcon extends StatelessWidget {
         border: Border.all(color: palette.outline, width: 2),
       ),
       alignment: Alignment.center,
-      child: Icon(
-        icon,
-        size: size * 0.5,
-        color: resolvedForeground,
-      ),
+      child: Icon(icon, size: size * 0.5, color: resolvedForeground),
     );
   }
 

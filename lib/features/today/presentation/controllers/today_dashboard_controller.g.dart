@@ -6,12 +6,264 @@ part of 'today_dashboard_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$todayDashboardHash() => r'd4cfa7c2a08e7436ff844102881ad98290bd3215';
+String _$activitySnapshotHash() => r'c76574347b1fdf99ac3b03ac549e5a05b4faf746';
 
-/// The Today screen's single source of numbers.
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// The raw engine reads, cached across rebuilds.
 ///
-/// Branches on faith here rather than in the widgets, so the screen's
-/// progress section is built once for both faiths and cannot drift apart.
+/// Separate from [todayDashboard] so that recording something rebuilds the
+/// *projection* — which is local and instant — without firing a network
+/// request per tap. A dhikr counter tapped a hundred times would otherwise
+/// make a hundred `GET /today`s.
+///
+/// Invalidated after a flush actually lands, which is when the server has
+/// something new to say.
+///
+/// Copied from [activitySnapshot].
+@ProviderFor(activitySnapshot)
+const activitySnapshotProvider = ActivitySnapshotFamily();
+
+/// The raw engine reads, cached across rebuilds.
+///
+/// Separate from [todayDashboard] so that recording something rebuilds the
+/// *projection* — which is local and instant — without firing a network
+/// request per tap. A dhikr counter tapped a hundred times would otherwise
+/// make a hundred `GET /today`s.
+///
+/// Invalidated after a flush actually lands, which is when the server has
+/// something new to say.
+///
+/// Copied from [activitySnapshot].
+class ActivitySnapshotFamily
+    extends
+        Family<
+          AsyncValue<
+            ({
+              ActivityTodaySnapshot today,
+              List<ActivityHistoryDay> history,
+              bool isStale,
+            })
+          >
+        > {
+  /// The raw engine reads, cached across rebuilds.
+  ///
+  /// Separate from [todayDashboard] so that recording something rebuilds the
+  /// *projection* — which is local and instant — without firing a network
+  /// request per tap. A dhikr counter tapped a hundred times would otherwise
+  /// make a hundred `GET /today`s.
+  ///
+  /// Invalidated after a flush actually lands, which is when the server has
+  /// something new to say.
+  ///
+  /// Copied from [activitySnapshot].
+  const ActivitySnapshotFamily();
+
+  /// The raw engine reads, cached across rebuilds.
+  ///
+  /// Separate from [todayDashboard] so that recording something rebuilds the
+  /// *projection* — which is local and instant — without firing a network
+  /// request per tap. A dhikr counter tapped a hundred times would otherwise
+  /// make a hundred `GET /today`s.
+  ///
+  /// Invalidated after a flush actually lands, which is when the server has
+  /// something new to say.
+  ///
+  /// Copied from [activitySnapshot].
+  ActivitySnapshotProvider call(ActivityFaith faith) {
+    return ActivitySnapshotProvider(faith);
+  }
+
+  @override
+  ActivitySnapshotProvider getProviderOverride(
+    covariant ActivitySnapshotProvider provider,
+  ) {
+    return call(provider.faith);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'activitySnapshotProvider';
+}
+
+/// The raw engine reads, cached across rebuilds.
+///
+/// Separate from [todayDashboard] so that recording something rebuilds the
+/// *projection* — which is local and instant — without firing a network
+/// request per tap. A dhikr counter tapped a hundred times would otherwise
+/// make a hundred `GET /today`s.
+///
+/// Invalidated after a flush actually lands, which is when the server has
+/// something new to say.
+///
+/// Copied from [activitySnapshot].
+class ActivitySnapshotProvider
+    extends
+        AutoDisposeFutureProvider<
+          ({
+            ActivityTodaySnapshot today,
+            List<ActivityHistoryDay> history,
+            bool isStale,
+          })
+        > {
+  /// The raw engine reads, cached across rebuilds.
+  ///
+  /// Separate from [todayDashboard] so that recording something rebuilds the
+  /// *projection* — which is local and instant — without firing a network
+  /// request per tap. A dhikr counter tapped a hundred times would otherwise
+  /// make a hundred `GET /today`s.
+  ///
+  /// Invalidated after a flush actually lands, which is when the server has
+  /// something new to say.
+  ///
+  /// Copied from [activitySnapshot].
+  ActivitySnapshotProvider(ActivityFaith faith)
+    : this._internal(
+        (ref) => activitySnapshot(ref as ActivitySnapshotRef, faith),
+        from: activitySnapshotProvider,
+        name: r'activitySnapshotProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$activitySnapshotHash,
+        dependencies: ActivitySnapshotFamily._dependencies,
+        allTransitiveDependencies:
+            ActivitySnapshotFamily._allTransitiveDependencies,
+        faith: faith,
+      );
+
+  ActivitySnapshotProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.faith,
+  }) : super.internal();
+
+  final ActivityFaith faith;
+
+  @override
+  Override overrideWith(
+    FutureOr<
+      ({
+        ActivityTodaySnapshot today,
+        List<ActivityHistoryDay> history,
+        bool isStale,
+      })
+    >
+    Function(ActivitySnapshotRef provider)
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ActivitySnapshotProvider._internal(
+        (ref) => create(ref as ActivitySnapshotRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        faith: faith,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<
+    ({
+      ActivityTodaySnapshot today,
+      List<ActivityHistoryDay> history,
+      bool isStale,
+    })
+  >
+  createElement() {
+    return _ActivitySnapshotProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ActivitySnapshotProvider && other.faith == faith;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, faith.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ActivitySnapshotRef
+    on
+        AutoDisposeFutureProviderRef<
+          ({
+            ActivityTodaySnapshot today,
+            List<ActivityHistoryDay> history,
+            bool isStale,
+          })
+        > {
+  /// The parameter `faith` of this provider.
+  ActivityFaith get faith;
+}
+
+class _ActivitySnapshotProviderElement
+    extends
+        AutoDisposeFutureProviderElement<
+          ({
+            ActivityTodaySnapshot today,
+            List<ActivityHistoryDay> history,
+            bool isStale,
+          })
+        >
+    with ActivitySnapshotRef {
+  _ActivitySnapshotProviderElement(super.provider);
+
+  @override
+  ActivityFaith get faith => (origin as ActivitySnapshotProvider).faith;
+}
+
+String _$todayDashboardHash() => r'64b4ce1283e50d31663d8e9780b0eb9a6de44979';
+
+/// The Today screen's numbers, for whichever faith is selected.
+///
+/// Branches on faith exactly once — to pick the content pack — rather than
+/// in the widgets, so the progress section is built once for both faiths
+/// and cannot drift apart. There is no Islam copy of this function and no
+/// Hindu one; that is the change Task 1.12 makes possible, because the two
+/// faiths now read the same endpoint instead of four different ones.
 ///
 /// Copied from [todayDashboard].
 @ProviderFor(todayDashboard)
@@ -29,54 +281,44 @@ final todayDashboardProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TodayDashboardRef = AutoDisposeFutureProviderRef<TodayDashboard>;
-String _$islamTodayDashboardHash() =>
-    r'db6c80e66a531c2617ba578754dbfc3034f235d9';
+String _$activitySnapshotCacheHash() =>
+    r'8f100909800f84e0400db26b5408a4f7001dc94c';
 
-/// Islam: prayers from the log, dhikr from history, streak derived locally.
+/// The last good response per faith, so a lost connection does not blank
+/// the screen.
 ///
-/// There is no server-side prayer streak to read — the Hindu side has one
-/// (`PujaStats.currentStreak`) and the Islam side does not — so this one is
-/// computed on-device with [deriveStreak], which mirrors the server's rule
-/// exactly so the two faiths' chips mean the same thing.
+/// Without this a failed `GET /today` sends `TodayProgressSection` down its
+/// error branch, and a user who turns off wifi and records a verse watches
+/// the whole section disappear — on the one screen whose entire promise is
+/// that offline worship still counts. In memory only: it is a render cache,
+/// not a second source of truth, and persisting it would create a second
+/// place the streak can be wrong.
 ///
-/// Copied from [islamTodayDashboard].
-@ProviderFor(islamTodayDashboard)
-final islamTodayDashboardProvider =
-    AutoDisposeFutureProvider<TodayDashboard>.internal(
-      islamTodayDashboard,
-      name: r'islamTodayDashboardProvider',
+/// Copied from [ActivitySnapshotCache].
+@ProviderFor(ActivitySnapshotCache)
+final activitySnapshotCacheProvider =
+    NotifierProvider<
+      ActivitySnapshotCache,
+      Map<
+        ActivityFaith,
+        ({ActivityTodaySnapshot today, List<ActivityHistoryDay> history})
+      >
+    >.internal(
+      ActivitySnapshotCache.new,
+      name: r'activitySnapshotCacheProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$islamTodayDashboardHash,
+          : _$activitySnapshotCacheHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef IslamTodayDashboardRef = AutoDisposeFutureProviderRef<TodayDashboard>;
-String _$hinduTodayDashboardHash() =>
-    r'3b61fe1aada1d565e11d6b0769fd16fe6ecb8241';
-
-/// Hindu: sandhya from the puja log, japa from history, and a streak that is
-/// read straight off the server — `GET /puja-times/stats` already computes
-/// one, so this faith gets an authoritative number for free.
-///
-/// Copied from [hinduTodayDashboard].
-@ProviderFor(hinduTodayDashboard)
-final hinduTodayDashboardProvider =
-    AutoDisposeFutureProvider<TodayDashboard>.internal(
-      hinduTodayDashboard,
-      name: r'hinduTodayDashboardProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$hinduTodayDashboardHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HinduTodayDashboardRef = AutoDisposeFutureProviderRef<TodayDashboard>;
+typedef _$ActivitySnapshotCache =
+    Notifier<
+      Map<
+        ActivityFaith,
+        ({ActivityTodaySnapshot today, List<ActivityHistoryDay> history})
+      >
+    >;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

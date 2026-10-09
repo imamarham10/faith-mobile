@@ -19,7 +19,9 @@ void main() {
   testWidgets(
     'does not render an invisible icon when a custom background is supplied without a foreground',
     (tester) async {
-      final palette = AppTheme.light(FaithId.islam).extension<FaithThemeExtension>()!.palette;
+      final palette = AppTheme.light(
+        FaithId.islam,
+      ).extension<FaithThemeExtension>()!.palette;
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(FaithId.islam),

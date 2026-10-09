@@ -58,6 +58,8 @@ class PoppySkeleton extends StatelessWidget {
       ),
     );
 
-    return padding == null ? skeleton : Padding(padding: padding!, child: skeleton);
+    return padding == null
+        ? skeleton
+        : Padding(padding: padding!, child: skeleton);
   }
 }

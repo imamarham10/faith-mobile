@@ -46,19 +46,18 @@ class _ShareCardScreenState extends ConsumerState<ShareCardScreen> {
         throw Exception('Could not render the card.');
       }
       final dir = await getTemporaryDirectory();
-      final file = await File('${dir.path}/faith_share.png').writeAsBytes(
-        bytes,
-      );
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
-        text: _shareText(widget.content),
-      );
+      final file = await File(
+        '${dir.path}/faith_share.png',
+      ).writeAsBytes(bytes);
+      await Share.shareXFiles([
+        XFile(file.path, mimeType: 'image/png'),
+      ], text: _shareText(widget.content));
     } on Object catch (e, st) {
       developer.log('share failed', error: e, stackTrace: st);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Couldn\'t share: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Couldn\'t share: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
