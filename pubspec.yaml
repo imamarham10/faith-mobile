@@ -66,6 +66,12 @@ dependencies:
   path_provider: ^2.1.5
   url_launcher: ^6.3.2
 
+  # Local database. One table — the offline activity-event queue — so
+  # sqflite rather than drift or isar: no codegen, no query builder, no
+  # migration framework for a schema that is a single CREATE TABLE.
+  sqflite: ^2.4.2+1
+  path: ^1.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -78,6 +84,11 @@ dev_dependencies:
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.5
   flutter_launcher_icons: ^0.14.1
+
+  # sqflite's platform channels don't exist on the Dart VM, so queue tests
+  # run against the FFI backend instead — a real SQLite file on disk, which
+  # is the only way a close/reopen durability test means anything.
+  sqflite_common_ffi: ^2.4.0+3
 
 flutter_launcher_icons:
   android: "ic_launcher"
