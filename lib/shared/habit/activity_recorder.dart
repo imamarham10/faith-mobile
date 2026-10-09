@@ -21,8 +21,9 @@
 ///    an unhandled future. Failures are logged and swallowed; [record]
 ///    reports whether the event landed for callers that care.
 ///
-/// The actual upload is Task 1.10's flush, and the calls from Qur'an,
-/// prayers and dhikr are Task 1.12. Neither is here.
+/// The actual upload and the calls from Qur'an, prayers and dhikr are both
+/// Task 1.12. Neither is here. (Task 1.10 is the local streak engine in
+/// `streak_engine.dart`, not the flush — this comment said otherwise.)
 library;
 
 import 'dart:developer' as developer;

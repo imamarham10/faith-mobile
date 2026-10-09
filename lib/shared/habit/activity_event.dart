@@ -1,5 +1,5 @@
-/// The vocabulary of a recorded act of worship, and the one shape the
-/// server accepts for it.
+/// The vocabulary of a recorded act of worship and of the goal it counts
+/// toward, and the one shape the server accepts for an event.
 ///
 /// Lifted out of `local_event_queue.dart`: these types are the *contract*,
 /// not the storage. A caller that only needs to name an activity — Task
@@ -70,6 +70,47 @@ enum ActivityType {
     (t) => t.wireValue == value,
     orElse: () =>
         throw ArgumentError.value(value, 'activityType', 'Unknown type'),
+  );
+}
+
+/// What the user set a target in. Wire values and ranges per contract §1.3.
+///
+/// Plural and readable (`verses`) rather than mirroring [ActivityType]
+/// (`quran_verse`) because it names the *unit the user counts in*, which is
+/// what the goal card says out loud: "5 / 5 verses".
+///
+/// Each goal type counts exactly one [ActivityType], and [faith] is derived
+/// from that rather than carried separately — which makes the server's
+/// `goal_type_faith_mismatch` rejection unrepresentable here, the same way
+/// [ActivityType.faith] does for events.
+///
+/// Deliberately absent: `pages` and `minutes`. §1.3 rules both out of Phase
+/// 1 and the server rejects them as unknown.
+enum GoalType {
+  verses('verses', ActivityType.quranVerse, 1000),
+  prayers('prayers', ActivityType.prayer, 5),
+  dhikr('dhikr', ActivityType.dhikr, 10000),
+  shlokas('shlokas', ActivityType.gitaShloka, 1000),
+  sandhyas('sandhyas', ActivityType.sandhya, 3),
+  malas('malas', ActivityType.japaMala, 108);
+
+  const GoalType(this.wireValue, this.counts, this.maxTarget);
+
+  /// The exact lowercase string the API accepts.
+  final String wireValue;
+
+  /// The one activity type whose `quantity` this goal sums (§2.4).
+  final ActivityType counts;
+
+  /// The largest target §1.3 allows. The smallest is always 1.
+  final int maxTarget;
+
+  /// The faith this goal belongs to, via the activity it counts.
+  ActivityFaith get faith => counts.faith;
+
+  static GoalType fromWire(String value) => values.firstWhere(
+    (g) => g.wireValue == value,
+    orElse: () => throw ArgumentError.value(value, 'goalType', 'Unknown type'),
   );
 }
 
