@@ -8,7 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/sanskrit_text.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
-import '../../../dhikr/presentation/widgets/milestone_ring.dart';
+import '../../../../shared/widgets/milestone_ring.dart';
 import '../../data/dtos/japa_counter.dart';
 import '../controllers/japa_counter_controller.dart';
 import '../controllers/japa_counters_controller.dart';

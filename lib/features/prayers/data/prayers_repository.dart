@@ -17,6 +17,10 @@ class PrayersRepository {
 
   static const String _base = '/api/v1/islam/prayers';
 
+  /// The server's own `take` on log reads. Mirrored here so callers can
+  /// recognise a truncated page without guessing.
+  static const int serverLogRowCap = 100;
+
   final Dio _dio;
 
   /// `GET /times?lat=&lng=&date=&method=` — today's schedule for a location.
@@ -66,6 +70,39 @@ class PrayersRepository {
           .toList(growable: false);
     } on DioException catch (e) {
       // 404 / not-yet-implemented is non-fatal — return empty.
+      if (e.response?.statusCode == 404) return const <PrayerLog>[];
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `GET /log?fromDate=&toDate=` — every log in a date range, newest
+  /// first.
+  ///
+  /// The server caps this at 100 rows ([serverLogRowCap], `take: 100` in
+  /// `prayers.service.ts`) ordered by date descending, so a long window
+  /// returns the most recent days and silently drops the oldest. Callers
+  /// deriving a streak must treat a full page as "history may go back
+  /// further than this" rather than as the end of the run.
+  Future<List<PrayerLog>> getLogsForRange({
+    required DateTime fromDate,
+    required DateTime toDate,
+  }) async {
+    try {
+      final fmt = DateFormat('yyyy-MM-dd');
+      final res = await _dio.get<dynamic>(
+        '$_base/log',
+        queryParameters: {
+          'fromDate': fmt.format(fromDate),
+          'toDate': fmt.format(toDate),
+        },
+      );
+      final data = res.data;
+      if (data is! List) return const <PrayerLog>[];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(PrayerLog.fromJson)
+          .toList(growable: false);
+    } on DioException catch (e) {
       if (e.response?.statusCode == 404) return const <PrayerLog>[];
       throw ApiException.fromDio(e);
     }

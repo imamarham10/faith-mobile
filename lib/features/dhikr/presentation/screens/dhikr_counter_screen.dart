@@ -11,7 +11,7 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../data/dtos/dhikr_counter.dart';
 import '../controllers/dhikr_counter_controller.dart';
 import '../controllers/dhikr_counters_controller.dart';
-import '../widgets/milestone_ring.dart';
+import '../../../../shared/widgets/milestone_ring.dart';
 
 /// The marquee Dhikr screen. Tap-anywhere increment, optimistic + debounced.
 class DhikrCounterScreen extends ConsumerStatefulWidget {

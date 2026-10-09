@@ -5,7 +5,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/sanskrit_text.dart';
 import '../../../../shared/widgets/poppy_card.dart';
-import '../../../dhikr/presentation/widgets/milestone_ring.dart';
+import '../../../../shared/widgets/milestone_ring.dart';
 import '../../data/dtos/japa_counter.dart';
 
 /// A counter row on the Japa home screen. Mirrors `DhikrCounterTile`

@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 
 /// A thin circular progress ring filling 0→1 toward a target.
 ///
+/// Lives in `shared/` rather than under a faith feature: dhikr counters,
+/// japa counters and the Today week strip all draw it, and it was already
+/// being cross-imported from `features/hindu_japa` into
+/// `features/dhikr` before it moved here.
+///
 /// Smoothly tweens between progress values (200ms easeOutCubic) so each
 /// increment has a tiny visual nudge toward the goal — small motion that
 /// communicates progress without yelling.

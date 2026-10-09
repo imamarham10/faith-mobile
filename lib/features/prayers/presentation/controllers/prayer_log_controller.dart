@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/notifications/permission_gate.dart';
+import '../../../today/presentation/controllers/today_dashboard_controller.dart';
 import '../../data/dtos/prayer_log.dart';
 import '../../data/dtos/prayer_stats.dart';
 import '../../data/prayers_repository.dart';
@@ -32,6 +33,12 @@ class TodayLogs extends _$TodayLogs {
     final current = state.value ?? const <String, PrayerLog>{};
     state = AsyncValue.data({...current, prayerName.toLowerCase(): created});
     ref.invalidate(prayerStatsControllerProvider);
+    // Closes the loop. The Today branch stays mounted in the shell's
+    // indexed stack, so without this the user logs a prayer, returns to
+    // Today, and the ring, the goal and the checklist all still show the
+    // old numbers — which is the whole feature failing silently.
+    // Task 1.12's `record()` call site replaces this.
+    ref.invalidate(todayDashboardProvider);
 
     // The one moment the notification ask has an obvious reason: the user
     // has just logged a prayer, so "remind you next time?" explains itself.

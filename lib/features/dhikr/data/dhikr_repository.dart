@@ -196,10 +196,16 @@ class DhikrRepository {
 
   // ---- History ----
 
-  /// `GET /history?from=&to=` — session history.
+  /// `GET /history?from=&to=&limit=` — session history.
+  ///
+  /// [limit] matters more than it looks: the endpoint defaults to 30 rows
+  /// and rows are unique per (phrase, day), so a user with five counters
+  /// runs out of page after six days and any weekly total computed from the
+  /// default would quietly undercount. The server clamps it to 365.
   Future<List<DhikrHistoryEntry>> getHistory({
     DateTime? from,
     DateTime? to,
+    int? limit,
   }) async {
     try {
       final res = await _dio.get<dynamic>(
@@ -207,6 +213,7 @@ class DhikrRepository {
         queryParameters: {
           if (from != null) 'from': _ymd(from),
           if (to != null) 'to': _ymd(to),
+          if (limit != null) 'limit': limit,
         },
       );
       final data = res.data;

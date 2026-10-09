@@ -7,7 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/dhikr_counter.dart';
-import 'milestone_ring.dart';
+import '../../../../shared/widgets/milestone_ring.dart';
 
 /// A counter row on the Dhikr home screen.
 ///

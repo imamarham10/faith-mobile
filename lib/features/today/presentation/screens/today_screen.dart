@@ -22,6 +22,8 @@ import '../widgets/daily_verse_card.dart';
 import '../widgets/mood_prompt.dart';
 import '../widgets/prayer_countdown_card.dart';
 import '../widgets/quick_actions_row.dart';
+import '../widgets/streak_chip.dart';
+import '../widgets/today_progress_section.dart';
 
 /// The first impression — sets the brand tone and the architectural pattern
 /// Phase 1 feature agents will mirror.
@@ -81,6 +83,11 @@ class _IslamTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
+                  // The loop first: what you did this week, what today's
+                  // goal is, and what is left of it. Everything above the
+                  // fold is now state that changed because of yesterday.
+                  const TodayProgressSection(),
+                  const Gap(AppSpacing.xxl),
                   PrayerCountdownCard(
                     onTap: () => context.push('/today/prayers'),
                   ),
@@ -145,6 +152,8 @@ class _HinduTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
+                  const TodayProgressSection(),
+                  const Gap(AppSpacing.xxl),
                   PujaCountdownCard(
                     onTap: () => context.push('/today/puja-times'),
                   ),
@@ -182,7 +191,7 @@ class _HinduGreeting extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Flexible(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.screenEdge,
@@ -222,7 +231,7 @@ class _HinduGreeting extends StatelessWidget {
             ),
           ),
         ),
-        const _SettingsButton(),
+        const _HeaderActions(),
       ],
     );
   }
@@ -308,7 +317,7 @@ class _Greeting extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Flexible(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.screenEdge,
@@ -351,20 +360,23 @@ class _Greeting extends StatelessWidget {
             ),
           ),
         ),
-        const _SettingsButton(),
+        const _HeaderActions(),
       ],
     );
   }
 }
 
-/// Top-right settings affordance shared by every faith branch's Today
-/// layout — one canonical inset (lifted from `_Greeting`'s original padding,
-/// the more deliberate of the two independently-tuned insets that existed
-/// pre-refactor) so switching faiths never visibly moves the settings
-/// button.
-class _SettingsButton extends StatelessWidget {
-  const _SettingsButton();
+/// Streak chip plus settings, in the header of every faith branch.
+///
+/// The chip draws nothing until a streak exists, so on a fresh install this
+/// is exactly the settings button it replaced.
+class _HeaderActions extends StatelessWidget {
+  const _HeaderActions();
 
+  /// One canonical inset for every faith branch — lifted from the original
+  /// `_Greeting` padding, the more deliberate of the two independently
+  /// tuned insets that existed before — so switching faiths never visibly
+  /// moves the settings button.
   static const EdgeInsets padding = EdgeInsets.fromLTRB(
     AppSpacing.screenEdge,
     AppSpacing.lg,
@@ -376,13 +388,19 @@ class _SettingsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: padding,
-      child: IconButton(
-        tooltip: 'Settings',
-        icon: const Icon(Icons.settings_outlined),
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          context.push('/settings');
-        },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StreakChip(),
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              context.push('/settings');
+            },
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../today/presentation/controllers/today_dashboard_controller.dart';
 import '../../data/dtos/puja_log.dart';
 import '../../data/dtos/puja_stats.dart';
 import '../../data/hindu_puja_times_repository.dart';
@@ -26,6 +27,8 @@ class TodayPujaLogs extends _$TodayPujaLogs {
     final current = state.valueOrNull ?? const <String, PujaLog>{};
     state = AsyncValue.data({...current, sandhya: created});
     ref.invalidate(pujaStatsControllerProvider);
+    // Parity with the Islam side — see `TodayLogs.log`.
+    ref.invalidate(todayDashboardProvider);
   }
 }
 

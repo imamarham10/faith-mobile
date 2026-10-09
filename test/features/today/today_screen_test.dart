@@ -7,7 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:faith_mobile/features/today/presentation/controllers/today_dashboard_controller.dart';
+import 'package:faith_mobile/features/today/presentation/widgets/today_progress_section.dart';
+
 import '../../helpers/fake_selected_faith.dart';
+import '../../helpers/fake_today_dashboard.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -32,6 +36,14 @@ void main() {
       ProviderScope(
         overrides: [
           selectedFaithProvider.overrideWith(() => FakeSelectedFaith(faith)),
+          // The progress section is the one part of this screen with a
+          // deterministic fake, so it is pinned rather than left to fail
+          // over to its error card.
+          todayDashboardProvider.overrideWith(
+            (ref) async => faith == FaithId.islam
+                ? FakeTodayDashboard.islam()
+                : FakeTodayDashboard.hindu(),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light(faith),
@@ -43,6 +55,24 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
+  /// Scrolls the Today list until [target] has been built.
+  ///
+  /// A bounded drag loop rather than `scrollUntilVisible`, for the same
+  /// reason the rest of this file uses bounded pumps: several of this
+  /// screen's network-backed providers never resolve in a widget test, so
+  /// anything that settles or that assumes a single resolvable Scrollable
+  /// is unreliable here. Also replaces the fixed `drag(Offset(0, -600))`
+  /// offsets this file used to carry, which had to be re-tuned every time
+  /// anything above the target changed height — and did, when the progress
+  /// section landed at the top of the screen.
+  Future<void> scrollTo(WidgetTester tester, Finder target) async {
+    for (var i = 0; i < 24 && target.evaluate().isEmpty; i++) {
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -220));
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+
   group('Islam branch', () {
     testWidgets('shows the Islam greeting and section content', (
       tester,
@@ -50,21 +80,35 @@ void main() {
       await pump(tester, FaithId.islam);
 
       expect(find.text('As-salāmu ʿalaykum'), findsOneWidget);
+      // These sit below the fold now that the progress section leads the
+      // screen, and a sliver list only builds what is near the viewport —
+      // so each has to be scrolled to rather than assumed built.
       // SectionLabel uppercases its text.
+      await scrollTo(tester, find.text('VERSE FOR TODAY'));
       expect(find.text('VERSE FOR TODAY'), findsOneWidget);
+      await scrollTo(tester, find.text('HADITH OF THE DAY'));
       expect(find.text('HADITH OF THE DAY'), findsOneWidget);
       // The verse itself is no longer asserted here: it is fetched from the
       // corpus and rotates by day-of-year, so there is no fixed string to
       // match. `daily_verse_test.dart` owns the rotation; re-pinning a
       // literal here would recreate exactly the bug that was just removed.
 
-      // "Quick" + the quick-actions row sit further down the scroll view
-      // than the default test viewport shows — scroll to reveal them rather
-      // than assuming they're already built/painted.
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
-      await tester.pump();
+      // "Quick" + the quick-actions row sit far below the fold now that the
+      // progress section leads the screen. scrollUntilVisible rather than a
+      // fixed drag offset, which would have to be re-tuned every time
+      // anything above them changes height.
+      await scrollTo(tester, find.text('QUICK'));
       expect(find.text('QUICK'), findsOneWidget);
+      await scrollTo(tester, find.text('How are you feeling?'));
       expect(find.text('How are you feeling?'), findsOneWidget);
+    });
+
+    testWidgets('leads with the progress section', (tester) async {
+      await pump(tester, FaithId.islam);
+
+      expect(find.byType(TodayProgressSection), findsOneWidget);
+      expect(find.text("TODAY'S GOAL"), findsOneWidget);
+      expect(find.text('Fajr'), findsOneWidget);
     });
 
     testWidgets('does not show the Hindu placeholder copy', (tester) async {
@@ -81,11 +125,7 @@ void main() {
         // MoodPrompt is now a PoppyCard (was Material+InkWell) — confirm the
         // tap-to-open-sheet behavior survived that conversion, and that the
         // mood chips (also converted to PoppyCard) are themselves tappable.
-        await tester.drag(
-          find.byType(CustomScrollView),
-          const Offset(0, -600),
-        );
-        await tester.pump();
+        await scrollTo(tester, find.text('How are you feeling?'));
         expect(find.text('How are you feeling?'), findsOneWidget);
 
         await tester.tap(find.text('How are you feeling?'));
@@ -112,18 +152,28 @@ void main() {
 
       expect(find.text('Namaste'), findsOneWidget);
       // SectionLabel uppercases its text.
+      await scrollTo(tester, find.text('SHLOKA FOR TODAY'));
       expect(find.text('SHLOKA FOR TODAY'), findsOneWidget);
+      await scrollTo(tester, find.text('KATHA FOR TODAY'));
       expect(find.text('KATHA FOR TODAY'), findsOneWidget);
 
-      // "Quick" + the quick-actions row sit further down the scroll view
-      // than the default test viewport shows — scroll to reveal them rather
-      // than assuming they're already built/painted.
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
-      await tester.pump();
+      await scrollTo(tester, find.text('QUICK'));
       expect(find.text('QUICK'), findsOneWidget);
-      expect(find.text('Japa'), findsOneWidget);
+      expect(find.text('Japa'), findsWidgets);
       expect(find.text('Stotras'), findsOneWidget);
       expect(find.text('Temples'), findsOneWidget);
+    });
+
+    testWidgets('leads with the same progress section as Islam', (
+      tester,
+    ) async {
+      await pump(tester, FaithId.hindu);
+
+      // Same widget, Hindu content — three sandhya rather than five prayers.
+      expect(find.byType(TodayProgressSection), findsOneWidget);
+      expect(find.text("TODAY'S GOAL"), findsOneWidget);
+      expect(find.text('Prātaḥ'), findsOneWidget);
+      expect(find.text('Fajr'), findsNothing);
     });
 
     testWidgets('does not reuse any Islam-specific copy or widgets', (
