@@ -12,6 +12,7 @@ import 'core/preferences/theme_mode.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/faith_id.dart';
+import 'core/time/device_timezone.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,11 @@ Future<void> main() async {
   // Init local notifications early so the orchestrator can schedule on first
   // prayer-times load. Permission is requested lazily from the settings UI.
   await NotificationService.instance.init();
+  // Read the device's IANA zone before the first screen can record anything
+  // (contract §1.5). Awaited rather than fired off because it is one method
+  // channel round trip and `ActivityRecorder` reads the result synchronously;
+  // it never throws, so it cannot hold up the boot.
+  await DeviceTimezone.instance.start();
   runApp(const ProviderScope(child: FaithApp()));
 }
 

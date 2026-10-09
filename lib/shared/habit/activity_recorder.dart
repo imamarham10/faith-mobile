@@ -31,6 +31,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/time/device_timezone.dart';
 import '../../core/time/timezone_names.dart';
 import 'activity_event.dart';
 import 'local_event_queue.dart';
@@ -57,23 +58,21 @@ class ActivityRecorder {
   static const Uuid _uuid = Uuid();
   static String _uuidV4() => _uuid.v4();
 
-  /// The device's civil timezone, as best this build can name it.
+  /// The device's civil timezone, as the platform names it.
   ///
   /// Contract §1.5 asks for the platform's IANA identifier and explicitly
   /// warns against `DateTime.timeZoneName`, which on Android and iOS is
-  /// usually the *abbreviation* (`IST`) rather than the zone
-  /// (`Asia/Kolkata`). There is no IANA source in this app today — reading
-  /// one means a platform channel, i.e. a new plugin — so this resolves
-  /// the abbreviation through the shared table instead.
+  /// the *abbreviation* (`IST`) rather than the zone (`Asia/Kolkata`).
+  /// [DeviceTimezone] is that IANA source: it reads
+  /// `TimeZone.getDefault().getID()` / `TimeZone.current.identifier`
+  /// through `flutter_timezone` and caches the answer, so this getter is
+  /// synchronous and [_stamp] stays synchronous with it.
   ///
-  /// That is an approximation and worth naming as one: it picks the most
-  /// populous zone for an ambiguous abbreviation, so a user in Chongqing
-  /// reporting `CST` is stored as `America/Chicago`. It costs them nothing
-  /// today, because §2.2 validates `localDay` against `occurredAt` and
-  /// never against `timezone` — the zone is stored, not interpreted. What
-  /// it must never do is emit the abbreviation itself, which the server
-  /// rejects permanently; [normaliseActivityTimezone] guarantees that.
-  static String _deviceTimezoneName() => DateTime.now().timeZoneName;
+  /// The abbreviation table is still underneath, as the fallback for a
+  /// platform that has not answered yet or cannot — see [DeviceTimezone].
+  /// Either way the value is run through [normaliseActivityTimezone], so
+  /// the event never carries a shape the server rejects permanently.
+  static String _deviceTimezoneName() => DeviceTimezone.instance.current;
 
   /// Resolved lazily and awaited inside [record], never in the constructor:
   /// the queue's path comes from a platform channel, and the provider is

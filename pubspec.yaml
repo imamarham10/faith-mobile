@@ -61,6 +61,15 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
 
+  # The device's IANA zone name. Contract §1.5 wants the tz database
+  # identifier (`Asia/Kolkata`) and explicitly rules out
+  # `DateTime.timeZoneName`, which on both platforms is an abbreviation
+  # (`IST`) that no table can disambiguate — `CST` is US Central, China
+  # Standard and Cuba Standard. This plugin reads
+  # `TimeZone.getDefault().getID()` on Android and `TimeZone.current
+  # .identifier` on iOS, both of which are the real thing.
+  flutter_timezone: ^5.1.1
+
   # Share cards (render-to-image + system share sheet)
   share_plus: ^10.1.2
   path_provider: ^2.1.5
