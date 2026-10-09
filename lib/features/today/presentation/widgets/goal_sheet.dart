@@ -97,7 +97,7 @@ class _GoalSheetState extends ConsumerState<GoalSheet> {
     setState(() => _saving = true);
     try {
       await ref
-          .read(goalControllerProvider.notifier)
+          .read(goalWriterProvider)
           .setGoal(
             faith: widget.pack.faith,
             goalType: _goalType,

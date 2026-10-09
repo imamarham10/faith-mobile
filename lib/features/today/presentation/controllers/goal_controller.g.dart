@@ -6,23 +6,24 @@ part of 'goal_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$goalControllerHash() => r'9963e03349f038b03a1005cbd8bc5c166b7af64d';
+String _$goalWriterHash() => r'bf93519da6319707e699fe8f7a40d18314667e02';
 
-/// Writes the user's daily goal and refreshes the screen from the result.
+/// The app's goal writer.
 ///
-/// Copied from [GoalController].
-@ProviderFor(GoalController)
-final goalControllerProvider =
-    AutoDisposeAsyncNotifierProvider<GoalController, void>.internal(
-      GoalController.new,
-      name: r'goalControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$goalControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+/// Copied from [goalWriter].
+@ProviderFor(goalWriter)
+final goalWriterProvider = Provider<GoalWriter>.internal(
+  goalWriter,
+  name: r'goalWriterProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$goalWriterHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-typedef _$GoalController = AutoDisposeAsyncNotifier<void>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GoalWriterRef = ProviderRef<GoalWriter>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

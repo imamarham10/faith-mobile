@@ -112,11 +112,15 @@ class _Content extends ConsumerWidget {
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.sm,
                     children: [
-                      StatChip(
-                        value: '${stats.currentStreak}',
-                        label: 'day streak',
-                        icon: Icons.local_fire_department_outlined,
-                      ),
+                      // The "day streak" chip that stood here was the
+                      // server's any-activity streak from
+                      // `puja-log.service.ts` — a *different* metric from
+                      // the engine's goal-met streak in the Today header,
+                      // drawn with the same flame and the same two words.
+                      // A user one tap from Today saw two numbers both
+                      // called a day streak. Retired with its twins in
+                      // Task 1.12; `completionRate` below is an honest
+                      // measurement of its own and stays.
                       StatChip(
                         value: '${stats.completionRate.round()}%',
                         label: 'on time',

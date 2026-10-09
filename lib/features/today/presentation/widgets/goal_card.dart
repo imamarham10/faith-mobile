@@ -63,43 +63,42 @@ class GoalCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (goal.isComplete)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle, size: 16, color: palette.primary),
-                  const Gap.h(AppSpacing.xs),
-                  Text(
-                    'Complete',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: palette.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              )
-            else
-              Semantics(
-                button: true,
-                label: 'Change daily goal',
-                excludeSemantics: true,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    onEdit();
-                  },
-                  // 44pt tap target around a 16pt glyph.
-                  child: const SizedBox(
-                    width: 44,
-                    height: 24,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Icon(Icons.tune, size: 16),
-                    ),
+            if (goal.isComplete) ...[
+              Icon(Icons.check_circle, size: 16, color: palette.primary),
+              const Gap.h(AppSpacing.xs),
+              Text(
+                'Complete',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: palette.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            // Always present, complete or not. Hiding it on a met goal
+            // locks the user out of changing their target for the rest of
+            // the day — and the day they most want to raise it is the day
+            // they have just met it.
+            Semantics(
+              button: true,
+              label: 'Change daily goal',
+              excludeSemantics: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onEdit();
+                },
+                // 44pt tap target around a 16pt glyph.
+                child: SizedBox(
+                  width: 44,
+                  height: 24,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Icon(Icons.tune, size: 16, color: palette.inkMuted),
                   ),
                 ),
               ),
+            ),
           ],
         ),
         const Gap(AppSpacing.sm),

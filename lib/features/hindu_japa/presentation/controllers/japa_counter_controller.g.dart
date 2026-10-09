@@ -7,7 +7,7 @@ part of 'japa_counter_controller.dart';
 // **************************************************************************
 
 String _$japaCounterControllerHash() =>
-    r'a7b773b6c302e487c31ac7834bda131493b5d6c5';
+    r'a3fcaee50e6b937a8584866295bc012b5701d056';
 
 /// Copied from Dart SDK
 class _SystemHash {

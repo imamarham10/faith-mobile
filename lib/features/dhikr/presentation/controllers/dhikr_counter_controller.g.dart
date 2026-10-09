@@ -7,7 +7,7 @@ part of 'dhikr_counter_controller.dart';
 // **************************************************************************
 
 String _$dhikrCounterControllerHash() =>
-    r'c9061a3e42ecd140e4a41f4ee82f0eb35e4cb1d1';
+    r'd922aa7216843a7e6168eba30004e487883ca7b5';
 
 /// Copied from Dart SDK
 class _SystemHash {

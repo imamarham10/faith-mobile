@@ -119,6 +119,11 @@ Future<
   })
 >
 activitySnapshot(Ref ref, ActivityFaith faith) async {
+  // Re-reads whenever a flush lands something new. The rows that were
+  // standing in for the server have just been deleted, so a snapshot older
+  // than the flush under-reports by exactly what synced.
+  ref.watch(activityFlushCompletedProvider);
+
   final repo = ref.watch(activityRepositoryProvider);
   final cache = ref.watch(activitySnapshotCacheProvider.notifier);
   // §1.5 — the IANA name from the device, never `DateTime.timeZoneName`.

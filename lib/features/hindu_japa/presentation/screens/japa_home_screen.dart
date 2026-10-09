@@ -148,11 +148,11 @@ class _StatsRow extends ConsumerWidget {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              StatChip(
-                value: '${stats.currentStreak}',
-                label: 'day streak',
-                icon: Icons.local_fire_department_outlined,
-              ),
+              // Retired with the puja-times one, and for the same reason:
+              // `JapaStats.currentStreak` counts days with any japa, where
+              // the Today header counts goal-met days. Same flame, same
+              // words, different number. `totalCount` is its own honest
+              // measurement and stays.
               StatChip(
                 value: '${stats.totalCount}',
                 label: 'total',

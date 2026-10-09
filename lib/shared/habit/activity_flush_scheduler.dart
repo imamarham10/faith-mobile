@@ -143,6 +143,16 @@ class _ActivityFlushScopeState extends ConsumerState<ActivityFlushScope>
         if (outcome.batches > 0) {
           developer.log('flush ($reason): $outcome', name: 'habit.flush');
         }
+        // The server now knows something it did not before, so whatever is
+        // rendering from a cached `/today` is out of date — and, worse,
+        // the queue rows that were covering for it have just been deleted.
+        // Without this the Today screen can drop a number it was already
+        // showing: the local overlay disappears with the rows while the
+        // cached snapshot still predates them, and the user watches their
+        // dhikr count fall back to zero a second after it synced.
+        if (outcome.accepted > 0 && mounted) {
+          ref.read(activityFlushCompletedProvider.notifier).bump();
+        }
       }),
     );
   }
@@ -177,3 +187,23 @@ class ActivityFlushRequest extends Notifier<int> {
 /// The counter the scheduler listens to.
 final activityFlushRequestProvider =
     NotifierProvider<ActivityFlushRequest, int>(ActivityFlushRequest.new);
+
+/// Bumped after a flush in which the server **accepted** something.
+///
+/// Watched by whatever holds a cached `/today`, which must re-read: the
+/// queue rows that were being overlaid are gone, so a snapshot older than
+/// the flush now under-reports by exactly the amount that just synced.
+///
+/// Only `accepted` counts. A flush that was all duplicates told the server
+/// nothing new and a refetch would return what is already on screen.
+class ActivityFlushCompleted extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  /// Signals that the server's projection has moved.
+  void bump() => state = state + 1;
+}
+
+/// The counter a cached snapshot watches.
+final activityFlushCompletedProvider =
+    NotifierProvider<ActivityFlushCompleted, int>(ActivityFlushCompleted.new);
