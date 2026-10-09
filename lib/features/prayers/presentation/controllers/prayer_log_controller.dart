@@ -58,11 +58,21 @@ class PrayerStatsController extends _$PrayerStatsController {
     return repo.getStats();
   }
 
-  /// Records one qada increment for [prayerName] and refreshes the view.
+  /// Records one qada increment for [prayerName] and adopts the tally the
+  /// server returns.
+  ///
+  /// Goes to `POST /qada/increment`, never `POST /log`. A `qada` log row
+  /// upserts on `(userId, prayerName, date)`, so adding a qaza for a prayer
+  /// already logged today would overwrite that row and quietly knock the
+  /// prayer off the Today checklist and goal. The standalone tally is what
+  /// this screen actually counts.
+  ///
+  /// The response is the refreshed tally, so there is no second read and no
+  /// loading flash between the tap and the new number.
   Future<void> incrementQada(String prayerName) async {
     final repo = ref.read(prayersRepositoryProvider);
-    await repo.logPrayer(prayerName: prayerName, status: PrayerStatus.qada);
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => repo.getStats());
+    state = await AsyncValue.guard(
+      () => repo.incrementQada(prayerName: prayerName),
+    );
   }
 }

@@ -14,8 +14,9 @@ import '../../../../shared/widgets/stat_chip.dart';
 import '../../data/dtos/prayer_stats.dart';
 import '../controllers/prayer_log_controller.dart';
 
-/// Qaza counts at a glance. Each prayer row supports incrementing (which
-/// `POST`s a `qada` log to the backend).
+/// Qaza counts at a glance. Each prayer row supports incrementing, which
+/// `POST`s to the standalone `/qada/increment` tally — never a `qada` prayer
+/// log, which would upsert over today's row for that prayer.
 class QazaTrackerScreen extends ConsumerWidget {
   const QazaTrackerScreen({super.key});
 

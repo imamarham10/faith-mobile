@@ -134,6 +134,48 @@ class PrayersRepository {
     }
   }
 
+  /// `POST /qada/increment` — add [by] to the standalone qaza tally.
+  ///
+  /// This is deliberately *not* `POST /log`. The log table is unique on
+  /// `(userId, prayerName, date)`, so posting a `qada` status upserts over
+  /// whatever that prayer already held for that day: adding a qaza owed for
+  /// a past day would flip today's `on_time` row to `qada`, un-tick the
+  /// prayer on the Today checklist and drop the daily goal by one.
+  /// `PrayerQadaCount` is a separate tally for exactly this reason
+  /// (`prayers.service.ts`, `adjustQada`: "a qada owed for a *past* day
+  /// must never upsert over today's log row").
+  ///
+  /// [by] is always sent positive. The server negates it itself on the
+  /// decrement route (`-(body.by ?? 1)`), so a negative `by` posted here
+  /// would silently decrement — direction is carried by the endpoint, never
+  /// by the sign. The server rejects `by` outside ±1…100.
+  ///
+  /// Returns the refreshed tally the server computed, so callers need no
+  /// follow-up read.
+  Future<PrayerStats> incrementQada({
+    required String prayerName,
+    int by = 1,
+  }) async {
+    if (by <= 0 || by > 100) {
+      throw ApiException(
+        message: 'Qaza adjustment must be between 1 and 100, got $by.',
+      );
+    }
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '$_base/qada/increment',
+        data: {'prayerName': prayerName, 'by': by},
+      );
+      final data = res.data;
+      if (data == null) {
+        throw const ApiException(message: 'Empty qaza-increment response.');
+      }
+      return PrayerStats.fromJson(data);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `GET /stats` — qaza counts by prayer.
   Future<PrayerStats> getStats() async {
     try {
