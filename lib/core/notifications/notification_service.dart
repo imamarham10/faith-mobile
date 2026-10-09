@@ -8,6 +8,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../preferences/notification_preferences.dart';
+import '../time/timezone_names.dart';
 import '../../features/prayers/data/dtos/prayer_times.dart';
 import '../../features/prayers/presentation/controllers/prayer_times_controller.dart';
 import 'notification_schedule.dart';
@@ -304,22 +305,16 @@ class NotificationService implements PrayerNotificationSink {
   }
 
   /// Maps the device's short timezone name (e.g. "IST", "PDT") to an IANA
-  /// location the timezone package recognizes. Falls back to the input,
-  /// which the package may also accept; if not, the caller catches.
-  static String _zoneFromName(String name) {
-    return switch (name) {
-      'IST' => 'Asia/Kolkata',
-      'PST' || 'PDT' => 'America/Los_Angeles',
-      'EST' || 'EDT' => 'America/New_York',
-      'CST' || 'CDT' => 'America/Chicago',
-      'MST' || 'MDT' => 'America/Denver',
-      'GMT' || 'BST' => 'Europe/London',
-      'CET' || 'CEST' => 'Europe/Paris',
-      'JST' => 'Asia/Tokyo',
-      'AEST' || 'AEDT' => 'Australia/Sydney',
-      _ => name,
-    };
-  }
+  /// location the timezone package recognizes.
+  ///
+  /// Falls back to the input, which the package may also accept — plenty of
+  /// devices report `Asia/Kolkata` directly — and if it does not,
+  /// `getLocation` throws and [init] settles for UTC. That tolerance is
+  /// why this path can share [ianaForAbbreviation]'s table with the
+  /// activity queue, which cannot afford the same fallback: a wrong guess
+  /// here is a mis-timed reminder, while there it is an event the server
+  /// rejects forever. The table is shared; the fallback is not.
+  static String _zoneFromName(String name) => ianaForAbbreviation(name) ?? name;
 }
 
 @Riverpod(keepAlive: true)

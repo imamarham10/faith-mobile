@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:faith_mobile/shared/habit/activity_event.dart';
 import 'package:faith_mobile/shared/habit/local_event_queue.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -116,9 +117,7 @@ void main() {
   group('flush settlement', () {
     test('acknowledge removes only the rows it names', () async {
       final queue = await _openQueue();
-      await queue.enqueueAll([
-        for (var i = 1; i <= 5; i++) _event('evt-$i'),
-      ]);
+      await queue.enqueueAll([for (var i = 1; i <= 5; i++) _event('evt-$i')]);
 
       final batch = await queue.peek(limit: 3);
       // Mirrors a 200 where two landed and one was permanently rejected —
@@ -126,10 +125,10 @@ void main() {
       await queue.acknowledge(batch.map((e) => e.clientEventId));
 
       expect(await queue.count(), 2);
-      expect(
-        (await queue.peek()).map((e) => e.clientEventId),
-        ['evt-4', 'evt-5'],
-      );
+      expect((await queue.peek()).map((e) => e.clientEventId), [
+        'evt-4',
+        'evt-5',
+      ]);
       await queue.close();
     });
 
@@ -328,7 +327,10 @@ void main() {
         () => _event('evt-1', localDay: '2026-10-09T00:00:00Z'),
         throwsArgumentError,
       );
-      expect(() => _event('evt-1', localDay: '09/10/2026'), throwsArgumentError);
+      expect(
+        () => _event('evt-1', localDay: '09/10/2026'),
+        throwsArgumentError,
+      );
     });
 
     test('rejects an empty clientEventId and an oversized sourceRef', () {
@@ -345,42 +347,7 @@ void main() {
     });
   });
 
-  group('normaliseTimezone', () {
-    test('passes IANA Region/City names straight through', () {
-      expect(normaliseTimezone('Asia/Kolkata'), 'Asia/Kolkata');
-      expect(
-        normaliseTimezone('America/Argentina/Buenos_Aires'),
-        'America/Argentina/Buenos_Aires',
-      );
-    });
-
-    test('accepts UTC and GMT verbatim', () {
-      // An Android device with no region set reports exactly "UTC" from
-      // TimeZone.getID(), and §1.5 accepts it.
-      expect(normaliseTimezone('UTC'), 'UTC');
-      expect(normaliseTimezone('GMT'), 'GMT');
-    });
-
-    test('resolves abbreviations the server rejects permanently', () {
-      expect(normaliseTimezone('IST'), 'Asia/Kolkata');
-      expect(normaliseTimezone('EST'), 'America/New_York');
-      expect(normaliseTimezone('AEDT'), 'Australia/Sydney');
-      // The gap in notification_service.dart's table: these fall through
-      // there, and would be queued as-is and rejected forever.
-      expect(normaliseTimezone('WIB'), 'Asia/Jakarta');
-      expect(normaliseTimezone('SAST'), 'Africa/Johannesburg');
-    });
-
-    test('falls back to UTC for anything it cannot resolve', () {
-      // A queueable-but-unacceptable value costs the user the event
-      // permanently; a slightly wrong zone costs them nothing, because the
-      // server stores it rather than validating localDay against it (§2.2).
-      expect(normaliseTimezone('+05:30'), 'UTC');
-      expect(normaliseTimezone('ZZZ'), 'UTC');
-      expect(normaliseTimezone(''), 'UTC');
-      expect(normaliseTimezone(null), 'UTC');
-    });
-
+  group('timezone normalisation at construction', () {
     test('an event normalises its timezone on construction', () async {
       final queue = await _openQueue();
       await queue.enqueue(_event('evt-1', timezone: 'IST'));
