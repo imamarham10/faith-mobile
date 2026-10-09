@@ -21,13 +21,16 @@
 ///    an unhandled future. Failures are logged and swallowed; [record]
 ///    reports whether the event landed for callers that care.
 ///
-/// The actual upload and the calls from Qur'an, prayers and dhikr are both
-/// Task 1.12. Neither is here. (Task 1.10 is the local streak engine in
-/// `streak_engine.dart`, not the flush — this comment said otherwise.)
+/// The upload itself is [ActivityFlusher] (`activity_flusher.dart`) and the
+/// decision of *when* to run it is [ActivityFlushScope]
+/// (`activity_flush_scheduler.dart`). This class signals the second of
+/// those through a counter and never reaches either directly, which is what
+/// keeps property 1 structural rather than a promise.
 library;
 
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -35,6 +38,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/time/device_timezone.dart';
 import '../../core/time/timezone_names.dart';
 import 'activity_event.dart';
+import 'activity_flush_scheduler.dart';
 import 'local_event_queue.dart';
 
 part 'activity_recorder.g.dart';
@@ -51,10 +55,12 @@ class ActivityRecorder {
     DateTime Function() now = DateTime.now,
     String Function() newId = _uuidV4,
     String Function() timezoneName = _deviceTimezoneName,
+    VoidCallback? onRecorded,
   }) : _queue = queue,
        _now = now,
        _newId = newId,
-       _timezoneName = timezoneName;
+       _timezoneName = timezoneName,
+       _onRecorded = onRecorded;
 
   static const Uuid _uuid = Uuid();
   static String _uuidV4() => _uuid.v4();
@@ -83,6 +89,15 @@ class ActivityRecorder {
   final DateTime Function() _now;
   final String Function() _newId;
   final String Function() _timezoneName;
+
+  /// Called after an event is durably queued, so the flush scheduler can
+  /// start its debounce. Deliberately a bare callback and not a flusher:
+  /// property 1 above — *it never touches the network* — is enforced by
+  /// there being no way to reach one from here, and handing this class a
+  /// `Dio` to satisfy a convenience would quietly give that up. The
+  /// callback is invoked after the write, never before, so a flush it
+  /// triggers can only ever find a row that is already durable.
+  final VoidCallback? _onRecorded;
 
   /// Records one act of worship and returns once it is durably queued.
   ///
@@ -137,6 +152,18 @@ class ActivityRecorder {
 
     try {
       await (await _queue).enqueue(event);
+      // After the row is durable, and guarded: a scheduler that threw must
+      // not turn a successful record into a `false`.
+      try {
+        _onRecorded?.call();
+      } on Object catch (e, st) {
+        developer.log(
+          'flush request failed after recording ${event.clientEventId}',
+          name: 'habit.recorder',
+          error: e,
+          stackTrace: st,
+        );
+      }
       return true;
     } on Object catch (e, st) {
       developer.log(
@@ -196,5 +223,7 @@ class ActivityRecorder {
 /// The queue it needs is async, so it is passed in unresolved and awaited
 /// inside `record()`, *after* the event has been stamped.
 @Riverpod(keepAlive: true)
-ActivityRecorder activityRecorder(Ref ref) =>
-    ActivityRecorder(queue: ref.watch(localEventQueueProvider.future));
+ActivityRecorder activityRecorder(Ref ref) => ActivityRecorder(
+  queue: ref.watch(localEventQueueProvider.future),
+  onRecorded: () => ref.read(activityFlushRequestProvider.notifier).poke(),
+);

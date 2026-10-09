@@ -13,6 +13,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/faith_id.dart';
 import 'core/time/device_timezone.dart';
+import 'shared/habit/activity_flush_scheduler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,20 +52,27 @@ class FaithApp extends ConsumerWidget {
     final themeMode =
         ref.watch(themeModePrefProvider).valueOrNull ?? ThemeMode.system;
     final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
-    return NotificationOrchestrator(
-      child: MaterialApp.router(
-        title: 'Siraat',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(faith),
-        darkTheme: AppTheme.dark(faith),
-        themeMode: themeMode,
-        routerConfig: router,
-        supportedLocales: const [Locale('en')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+    // Both wrappers are side-effect carriers that render their child
+    // verbatim. ActivityFlushScope is outermost so the queue starts
+    // draining on the very first frame, before any screen has mounted —
+    // rows can survive a kill, so there may be events waiting from a
+    // previous run that no lifecycle event will ever announce.
+    return ActivityFlushScope(
+      child: NotificationOrchestrator(
+        child: MaterialApp.router(
+          title: 'Siraat',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(faith),
+          darkTheme: AppTheme.dark(faith),
+          themeMode: themeMode,
+          routerConfig: router,
+          supportedLocales: const [Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+        ),
       ),
     );
   }

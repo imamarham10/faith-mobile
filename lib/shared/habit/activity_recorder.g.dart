@@ -6,7 +6,7 @@ part of 'activity_recorder.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activityRecorderHash() => r'a48f1d758e9aaa7a561892e996713af45f5e80d0';
+String _$activityRecorderHash() => r'e59effcb060b5331698460d83c904a07a3d62126';
 
 /// The recorder every feature reaches for.
 ///
