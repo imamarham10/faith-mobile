@@ -237,7 +237,7 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
             target: goal.target,
             unit: pack.unitFor(goal.goalType, todayProgress.progress),
           ),
-    checklist: await _buildChecklist(ref, pack),
+    checklist: await ref.watch(practiceChecklistProvider(pack.faithId).future),
     stats: [
       for (final type in pack.activityTypes)
         StatSeries(
@@ -417,10 +417,20 @@ Future<Map<String, Map<String, int>>> _pendingCountsByDay(
 /// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
 /// puja logs remain the source for the ticks, as they always were; the
 /// engine mirrors them through `record()`.
-Future<List<ChecklistItem>> _buildChecklist(
-  Ref ref,
-  FaithHabitPack pack,
-) async {
+///
+/// **Its own provider, so it is memoised.** [todayDashboard] watches the
+/// record counter and therefore re-runs its whole body on every recorded
+/// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+/// past. Twenty verses was twenty requests.
+///
+/// Being memoised, it must be invalidated explicitly when a prayer or
+/// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+/// reach it, because invalidating a watcher does nothing to what it
+/// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+/// is the only thing that changes a tick.
+@riverpod
+Future<List<ChecklistItem>> practiceChecklist(Ref ref, FaithId faith) async {
+  final pack = habitPackFor(faith);
   final done = await _loggedStepKeys(ref, pack);
   return [
     for (final step in pack.dailySteps)

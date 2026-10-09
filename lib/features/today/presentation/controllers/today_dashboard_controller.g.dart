@@ -6,7 +6,7 @@ part of 'today_dashboard_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activitySnapshotHash() => r'c76574347b1fdf99ac3b03ac549e5a05b4faf746';
+String _$activitySnapshotHash() => r'48e69e483106365cdd4936cecf5f69a7c783a829';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -255,7 +255,7 @@ class _ActivitySnapshotProviderElement
   ActivityFaith get faith => (origin as ActivitySnapshotProvider).faith;
 }
 
-String _$todayDashboardHash() => r'64b4ce1283e50d31663d8e9780b0eb9a6de44979';
+String _$todayDashboardHash() => r'2ebd28ed02f9b1528670eb3ba06e109cf2f4845b';
 
 /// The Today screen's numbers, for whichever faith is selected.
 ///
@@ -281,6 +281,237 @@ final todayDashboardProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TodayDashboardRef = AutoDisposeFutureProviderRef<TodayDashboard>;
+String _$practiceChecklistHash() => r'227b68754bb1af30cb1c89915c4b87fbe967ffc6';
+
+/// The day's named acts, ticked from the log that owns them.
+///
+/// Deliberately **not** read from the engine. `/today`'s `counts` says
+/// `prayer: 3` — a sum, not a set — so it cannot say *which* three, and a
+/// checklist is exactly a question about which. The `sourceRef` that
+/// carries `prayer:fajr` is stored but not projected by any Phase 1
+/// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
+/// puja logs remain the source for the ticks, as they always were; the
+/// engine mirrors them through `record()`.
+///
+/// **Its own provider, so it is memoised.** [todayDashboard] watches the
+/// record counter and therefore re-runs its whole body on every recorded
+/// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+/// past. Twenty verses was twenty requests. The ticks only change when a
+/// prayer or sandhya is actually logged, and those call sites already
+/// invalidate [todayDashboardProvider] — which now invalidates this too,
+/// because it is watched from there.
+///
+/// Copied from [practiceChecklist].
+@ProviderFor(practiceChecklist)
+const practiceChecklistProvider = PracticeChecklistFamily();
+
+/// The day's named acts, ticked from the log that owns them.
+///
+/// Deliberately **not** read from the engine. `/today`'s `counts` says
+/// `prayer: 3` — a sum, not a set — so it cannot say *which* three, and a
+/// checklist is exactly a question about which. The `sourceRef` that
+/// carries `prayer:fajr` is stored but not projected by any Phase 1
+/// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
+/// puja logs remain the source for the ticks, as they always were; the
+/// engine mirrors them through `record()`.
+///
+/// **Its own provider, so it is memoised.** [todayDashboard] watches the
+/// record counter and therefore re-runs its whole body on every recorded
+/// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+/// past. Twenty verses was twenty requests. The ticks only change when a
+/// prayer or sandhya is actually logged, and those call sites already
+/// invalidate [todayDashboardProvider] — which now invalidates this too,
+/// because it is watched from there.
+///
+/// Copied from [practiceChecklist].
+class PracticeChecklistFamily extends Family<AsyncValue<List<ChecklistItem>>> {
+  /// The day's named acts, ticked from the log that owns them.
+  ///
+  /// Deliberately **not** read from the engine. `/today`'s `counts` says
+  /// `prayer: 3` — a sum, not a set — so it cannot say *which* three, and a
+  /// checklist is exactly a question about which. The `sourceRef` that
+  /// carries `prayer:fajr` is stored but not projected by any Phase 1
+  /// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
+  /// puja logs remain the source for the ticks, as they always were; the
+  /// engine mirrors them through `record()`.
+  ///
+  /// **Its own provider, so it is memoised.** [todayDashboard] watches the
+  /// record counter and therefore re-runs its whole body on every recorded
+  /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+  /// past. Twenty verses was twenty requests. The ticks only change when a
+  /// prayer or sandhya is actually logged, and those call sites already
+  /// invalidate [todayDashboardProvider] — which now invalidates this too,
+  /// because it is watched from there.
+  ///
+  /// Copied from [practiceChecklist].
+  const PracticeChecklistFamily();
+
+  /// The day's named acts, ticked from the log that owns them.
+  ///
+  /// Deliberately **not** read from the engine. `/today`'s `counts` says
+  /// `prayer: 3` — a sum, not a set — so it cannot say *which* three, and a
+  /// checklist is exactly a question about which. The `sourceRef` that
+  /// carries `prayer:fajr` is stored but not projected by any Phase 1
+  /// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
+  /// puja logs remain the source for the ticks, as they always were; the
+  /// engine mirrors them through `record()`.
+  ///
+  /// **Its own provider, so it is memoised.** [todayDashboard] watches the
+  /// record counter and therefore re-runs its whole body on every recorded
+  /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+  /// past. Twenty verses was twenty requests. The ticks only change when a
+  /// prayer or sandhya is actually logged, and those call sites already
+  /// invalidate [todayDashboardProvider] — which now invalidates this too,
+  /// because it is watched from there.
+  ///
+  /// Copied from [practiceChecklist].
+  PracticeChecklistProvider call(FaithId faith) {
+    return PracticeChecklistProvider(faith);
+  }
+
+  @override
+  PracticeChecklistProvider getProviderOverride(
+    covariant PracticeChecklistProvider provider,
+  ) {
+    return call(provider.faith);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'practiceChecklistProvider';
+}
+
+/// The day's named acts, ticked from the log that owns them.
+///
+/// Deliberately **not** read from the engine. `/today`'s `counts` says
+/// `prayer: 3` — a sum, not a set — so it cannot say *which* three, and a
+/// checklist is exactly a question about which. The `sourceRef` that
+/// carries `prayer:fajr` is stored but not projected by any Phase 1
+/// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
+/// puja logs remain the source for the ticks, as they always were; the
+/// engine mirrors them through `record()`.
+///
+/// **Its own provider, so it is memoised.** [todayDashboard] watches the
+/// record counter and therefore re-runs its whole body on every recorded
+/// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+/// past. Twenty verses was twenty requests. The ticks only change when a
+/// prayer or sandhya is actually logged, and those call sites already
+/// invalidate [todayDashboardProvider] — which now invalidates this too,
+/// because it is watched from there.
+///
+/// Copied from [practiceChecklist].
+class PracticeChecklistProvider
+    extends AutoDisposeFutureProvider<List<ChecklistItem>> {
+  /// The day's named acts, ticked from the log that owns them.
+  ///
+  /// Deliberately **not** read from the engine. `/today`'s `counts` says
+  /// `prayer: 3` — a sum, not a set — so it cannot say *which* three, and a
+  /// checklist is exactly a question about which. The `sourceRef` that
+  /// carries `prayer:fajr` is stored but not projected by any Phase 1
+  /// endpoint (§1.6 makes it load-bearing from Phase 2). So the prayer and
+  /// puja logs remain the source for the ticks, as they always were; the
+  /// engine mirrors them through `record()`.
+  ///
+  /// **Its own provider, so it is memoised.** [todayDashboard] watches the
+  /// record counter and therefore re-runs its whole body on every recorded
+  /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
+  /// past. Twenty verses was twenty requests. The ticks only change when a
+  /// prayer or sandhya is actually logged, and those call sites already
+  /// invalidate [todayDashboardProvider] — which now invalidates this too,
+  /// because it is watched from there.
+  ///
+  /// Copied from [practiceChecklist].
+  PracticeChecklistProvider(FaithId faith)
+    : this._internal(
+        (ref) => practiceChecklist(ref as PracticeChecklistRef, faith),
+        from: practiceChecklistProvider,
+        name: r'practiceChecklistProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$practiceChecklistHash,
+        dependencies: PracticeChecklistFamily._dependencies,
+        allTransitiveDependencies:
+            PracticeChecklistFamily._allTransitiveDependencies,
+        faith: faith,
+      );
+
+  PracticeChecklistProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.faith,
+  }) : super.internal();
+
+  final FaithId faith;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<ChecklistItem>> Function(PracticeChecklistRef provider)
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PracticeChecklistProvider._internal(
+        (ref) => create(ref as PracticeChecklistRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        faith: faith,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<ChecklistItem>> createElement() {
+    return _PracticeChecklistProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PracticeChecklistProvider && other.faith == faith;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, faith.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin PracticeChecklistRef
+    on AutoDisposeFutureProviderRef<List<ChecklistItem>> {
+  /// The parameter `faith` of this provider.
+  FaithId get faith;
+}
+
+class _PracticeChecklistProviderElement
+    extends AutoDisposeFutureProviderElement<List<ChecklistItem>>
+    with PracticeChecklistRef {
+  _PracticeChecklistProviderElement(super.provider);
+
+  @override
+  FaithId get faith => (origin as PracticeChecklistProvider).faith;
+}
+
 String _$activitySnapshotCacheHash() =>
     r'8f100909800f84e0400db26b5408a4f7001dc94c';
 

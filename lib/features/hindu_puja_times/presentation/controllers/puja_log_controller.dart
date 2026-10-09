@@ -42,9 +42,20 @@ class TodayPujaLogs extends _$TodayPujaLogs {
       unawaited(
         ref
             .read(activityRecorderProvider)
-            .record(ActivityType.sandhya, sourceRef: 'sandhya:$sandhya'),
+            .record(
+              ActivityType.sandhya,
+              // §1.6, as on the Islam side.
+              sourceRef: 'sandhya:${sandhya.toLowerCase()}',
+            ),
       );
     }
+    // Closes the loop for the checklist, which still reads the log —
+    // `/today`'s `counts` gives a sum and cannot say *which* acts. The
+    // checklist provider is memoised, so it is invalidated by name:
+    // invalidating `todayDashboardProvider` would not reach it. The goal,
+    // week strip and streak update on their own — the recorder pokes the
+    // counter `todayDashboard` watches.
+    ref.invalidate(practiceChecklistProvider);
     ref.invalidate(todayDashboardProvider);
   }
 }

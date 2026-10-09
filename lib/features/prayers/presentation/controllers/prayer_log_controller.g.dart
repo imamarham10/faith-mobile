@@ -6,7 +6,7 @@ part of 'prayer_log_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$todayLogsHash() => r'9260e35ff1ed9b7dfd88b5e9b1c7dd3b5ac9e978';
+String _$todayLogsHash() => r'b321b9a1eb725d9628a0b2d1c04979b990850977';
 
 /// Today's logs, indexed by `prayerName.toLowerCase()` for O(1) lookup.
 ///

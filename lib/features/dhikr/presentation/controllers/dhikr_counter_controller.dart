@@ -36,6 +36,21 @@ class DhikrCounterController extends _$DhikrCounterController {
 
   Timer? _syncTimer;
   int _pendingDelta = 0;
+
+  /// Repetitions not yet told to the activity engine.
+  ///
+  /// **Deliberately separate from [_pendingDelta].** That one is the
+  /// dhikr API's retry buffer: a failed `incrementCounter` puts its delta
+  /// back so the next flush resends it. Recording off that variable
+  /// therefore records the same repetitions again on every retry — with a
+  /// fresh `clientEventId` each time, so the server's idempotency cannot
+  /// catch it and the count that feeds the goal and the streak inflates.
+  /// That is the normal offline path, not an edge case.
+  ///
+  /// This one is zeroed the moment it is recorded and never re-queued: the
+  /// dhikr was said once, whichever way the counter API's own sync goes.
+  int _unrecordedDelta = 0;
+
   bool _disposed = false;
 
   @override
@@ -85,6 +100,7 @@ class DhikrCounterController extends _$DhikrCounterController {
     ref.read(dhikrCountersControllerProvider.notifier).patchLocal(updated);
 
     _pendingDelta += 1;
+    _unrecordedDelta += 1;
     _scheduleSync();
 
     return IncrementResult(
@@ -101,6 +117,10 @@ class DhikrCounterController extends _$DhikrCounterController {
     state = AsyncValue.data(updated);
     ref.read(dhikrCountersControllerProvider.notifier).patchLocal(updated);
     _pendingDelta = 0;
+    // Repetitions already said are not unsaid by resetting the bead count,
+    // so anything still unrecorded is flushed to the engine rather than
+    // dropped. Reset starts a new round; it is not an undo.
+    _recordPending();
     _syncTimer?.cancel();
 
     try {
@@ -147,26 +167,37 @@ class DhikrCounterController extends _$DhikrCounterController {
     _syncTimer = Timer(_syncDebounce, _flushNow);
   }
 
-  Future<void> _flushNow() async {
-    if (_pendingDelta <= 0) return;
-    final delta = _pendingDelta;
-    _pendingDelta = 0;
-
-    // One event carrying the whole delta, not `delta` events of one. The
-    // server sums `quantity` (§2.4), so 33 taps are one queue row instead
-    // of thirty-three — and the recorder's own doc calls this out as the
-    // reason `quantity` exists. Recorded here rather than in `increment()`
-    // for the same reason the sync is debounced: a tap handler at
-    // 5 taps/second must not do a SQLite write per tap.
-    //
-    // Deliberately recorded even if the repository call below fails. The
-    // dhikr *was* said; whether this app's counter table caught up with it
-    // is a different question, and the engine's queue is the durable one.
+  /// Tells the engine about every repetition not yet recorded, once.
+  ///
+  /// One event carrying the whole delta, not `delta` events of one. The
+  /// server sums `quantity` (§2.4), so 33 taps are one queue row instead
+  /// of thirty-three — which is the reason `quantity` exists. Called from
+  /// the debounced sync rather than from `increment()` for the same reason
+  /// the sync is debounced: a tap handler at 5 taps/second must not do a
+  /// SQLite write per tap.
+  ///
+  /// Runs whether or not the dhikr API call succeeds. The dhikr *was*
+  /// said; whether this app's counter table caught up with it is a
+  /// different question, and the engine's queue is the durable one.
+  void _recordPending() {
+    if (_unrecordedDelta <= 0) return;
+    final delta = _unrecordedDelta;
+    // Zeroed before recording, and never restored — `record()` does not
+    // throw, and re-queueing here is exactly the double-count this field
+    // exists to prevent.
+    _unrecordedDelta = 0;
     unawaited(
       ref
           .read(activityRecorderProvider)
           .record(ActivityType.dhikr, quantity: delta, sourceRef: 'dhikr:$id'),
     );
+  }
+
+  Future<void> _flushNow() async {
+    _recordPending();
+    if (_pendingDelta <= 0) return;
+    final delta = _pendingDelta;
+    _pendingDelta = 0;
     try {
       final synced = await ref
           .read(dhikrRepositoryProvider)
@@ -180,7 +211,8 @@ class DhikrCounterController extends _$DhikrCounterController {
         error: e,
         stackTrace: st,
       );
-      // Re-queue the delta so the next flush retries.
+      // Re-queue the delta so the next flush retries. Only the dhikr
+      // API's delta — never `_unrecordedDelta`, which is already spent.
       _pendingDelta += delta;
     }
   }

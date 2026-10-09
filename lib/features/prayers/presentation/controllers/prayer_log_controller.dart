@@ -44,14 +44,26 @@ class TodayLogs extends _$TodayLogs {
       unawaited(
         ref
             .read(activityRecorderProvider)
-            .record(ActivityType.prayer, sourceRef: 'prayer:$prayerName'),
+            .record(
+              ActivityType.prayer,
+              // §1.6 fixes the shape as `prayer:fajr`. The in-app caller
+              // already passes the lowercase key, so this is a no-op
+              // today — but nothing validates `sourceRef` in Phase 1, and
+              // Phase 2 derives challenge progress by matching that exact
+              // shape. A capitalised one would fail silently, months
+              // later, in data already written.
+              sourceRef: 'prayer:${prayerName.toLowerCase()}',
+            ),
       );
     }
 
-    // Closes the loop for the checklist, which still reads the prayer log
-    // — `/today`'s `counts` gives `prayer: 3`, a sum, and cannot say which
-    // three. The goal, week strip and streak update on their own: the
-    // recorder pokes the counter `todayDashboard` watches.
+    // Closes the loop for the checklist, which still reads the log —
+    // `/today`'s `counts` gives a sum and cannot say *which* acts. The
+    // checklist provider is memoised, so it is invalidated by name:
+    // invalidating `todayDashboardProvider` would not reach it. The goal,
+    // week strip and streak update on their own — the recorder pokes the
+    // counter `todayDashboard` watches.
+    ref.invalidate(practiceChecklistProvider);
     ref.invalidate(todayDashboardProvider);
 
     // The one moment the notification ask has an obvious reason: the user
