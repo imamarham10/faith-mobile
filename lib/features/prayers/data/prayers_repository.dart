@@ -145,16 +145,38 @@ class PrayersRepository {
   /// (`prayers.service.ts`, `adjustQada`: "a qada owed for a *past* day
   /// must never upsert over today's log row").
   ///
-  /// [by] is always sent positive. The server negates it itself on the
-  /// decrement route (`-(body.by ?? 1)`), so a negative `by` posted here
-  /// would silently decrement — direction is carried by the endpoint, never
-  /// by the sign. The server rejects `by` outside ±1…100.
-  ///
   /// Returns the refreshed tally the server computed, so callers need no
   /// follow-up read.
-  Future<PrayerStats> incrementQada({
+  Future<PrayerStats> incrementQada({required String prayerName, int by = 1}) =>
+      _adjustQada(path: 'qada/increment', prayerName: prayerName, by: by);
+
+  /// `POST /qada/decrement` — subtract [by] from the standalone qaza tally.
+  ///
+  /// The counterpart to [incrementQada], and the reason it exists: a
+  /// tracker that only counts up turns a mis-tap into a permanent debt the
+  /// user cannot clear from inside the app.
+  ///
+  /// Hits the same `adjustQada` service through a different route; nothing
+  /// here touches `POST /log` either, for the same upsert reason.
+  ///
+  /// The count is clamped at zero by the server, so decrementing a tally
+  /// already at zero is a successful no-op rather than an error. The UI
+  /// still hides the affordance at zero — see `QazaTrackerScreen`.
+  Future<PrayerStats> decrementQada({required String prayerName, int by = 1}) =>
+      _adjustQada(path: 'qada/decrement', prayerName: prayerName, by: by);
+
+  /// Shared body of [incrementQada] and [decrementQada].
+  ///
+  /// [by] is always sent **positive**, for both directions. The server
+  /// negates it itself on the decrement route (`-(body.by ?? 1)`), so a
+  /// negative `by` posted to either path would reverse its meaning —
+  /// direction is carried by [path], never by the sign. The server rejects
+  /// `by` outside ±1…100 and rejects zero outright; this rejects the same
+  /// range locally so a guaranteed-400 never leaves the device.
+  Future<PrayerStats> _adjustQada({
+    required String path,
     required String prayerName,
-    int by = 1,
+    required int by,
   }) async {
     if (by <= 0 || by > 100) {
       throw ApiException(
@@ -163,12 +185,12 @@ class PrayersRepository {
     }
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        '$_base/qada/increment',
+        '$_base/$path',
         data: {'prayerName': prayerName, 'by': by},
       );
       final data = res.data;
       if (data == null) {
-        throw const ApiException(message: 'Empty qaza-increment response.');
+        throw const ApiException(message: 'Empty qaza-adjustment response.');
       }
       return PrayerStats.fromJson(data);
     } on DioException catch (e) {

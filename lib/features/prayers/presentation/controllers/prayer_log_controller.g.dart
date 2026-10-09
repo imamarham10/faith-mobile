@@ -6,7 +6,7 @@ part of 'prayer_log_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$todayLogsHash() => r'b5bfb7f63e3b73f0f63a8a8e8bc7e1d729e2631a';
+String _$todayLogsHash() => r'c305881103027163cd1045c10b0d63d097e0c019';
 
 /// Today's logs, indexed by `prayerName.toLowerCase()` for O(1) lookup.
 ///
@@ -28,7 +28,7 @@ final todayLogsProvider =
 
 typedef _$TodayLogs = AutoDisposeAsyncNotifier<Map<String, PrayerLog>>;
 String _$prayerStatsControllerHash() =>
-    r'52f900e551f9a10e8f5c2079bd27b86d1f0e3535';
+    r'7cbb554c844477cc9c36dbd5d8f690763eb9eb3d';
 
 /// Aggregate qaza stats for the qaza tracker screen.
 ///

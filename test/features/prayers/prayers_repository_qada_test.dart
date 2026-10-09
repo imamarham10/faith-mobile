@@ -85,17 +85,22 @@ void main() {
       expect(sent.containsKey('status'), isFalse);
     });
 
-    test('adopts the tally the server returns, with no follow-up read', () async {
-      final adapter = _RecordingAdapter(qadaResponse);
+    test(
+      'adopts the tally the server returns, with no follow-up read',
+      () async {
+        final adapter = _RecordingAdapter(qadaResponse);
 
-      final stats = await _repoWith(adapter).incrementQada(prayerName: 'fajr');
+        final stats = await _repoWith(
+          adapter,
+        ).incrementQada(prayerName: 'fajr');
 
-      expect(stats.totalQaza, 3);
-      expect(stats.fajrQaza, 3);
-      expect(stats.dhuhrQaza, 0);
-      // One request total — no GET /stats round-trip behind it.
-      expect(adapter.requests, hasLength(1));
-    });
+        expect(stats.totalQaza, 3);
+        expect(stats.fajrQaza, 3);
+        expect(stats.dhuhrQaza, 0);
+        // One request total — no GET /stats round-trip behind it.
+        expect(adapter.requests, hasLength(1));
+      },
+    );
 
     test('rejects an out-of-range by before any request is made', () async {
       final adapter = _RecordingAdapter(qadaResponse);
@@ -113,19 +118,95 @@ void main() {
     });
 
     test('surfaces a server failure as an ApiException', () async {
-      final adapter = _RecordingAdapter(
-        {'statusCode': 400, 'message': 'prayerName must be one of...'},
-        statusCode: 400,
-      );
+      final adapter = _RecordingAdapter({
+        'statusCode': 400,
+        'message': 'prayerName must be one of...',
+      }, statusCode: 400);
 
       await expectLater(
         _repoWith(adapter).incrementQada(prayerName: 'not_a_prayer'),
         throwsA(
-          isA<ApiException>().having(
-            (e) => e.statusCode,
-            'statusCode',
-            400,
-          ),
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 400),
+        ),
+      );
+    });
+  });
+
+  group('PrayersRepository.decrementQada', () {
+    test('posts to /qada/decrement and never touches the daily log', () async {
+      final adapter = _RecordingAdapter(qadaResponse);
+
+      await _repoWith(adapter).decrementQada(prayerName: 'fajr');
+
+      expect(
+        adapter.paths,
+        isNot(contains('/api/v1/islam/prayers/log')),
+        reason: 'a qaza decrement must never write a prayer-log row',
+      );
+      expect(adapter.paths, ['/api/v1/islam/prayers/qada/decrement']);
+      expect(adapter.requests.single.method, 'POST');
+    });
+
+    test('sends a POSITIVE by — the route carries the direction', () async {
+      final adapter = _RecordingAdapter(qadaResponse);
+
+      await _repoWith(adapter).decrementQada(prayerName: 'asr', by: 2);
+
+      final sent = adapter.requests.single.data as Map<String, dynamic>;
+      expect(sent['prayerName'], 'asr');
+      // The server computes `-(body.by ?? 1)` on this route. Sending -2 here
+      // would therefore *add* two qaza — the exact inversion this asserts
+      // against.
+      expect(sent['by'], 2);
+      expect(sent['by'], isPositive);
+    });
+
+    test('rejects a negative or zero by before any request', () async {
+      final adapter = _RecordingAdapter(qadaResponse);
+      final repo = _repoWith(adapter);
+
+      await expectLater(
+        repo.decrementQada(prayerName: 'fajr', by: -1),
+        throwsA(isA<ApiException>()),
+      );
+      await expectLater(
+        repo.decrementQada(prayerName: 'fajr', by: 0),
+        throwsA(isA<ApiException>()),
+      );
+      await expectLater(
+        repo.decrementQada(prayerName: 'fajr', by: 101),
+        throwsA(isA<ApiException>()),
+      );
+      expect(adapter.requests, isEmpty);
+    });
+
+    test('adopts the clamped tally the server returns', () async {
+      // The server clamps at zero (`Math.max(0, count + by)`), so a
+      // decrement past zero is a 200 with the floor, not an error. The
+      // client must take the server's number, not predict its own.
+      final adapter = _RecordingAdapter(const <String, dynamic>{
+        'total': 0,
+        'totalQaza': 0,
+        'byPrayer': {'fajr': 0, 'dhuhr': 0, 'asr': 0, 'maghrib': 0, 'isha': 0},
+      });
+
+      final stats = await _repoWith(adapter).decrementQada(prayerName: 'fajr');
+
+      expect(stats.fajrQaza, 0);
+      expect(stats.totalQaza, 0);
+      expect(adapter.requests, hasLength(1));
+    });
+
+    test('surfaces a server failure as an ApiException', () async {
+      final adapter = _RecordingAdapter({
+        'statusCode': 400,
+        'message': 'prayerName must be one of...',
+      }, statusCode: 400);
+
+      await expectLater(
+        _repoWith(adapter).decrementQada(prayerName: 'not_a_prayer'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 400),
         ),
       );
     });

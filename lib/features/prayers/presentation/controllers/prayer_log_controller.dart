@@ -58,21 +58,50 @@ class PrayerStatsController extends _$PrayerStatsController {
     return repo.getStats();
   }
 
-  /// Records one qada increment for [prayerName] and adopts the tally the
-  /// server returns.
+  /// Adds one qaza for [prayerName] and adopts the tally the server returns.
   ///
   /// Goes to `POST /qada/increment`, never `POST /log`. A `qada` log row
   /// upserts on `(userId, prayerName, date)`, so adding a qaza for a prayer
   /// already logged today would overwrite that row and quietly knock the
   /// prayer off the Today checklist and goal. The standalone tally is what
   /// this screen actually counts.
+  Future<void> incrementQada(String prayerName) =>
+      _adjust((repo) => repo.incrementQada(prayerName: prayerName));
+
+  /// Removes one qaza for [prayerName] — the undo for [incrementQada].
+  ///
+  /// The server clamps the tally at zero, so this can never drive a count
+  /// negative however many times it is called. The screen additionally
+  /// hides the affordance at zero, so the no-op request is not made.
+  Future<void> decrementQada(String prayerName) =>
+      _adjust((repo) => repo.decrementQada(prayerName: prayerName));
+
+  /// Runs [call] and swaps in the refreshed tally it returns.
+  ///
+  /// On failure the **previous** tally is restored and the error rethrown,
+  /// rather than parked in `state` as an [AsyncError]. Two reasons, and the
+  /// second is the one that matters:
+  ///
+  /// 1. `AsyncValue.guard` swallows the throw, so the caller's `catch` never
+  ///    runs and the screen's "Couldn't update" snackbar was dead code.
+  /// 2. An [AsyncError] state makes `statsAsync.when(error:)` replace the
+  ///    whole screen with the retry view — so one failed tap wipes every
+  ///    count off the list. For a *decrement* that is especially bad: the
+  ///    user tapped undo, nothing visibly undid, and the numbers they were
+  ///    trying to correct vanished.
   ///
   /// The response is the refreshed tally, so there is no second read and no
   /// loading flash between the tap and the new number.
-  Future<void> incrementQada(String prayerName) async {
+  Future<void> _adjust(
+    Future<PrayerStats> Function(PrayersRepository) call,
+  ) async {
+    final previous = state;
     final repo = ref.read(prayersRepositoryProvider);
-    state = await AsyncValue.guard(
-      () => repo.incrementQada(prayerName: prayerName),
-    );
+    try {
+      state = AsyncValue.data(await call(repo));
+    } catch (_) {
+      state = previous;
+      rethrow;
+    }
   }
 }

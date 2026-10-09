@@ -14,9 +14,14 @@ import '../../../../shared/widgets/stat_chip.dart';
 import '../../data/dtos/prayer_stats.dart';
 import '../controllers/prayer_log_controller.dart';
 
-/// Qaza counts at a glance. Each prayer row supports incrementing, which
-/// `POST`s to the standalone `/qada/increment` tally — never a `qada` prayer
-/// log, which would upsert over today's row for that prayer.
+/// Qaza counts at a glance. Each prayer row can be adjusted in both
+/// directions, which `POST`s to the standalone `/qada/increment` and
+/// `/qada/decrement` tallies — never a `qada` prayer log, which would upsert
+/// over today's row for that prayer.
+///
+/// Both directions matter. A counter that only climbs makes a mis-tap
+/// permanent, and a debt the user cannot clear is a reason to stop opening
+/// the screen.
 class QazaTrackerScreen extends ConsumerWidget {
   const QazaTrackerScreen({super.key});
 
@@ -125,24 +130,53 @@ class _Content extends ConsumerWidget {
             child: _QazaRow(
               label: p.label,
               count: stats.countFor(p.key),
-              onIncrement: () async {
-                HapticFeedback.mediumImpact();
-                try {
-                  await ref
-                      .read(prayerStatsControllerProvider.notifier)
-                      .incrementQada(p.key);
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Couldn\'t update: $e')),
-                  );
-                }
-              },
+              onIncrement: () => _adjust(
+                context,
+                ref,
+                (c) => c.incrementQada(p.key),
+                impact: HapticFeedback.mediumImpact,
+              ),
+              // Null disables the control, which is the client half of the
+              // below-zero guard. The server clamps at zero regardless
+              // (`prayers.service.ts`: `Math.max(0, count + by)`), so this
+              // is an affordance, not the enforcement — it just stops a
+              // guaranteed no-op round-trip and stops the button lying
+              // about what it will do.
+              onDecrement: stats.countFor(p.key) == 0
+                  ? null
+                  : () => _adjust(
+                      context,
+                      ref,
+                      (c) => c.decrementQada(p.key),
+                      impact: HapticFeedback.lightImpact,
+                    ),
             ),
           ),
         ),
       ],
     );
+  }
+
+  /// Runs one tally adjustment, reporting failure in place.
+  ///
+  /// The controller restores the previous tally and rethrows, so the row the
+  /// user was looking at stays on screen and only the snackbar changes.
+  Future<void> _adjust(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function(PrayerStatsController) call, {
+    required void Function() impact,
+  }) async {
+    impact();
+    try {
+      await call(ref.read(prayerStatsControllerProvider.notifier));
+    } catch (e) {
+      if (!context.mounted) return;
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Couldn\'t update: $e')));
+    }
   }
 }
 
@@ -151,11 +185,15 @@ class _QazaRow extends StatelessWidget {
     required this.label,
     required this.count,
     required this.onIncrement,
+    required this.onDecrement,
   });
 
   final String label;
   final int count;
   final VoidCallback onIncrement;
+
+  /// `null` when the count is already zero — there is nothing to undo.
+  final VoidCallback? onDecrement;
 
   @override
   Widget build(BuildContext context) {
@@ -181,8 +219,16 @@ class _QazaRow extends StatelessWidget {
           ),
           const Gap.h(AppSpacing.base),
           _IconCircleButton(
+            icon: Icons.remove,
+            tooltip: count == 0
+                ? 'No $label qaḍāʾ to remove'
+                : 'Remove one $label qaḍāʾ',
+            onPressed: onDecrement,
+          ),
+          const Gap.h(AppSpacing.sm),
+          _IconCircleButton(
             icon: Icons.add,
-            tooltip: 'Add one qaḍāʾ',
+            tooltip: 'Add one $label qaḍāʾ',
             onPressed: onIncrement,
           ),
         ],
@@ -199,24 +245,43 @@ class _IconCircleButton extends StatelessWidget {
   });
 
   final IconData icon;
-  final VoidCallback onPressed;
+
+  /// `null` renders the button disabled rather than removing it, so the row
+  /// does not reflow every time a count crosses zero.
+  final VoidCallback? onPressed;
+
   final String tooltip;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final enabled = onPressed != null;
     return Tooltip(
       message: tooltip,
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Material(
-          color: theme.colorScheme.primaryContainer,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onPressed,
-            child: Icon(icon, color: theme.colorScheme.primary, size: 22),
+      child: Semantics(
+        button: true,
+        enabled: enabled,
+        label: tooltip,
+        child: SizedBox(
+          // 44pt is the minimum comfortable tap target, and the two buttons
+          // sit side by side — shrinking either would put them inside each
+          // other's slop.
+          width: 44,
+          height: 44,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            opacity: enabled ? 1 : 0.38,
+            child: Material(
+              color: cs.primaryContainer,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onPressed,
+                child: Icon(icon, color: cs.primary, size: 22),
+              ),
+            ),
           ),
         ),
       ),
