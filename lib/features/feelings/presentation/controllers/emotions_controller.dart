@@ -6,30 +6,17 @@ import '../../data/feelings_repository.dart';
 
 part 'emotions_controller.g.dart';
 
-/// The 9 default moods we always offer in the chooser sheet.
+/// Every mood the Islam vertical can actually answer, straight from
+/// `GET /api/v1/islam/feelings`.
 ///
-/// Used as a fallback when the API list is empty/unavailable, and as the
-/// canonical ordering for the home tab.
-const List<({String slug, String name})> kDefaultMoods = [
-  (slug: 'anxious', name: 'Anxious'),
-  (slug: 'grateful', name: 'Grateful'),
-  (slug: 'lonely', name: 'Lonely'),
-  (slug: 'hopeful', name: 'Hopeful'),
-  (slug: 'lost', name: 'Lost'),
-  (slug: 'tested', name: 'Tested'),
-  (slug: 'joyful', name: 'Joyful'),
-  (slug: 'heavy', name: 'Heavy'),
-  (slug: 'searching', name: 'Searching'),
-];
-
-/// All available emotions. Falls back to [kDefaultMoods] when the server
-/// hasn't seeded the full set.
+/// There is no client-side fallback list on purpose. A hardcoded slug cannot
+/// be known to exist server-side, so a fallback can only ever offer options
+/// the detail endpoint will reject — which is precisely how this feature
+/// broke: a nine-mood const shipped in the binary overlapped the seeded data
+/// in three slugs, and the other six 404'd on tap. An empty chooser with a
+/// retry is a better failure than a chooser full of dead ends.
 @Riverpod(keepAlive: true)
-Future<List<Emotion>> emotions(Ref ref) async {
+Future<List<Emotion>> emotions(Ref ref) {
   final repo = ref.watch(feelingsRepositoryProvider);
-  final list = await repo.getEmotions();
-  if (list.isNotEmpty) return list;
-  return kDefaultMoods
-      .map((m) => Emotion(id: m.slug, name: m.name, slug: m.slug))
-      .toList(growable: false);
+  return repo.getEmotions();
 }

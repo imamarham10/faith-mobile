@@ -13,7 +13,6 @@ import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/journal_entry.dart';
-import '../controllers/emotions_controller.dart';
 import '../controllers/mood_history_controller.dart';
 
 /// `/reflect/history` — last 30 days of mood entries with frequency dots.
@@ -64,6 +63,16 @@ class MoodHistoryScreen extends ConsumerWidget {
   }
 }
 
+/// Slugs the two seeded mood sets treat as settled rather than difficult.
+///
+/// An allowlist, not a denylist of "heavier" slugs. The old denylist named
+/// five moods — `tested`, `lonely`, `lost`, `heavy`, `searching` — of which
+/// only `lost` exists on the Islam side and only `lonely` on the Hindu side,
+/// so it coloured almost nothing it was meant to. Inverting it means a slug
+/// this file has never heard of still lands on the contrast-safe branch
+/// rather than failing WCAG AA by default.
+const Set<String> _calmMoods = {'grateful'};
+
 class _FrequencyRow extends StatelessWidget {
   const _FrequencyRow({required this.frequency});
 
@@ -75,17 +84,28 @@ class _FrequencyRow extends StatelessWidget {
     final cs = theme.colorScheme;
     final maxCount = frequency.values.fold<int>(0, (a, b) => a > b ? a : b);
 
+    // Charted from the moods actually logged, strongest first — not from any
+    // shipped list of moods on offer. This screen is shared by both faiths
+    // (the journal behind it is faith-neutral), and it used to plot Islam's
+    // hardcoded nine, which meant Hindu users saw Islamic labels and every
+    // user saw a row of permanent zeroes for moods no chooser can produce.
+    final slugs = frequency.keys.toList()
+      ..sort((a, b) {
+        final byCount = frequency[b]!.compareTo(frequency[a]!);
+        return byCount != 0 ? byCount : a.compareTo(b);
+      });
+
     return Wrap(
       spacing: AppSpacing.base,
       runSpacing: AppSpacing.md,
       children: [
-        for (final mood in kDefaultMoods)
+        for (final slug in slugs)
           _FrequencyDot(
-            label: mood.name,
-            count: frequency[mood.slug] ?? 0,
+            label: _titleCase(slug),
+            count: frequency[slug] ?? 0,
             maxCount: maxCount,
-            color: _moodColor(context, mood.slug),
-            textColor: _moodTextColor(context, mood.slug),
+            color: _moodColor(context, slug),
+            textColor: _moodTextColor(context, slug),
             mutedColor: cs.outline,
             theme: theme,
           ),
@@ -93,12 +113,14 @@ class _FrequencyRow extends StatelessWidget {
     );
   }
 
+  static String _titleCase(String slug) =>
+      slug.isEmpty ? slug : slug[0].toUpperCase() + slug.substring(1);
+
   Color _moodColor(BuildContext context, String slug) {
     // Sage for "calm/positive" hues, gold for "warmer/heavier" hues. Doesn't
     // depend on hardcoded hex — pulled from the theme.
     final cs = Theme.of(context).colorScheme;
-    const warmer = {'tested', 'lonely', 'lost', 'heavy', 'searching'};
-    return warmer.contains(slug) ? cs.secondary : cs.primary;
+    return _calmMoods.contains(slug) ? cs.primary : cs.secondary;
   }
 
   /// Same warm/calm split as [_moodColor], but for the count text drawn
@@ -111,8 +133,7 @@ class _FrequencyRow extends StatelessWidget {
         .extension<FaithThemeExtension>()!
         .palette
         .accentText;
-    const warmer = {'tested', 'lonely', 'lost', 'heavy', 'searching'};
-    return warmer.contains(slug) ? accentText : cs.primary;
+    return _calmMoods.contains(slug) ? cs.primary : accentText;
   }
 }
 

@@ -12,8 +12,7 @@ import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../feelings/data/dtos/journal_entry.dart';
 import '../../../feelings/presentation/controllers/journal_controller.dart';
-import '../../../feelings/presentation/widgets/mood_chip_row.dart';
-import '../../../hindu_feelings/presentation/widgets/hindu_mood_chip_row.dart';
+import '../../../feelings/presentation/widgets/mood_sheet.dart';
 
 /// `/reflect` — the calm landing for the Reflect tab.
 ///
@@ -129,18 +128,7 @@ class _IslamReflectContent extends ConsumerWidget {
   }
 
   Future<void> _openMoodSheet(BuildContext context) async {
-    HapticFeedback.lightImpact();
-    final theme = Theme.of(context);
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: theme.scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
-      builder: (_) => const _MoodSheet(),
-    );
+    final selected = await showMoodSheet(context);
     if (selected == null || !context.mounted) return;
     context.push('/reflect/feelings/$selected');
   }
@@ -242,18 +230,7 @@ class _HinduReflectContent extends ConsumerWidget {
   }
 
   Future<void> _openHinduMoodSheet(BuildContext context) async {
-    HapticFeedback.lightImpact();
-    final theme = Theme.of(context);
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: theme.scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
-      builder: (_) => const _HinduMoodSheet(),
-    );
+    final selected = await showMoodSheet(context);
     if (selected == null || !context.mounted) return;
     context.push('/reflect/feelings/$selected');
   }
@@ -421,101 +398,5 @@ class _RecentRow extends StatelessWidget {
     if (delta.inDays < 7) return '${delta.inDays}d';
     if (delta.inDays < 30) return '${(delta.inDays / 7).floor()}w';
     return '${(delta.inDays / 30).floor()}mo';
-  }
-}
-
-class _MoodSheet extends StatelessWidget {
-  const _MoodSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenEdge,
-          12,
-          AppSpacing.screenEdge,
-          AppSpacing.xl,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.outline,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            Text('How are you?', style: theme.textTheme.headlineMedium),
-            const Gap(AppSpacing.sm),
-            Text(
-              "There's a dua for what you're carrying.",
-              style: theme.textTheme.bodyMedium,
-            ),
-            const Gap(AppSpacing.lg),
-            MoodChipRow(onSelected: (slug) => Navigator.of(context).pop(slug)),
-            const Gap(AppSpacing.md),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HinduMoodSheet extends StatelessWidget {
-  const _HinduMoodSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenEdge,
-          12,
-          AppSpacing.screenEdge,
-          AppSpacing.xl,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.outline,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            Text('How are you?', style: theme.textTheme.headlineMedium),
-            const Gap(AppSpacing.sm),
-            Text(
-              "There's a shloka for what you're carrying.",
-              style: theme.textTheme.bodyMedium,
-            ),
-            const Gap(AppSpacing.lg),
-            HinduMoodChipRow(
-              onSelected: (slug) => Navigator.of(context).pop(slug),
-            ),
-            const Gap(AppSpacing.md),
-          ],
-        ),
-      ),
-    );
   }
 }

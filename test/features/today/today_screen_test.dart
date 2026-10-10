@@ -11,6 +11,8 @@ import 'package:faith_mobile/features/hindu_stories/data/dtos/hindu_story.dart';
 import 'package:faith_mobile/features/hindu_stories/presentation/controllers/daily_katha_controller.dart';
 import 'package:faith_mobile/features/today/domain/daily_verse.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/daily_verse_controller.dart';
+import 'package:faith_mobile/features/feelings/data/dtos/emotion.dart';
+import 'package:faith_mobile/features/feelings/presentation/controllers/emotions_controller.dart';
 import 'package:faith_mobile/features/today/presentation/screens/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +22,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/today_dashboard_controller.dart';
 import 'package:faith_mobile/features/today/presentation/widgets/today_progress_section.dart';
 
+import 'package:go_router/go_router.dart';
+
+import '../../helpers/fake_emotions.dart';
 import '../../helpers/fake_selected_faith.dart';
 import '../../helpers/fake_today_dashboard.dart';
 
@@ -79,10 +84,29 @@ void main() {
           dailyKathaProvider.overrideWith(
             (ref) => Completer<HinduStory?>().future,
           ),
+          // The mood chooser is server-driven now, so the sheet renders
+          // whatever this returns and nothing else.
+          emotionsProvider.overrideWith(
+            (ref) async => const <Emotion>[...FakeEmotions.islam],
+          ),
         ],
-        child: MaterialApp(
+        // MaterialApp.router, not a bare MaterialApp: picking a mood now
+        // navigates to that mood's remedy, and the remedy lives in the
+        // Reflect branch. A home-only harness could not observe the
+        // navigation that is the entire point of the card.
+        child: MaterialApp.router(
           theme: AppTheme.light(faith),
-          home: const TodayScreen(),
+          routerConfig: GoRouter(
+            initialLocation: '/today',
+            routes: [
+              GoRoute(path: '/today', builder: (_, __) => const TodayScreen()),
+              GoRoute(
+                path: '/reflect/feelings/:mood',
+                builder: (_, state) =>
+                    Text('REMEDY:${state.pathParameters['mood']}'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -151,7 +175,7 @@ void main() {
     });
 
     testWidgets(
-      'MoodPrompt opens the mood sheet, and picking a mood chip pops it',
+      'MoodPrompt opens the mood sheet, and picking a mood opens its remedy',
       (tester) async {
         await pump(tester, FaithId.islam);
 
@@ -170,11 +194,27 @@ void main() {
 
         await tester.tap(find.text('Grateful'));
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 400));
 
         expect(find.text('How are you?'), findsNothing);
+        // This card used to await the sheet and discard the result, so every
+        // mood on it was a dead end whatever slug it carried.
+        expect(find.text('REMEDY:grateful'), findsOneWidget);
       },
     );
+
+    testWidgets('the mood sheet offers no mood the Islam data lacks', (
+      tester,
+    ) async {
+      await pump(tester, FaithId.islam);
+      await scrollTo(tester, find.text('How are you feeling?'));
+      await tester.tap(find.text('How are you feeling?'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Lonely'), findsNothing);
+      expect(find.text('Searching'), findsNothing);
+    });
   });
 
   group('Hindu branch', () {

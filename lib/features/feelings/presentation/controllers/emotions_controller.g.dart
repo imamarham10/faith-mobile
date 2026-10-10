@@ -6,10 +6,17 @@ part of 'emotions_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$emotionsHash() => r'6e308289b9e9c402e4b8d344e1621fd3f3b350f1';
+String _$emotionsHash() => r'efe0324a3516d2d904ad28fa5a8df8944b40a740';
 
-/// All available emotions. Falls back to [kDefaultMoods] when the server
-/// hasn't seeded the full set.
+/// Every mood the Islam vertical can actually answer, straight from
+/// `GET /api/v1/islam/feelings`.
+///
+/// There is no client-side fallback list on purpose. A hardcoded slug cannot
+/// be known to exist server-side, so a fallback can only ever offer options
+/// the detail endpoint will reject — which is precisely how this feature
+/// broke: a nine-mood const shipped in the binary overlapped the seeded data
+/// in three slugs, and the other six 404'd on tap. An empty chooser with a
+/// retry is a better failure than a chooser full of dead ends.
 ///
 /// Copied from [emotions].
 @ProviderFor(emotions)
