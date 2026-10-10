@@ -75,12 +75,37 @@ class _NotificationOrchestratorState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(prayerTimesControllerProvider, (prev, next) {
-      unawaited(_maybeReschedule());
-    });
+    // Subscribing to a provider is what *creates* it, so this listen is not
+    // a passive observation — it is what sent `GET /islam/prayers/times` at
+    // boot on a Hindu profile, for a user who has no prayer times. It cost
+    // a ninth connection into the cold-start pile-up, and the reschedule it
+    // would have triggered does nothing but fall straight through the faith
+    // gate in [_reschedule].
+    //
+    // So the trigger is registered only once the faith has *resolved* to
+    // Islam. Not "is not Hindu": during the SharedPreferences read the
+    // faith is still null, and treating that as Islam would fire the
+    // request inside exactly the window this is clearing. A conditional
+    // `ref.listen` is safe here — Riverpod re-registers listeners from
+    // scratch on every build, so this attaches the moment the faith
+    // resolves and detaches again the moment the user switches away.
+    //
+    // The faith gate inside [_reschedule] stays exactly where it is. This
+    // is an *additional* gate on one trigger, not a replacement for the one
+    // that cancels a departing faith's alarms.
+    final faith = ref.watch(selectedFaithProvider).valueOrNull;
+    if (faith == FaithId.islam) {
+      ref.listen(prayerTimesControllerProvider, (prev, next) {
+        unawaited(_maybeReschedule());
+      });
+    }
     ref.listen(notificationPrefsProvider, (prev, next) {
       unawaited(_maybeReschedule());
     });
+    // Still a listen as well as the watch above: the watch decides whether
+    // to subscribe to prayer times, this fires the reschedule that cancels
+    // a departing faith's window. Both are needed and they are not the same
+    // event.
     ref.listen(selectedFaithProvider, (prev, next) {
       unawaited(_maybeReschedule());
     });
