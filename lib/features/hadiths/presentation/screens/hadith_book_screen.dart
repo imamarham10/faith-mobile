@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/hadith_book.dart';
@@ -66,7 +69,6 @@ class _HadithBookScreenState extends ConsumerState<HadithBookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final feedAsync = ref.watch(hadithsByBookControllerProvider(widget.bookId));
     final booksAsync = ref.watch(hadithBooksProvider);
 
@@ -80,6 +82,7 @@ class _HadithBookScreenState extends ConsumerState<HadithBookScreen> {
       orElse: () => null,
     );
 
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(book?.name ?? 'Book', style: theme.textTheme.titleLarge),
@@ -227,28 +230,14 @@ class _EmptyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isPremium ? Icons.lock_outline : Icons.inbox_outlined,
-              size: 36,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const Gap(AppSpacing.md),
-            Text(
-              isPremium
-                  ? 'This collection is part of premium.'
-                  : 'No hadiths in this book yet.',
-              style: theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return Center(
+      child: IllustratedEmptyState(
+        title: isPremium ? 'Part of premium' : 'Nothing here yet',
+        message: isPremium
+            ? 'This collection is part of premium.'
+            : 'No hadiths in this book yet.',
+        slot: ArtSlot.emptyCollection,
+        mascot: MascotState.sleep,
       ),
     );
   }

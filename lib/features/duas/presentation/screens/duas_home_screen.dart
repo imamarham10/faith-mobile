@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -247,7 +250,6 @@ class _SearchResultsSliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final favs = ref.watch(duaFavoritesControllerProvider);
     final favsCtrl = ref.read(duaFavoritesControllerProvider.notifier);
     final results = ref.watch(duasSearchProvider(query));
@@ -266,23 +268,12 @@ class _SearchResultsSliver extends ConsumerWidget {
       ),
       data: (list) {
         if (list.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.search_off_outlined,
-                    size: 36,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const Gap(AppSpacing.md),
-                  Text(
-                    'No duas matched that.',
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ],
-              ),
+          return const SliverToBoxAdapter(
+            child: IllustratedEmptyState(
+              title: 'Nothing matched',
+              message: 'No duas matched that.',
+              slot: ArtSlot.emptySearch,
+              mascot: MascotState.encourage,
             ),
           );
         }
@@ -419,25 +410,11 @@ class _EmptyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.menu_book_outlined,
-            size: 36,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const Gap(AppSpacing.md),
-          Text(
-            'No duas yet — check back soon.',
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return const IllustratedEmptyState(
+      title: 'No duas yet',
+      message: 'Check back soon.',
+      slot: ArtSlot.emptyCollection,
+      mascot: MascotState.sleep,
     );
   }
 }

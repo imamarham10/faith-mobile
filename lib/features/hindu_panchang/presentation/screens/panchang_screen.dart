@@ -4,11 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/location/location_service.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/sanskrit_text.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -297,16 +300,11 @@ class _UpcomingFestivalsList extends ConsumerWidget {
       data: (list) {
         if (list == null) return const SizedBox.shrink();
         if (list.isEmpty) {
-          return PoppyCard(
-            radius: AppRadius.md,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.base,
-              vertical: AppSpacing.lg,
-            ),
-            child: Text(
-              'No festivals in the next 90 days.',
-              style: theme.textTheme.bodyMedium,
-            ),
+          return const IllustratedEmptyState(
+            title: 'A quiet season',
+            message: 'No festivals in the next 90 days.',
+            slot: ArtSlot.emptyDormant,
+            mascot: MascotState.sleep,
           );
         }
         return Column(

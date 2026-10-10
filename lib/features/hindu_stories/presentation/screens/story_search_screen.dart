@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../controllers/stories_by_collection_controller.dart';
 import '../widgets/story_list_tile.dart';
@@ -147,27 +150,12 @@ class _Body extends ConsumerWidget {
       ),
       data: (hits) {
         if (hits.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.search_off_outlined,
-                    size: 36,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const Gap(AppSpacing.md),
-                  Text('No stories matched.', style: theme.textTheme.bodyLarge),
-                  const Gap(AppSpacing.xs),
-                  Text(
-                    'Try a different word or phrase.',
-                    style: theme.textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+          return const Center(
+            child: IllustratedEmptyState(
+              title: 'No stories matched.',
+              message: 'Try a different word or phrase.',
+              slot: ArtSlot.emptySearch,
+              mascot: MascotState.encourage,
             ),
           );
         }

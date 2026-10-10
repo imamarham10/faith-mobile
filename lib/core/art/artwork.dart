@@ -14,7 +14,17 @@ enum ArtSlot {
   todayGoal,
   scriptureHeader,
   narrativeHeader,
-  empty,
+
+  // Empty-state families. Deliberately not one generic `empty`: around forty
+  // surfaces in this app can be empty, and giving them all the same picture
+  // would make the app look like it had one illustration rather than a set.
+  // Grouped by what the emptiness *means*, so the motif reinforces the copy.
+  emptyBookmarks,
+  emptyFavorites,
+  emptyHistory,
+  emptySearch,
+  emptyCollection,
+  emptyDormant,
 }
 
 /// One public-domain museum piece, already cropped and encoded for a slot.
@@ -94,9 +104,35 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     semanticLabel: 'Calligraphic band from an enamelled mosque lamp',
     aspectRatio: 900 / 418,
   ),
-  (FaithId.islam, ArtSlot.empty) => const Artwork(
+  // PROVISIONAL: these six share four files until the expanded set lands.
+  (FaithId.islam, ArtSlot.emptyBookmarks) => const Artwork(
     assetKey: 'assets/art/islam/star_tile.webp',
     semanticLabel: 'Star-shaped lustreware tile, 13th–14th century Iran',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.islam, ArtSlot.emptyFavorites) => const Artwork(
+    assetKey: 'assets/art/islam/tile_interlace.webp',
+    semanticLabel: 'Lustreware tile with floral interlace',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.islam, ArtSlot.emptyHistory) => const Artwork(
+    assetKey: 'assets/art/islam/illumination_corner.webp',
+    semanticLabel: 'Gold and lapis illumination border',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.islam, ArtSlot.emptySearch) => const Artwork(
+    assetKey: 'assets/art/islam/lamp_enamel.webp',
+    semanticLabel: 'Enamelled and gilded mosque lamp, 14th century',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.islam, ArtSlot.emptyCollection) => const Artwork(
+    assetKey: 'assets/art/islam/star_tile.webp',
+    semanticLabel: 'Star-shaped lustreware tile, 13th–14th century Iran',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.islam, ArtSlot.emptyDormant) => const Artwork(
+    assetKey: 'assets/art/islam/illumination_corner.webp',
+    semanticLabel: 'Gold and lapis illumination border',
     aspectRatio: 360 / 168,
   ),
 
@@ -141,9 +177,34 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     semanticLabel: 'Painted Kashmir shawl paisley motif',
     aspectRatio: 900 / 418,
   ),
-  (FaithId.hindu, ArtSlot.empty) => const Artwork(
+  (FaithId.hindu, ArtSlot.emptyBookmarks) => const Artwork(
     assetKey: 'assets/art/hindu/floral_arch.webp',
     semanticLabel: 'Floral arch from a gold-embroidered Indian tent panel',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.hindu, ArtSlot.emptyFavorites) => const Artwork(
+    assetKey: 'assets/art/hindu/sari_border.webp',
+    semanticLabel: 'Floral border band from an Indian sari',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.hindu, ArtSlot.emptyHistory) => const Artwork(
+    assetKey: 'assets/art/hindu/patola_ikat.webp',
+    semanticLabel: 'Patola double-ikat silk, Gujarat',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.hindu, ArtSlot.emptySearch) => const Artwork(
+    assetKey: 'assets/art/hindu/jali_lattice.webp',
+    semanticLabel: 'Pierced sandstone jali window screen, India',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.hindu, ArtSlot.emptyCollection) => const Artwork(
+    assetKey: 'assets/art/hindu/floral_arch.webp',
+    semanticLabel: 'Floral arch from a gold-embroidered Indian tent panel',
+    aspectRatio: 360 / 168,
+  ),
+  (FaithId.hindu, ArtSlot.emptyDormant) => const Artwork(
+    assetKey: 'assets/art/hindu/patola_ikat.webp',
+    semanticLabel: 'Patola double-ikat silk, Gujarat',
     aspectRatio: 360 / 168,
   ),
 };

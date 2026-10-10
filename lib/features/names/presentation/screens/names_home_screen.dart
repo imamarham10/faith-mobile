@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/divine_name.dart';
@@ -284,12 +287,11 @@ class _EmptyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Text('No names available.', style: theme.textTheme.bodyLarge),
-      ),
+    return const IllustratedEmptyState(
+      title: 'No names available',
+      message: 'Check back soon.',
+      slot: ArtSlot.emptyCollection,
+      mascot: MascotState.sleep,
     );
   }
 }

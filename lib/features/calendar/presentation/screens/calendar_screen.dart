@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
-import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../controllers/calendar_controller.dart';
@@ -59,7 +61,6 @@ class _Content extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     return ListView(
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
@@ -106,16 +107,11 @@ class _Content extends ConsumerWidget {
         const SectionLabel('Events this month'),
         const Gap(AppSpacing.md),
         if (data.eventsThisMonth.isEmpty)
-          PoppyCard(
-            radius: AppRadius.md,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.base,
-              vertical: AppSpacing.lg,
-            ),
-            child: Text(
-              'No major Islamic events this month.',
-              style: theme.textTheme.bodyMedium,
-            ),
+          const IllustratedEmptyState(
+            title: 'A quiet month',
+            message: 'No major Islamic events this month.',
+            slot: ArtSlot.emptyDormant,
+            mascot: MascotState.sleep,
           )
         else
           ...data.eventsThisMonth.map(

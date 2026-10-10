@@ -127,7 +127,7 @@ void main() {
           host(
             faith: FaithId.hindu,
             bundle: _BrokenAssetBundle(),
-            child: const ArtworkPanel(slot: ArtSlot.empty),
+            child: const ArtworkPanel(slot: ArtSlot.emptyCollection),
           ),
         );
         await tester.pump();

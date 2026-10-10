@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../controllers/temple_favorites_controller.dart';
@@ -22,7 +25,6 @@ class TempleDeityScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final templesAsync = ref.watch(templesByDeityProvider(deity));
     final favorites =
         ref.watch(templeFavoritesControllerProvider).valueOrNull ?? const [];
@@ -45,24 +47,12 @@ class TempleDeityScreen extends ConsumerWidget {
           ),
           data: (temples) {
             if (temples.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.inbox_outlined,
-                        size: 36,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const Gap(AppSpacing.md),
-                      Text(
-                        'No temples found for $deity yet.',
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
+              return Center(
+                child: IllustratedEmptyState(
+                  title: 'Nothing here yet',
+                  message: 'No temples found for $deity yet.',
+                  slot: ArtSlot.emptyCollection,
+                  mascot: MascotState.sleep,
                 ),
               );
             }

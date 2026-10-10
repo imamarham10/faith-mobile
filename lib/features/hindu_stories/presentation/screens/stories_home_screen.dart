@@ -8,7 +8,9 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
 import '../../../../shared/widgets/illustrated_header.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -286,23 +288,11 @@ class _EmptyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        children: [
-          Icon(
-            Icons.auto_stories_outlined,
-            size: 32,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const Gap(AppSpacing.md),
-          Text(
-            'No stories yet — check back soon.',
-            style: theme.textTheme.bodyLarge,
-          ),
-        ],
-      ),
+    return const IllustratedEmptyState(
+      title: 'No stories yet',
+      message: 'Check back soon.',
+      slot: ArtSlot.emptyCollection,
+      mascot: MascotState.sleep,
     );
   }
 }

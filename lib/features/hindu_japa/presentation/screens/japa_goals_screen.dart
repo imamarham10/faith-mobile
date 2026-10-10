@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -393,26 +396,12 @@ class _EmptyGoals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return PoppyCard(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.flag_outlined, size: 28, color: cs.primary),
-          const Gap(12),
-          Text('No goals yet', style: theme.textTheme.titleLarge),
-          const Gap(4),
-          Text(
-            'Set a daily or weekly target to give your japa a quiet rhythm.',
-            style: theme.textTheme.bodyMedium,
-          ),
-          const Gap(16),
-          PoppyButton(label: 'New goal', icon: Icons.add, onPressed: onCreate),
-        ],
-      ),
+    return IllustratedEmptyState(
+      title: 'No goals yet',
+      message: 'Set a daily or weekly target to give your japa a quiet rhythm.',
+      slot: ArtSlot.emptyCollection,
+      mascot: MascotState.encourage,
+      action: PoppyButton(label: 'New goal', icon: Icons.add, onPressed: onCreate),
     );
   }
 }

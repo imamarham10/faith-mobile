@@ -90,20 +90,31 @@ path serves Dhikr under Islam and Japa under Hindu.
 
 ## Judgment calls worth knowing about
 
-**Two Hindu-slot objects are filed by the Met under *Islamic Art*.**
-`453054` (Floral Tent Panel) and `453344` (Jali) are both made in India, in the
-Mughal period, and the Met classifies them by patronage rather than by
-geography. They were chosen anyway, for two reasons: the motifs themselves —
-a gold floral arcade and a geometric pierced screen — carry no religious
-marking in either direction, and jali geometry was explicitly named as
-acceptable subject matter for this slot. The alternative was to restrict the
-Hindu set to objects the Met files under Asian Art with Hindu provenance, which
-in practice means figurative sculpture and painting — the exact content the
-rule above forbids.
+**Two Hindu-slot objects are filed by the Met under *Islamic Art*. This was
+raised, considered, and deliberately kept — it is not an oversight.**
 
-If this reads wrong to a reviewer, `453054` and `453344` are the two to swap,
-and only those two; the other four Hindu assets are unambiguously Indian
-textile and shawl work.
+`453054` (Floral Tent Panel) and `453344` (Pierced Window Screen) are both
+made in India, in the Mughal period. The Met catalogues them by patronage
+rather than by geography, which is a **curatorial filing convention, not a
+statement about the objects themselves**. A department name describes how a
+museum organises its storerooms; it does not make a stone screen carved in
+sixteenth-century India into a religious statement about anyone who looks at
+it.
+
+The motifs carry no religious marking in either direction: a gold floral
+arcade and a geometric pierced lattice. A stone jali behind a Temples card is
+apt regardless of which department catalogued it — jali screens are a
+feature of Indian architecture across traditions, and the geometry is the
+point.
+
+The alternative was to restrict the Hindu set to objects the Met files under
+Asian Art with Hindu provenance. In practice that means figurative sculpture
+and painting — deities, saints, human figures — which is exactly the content
+the rule at the top of this file forbids. Choosing the departmental label
+over the content rule would have meant breaking the rule that actually
+matters in order to satisfy one that does not.
+
+Recorded here so the next reader sees a decision rather than an accident.
 
 **`359318` has no `culture` field.** It is a Kashmir shawl design drawing held
 under Drawings and Prints. Its subject is unambiguously an Indian shawl motif;

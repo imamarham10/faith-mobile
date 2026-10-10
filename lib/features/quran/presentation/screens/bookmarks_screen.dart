@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/bookmark.dart';
@@ -181,6 +183,8 @@ class _EmptyState extends StatelessWidget {
       child: IllustratedEmptyState(
         title: 'No bookmarks yet',
         message: 'Tap any ayah to bookmark it.',
+        slot: ArtSlot.emptyBookmarks,
+        mascot: MascotState.encourage,
       ),
     );
   }

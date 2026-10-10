@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../data/dtos/journal_entry.dart';
 import '../controllers/journal_controller.dart';
@@ -145,34 +148,11 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.auto_stories_outlined,
-              size: 40,
-              color: cs.onSurfaceVariant,
-            ),
-            const Gap(AppSpacing.base),
-            Text(
-              'Your reflections will live here.',
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const Gap(AppSpacing.sm),
-            Text(
-              'Quietly.',
-              style: theme.textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return const IllustratedEmptyState(
+      title: 'Your reflections will live here.',
+      message: 'Quietly.',
+      slot: ArtSlot.emptyHistory,
+      mascot: MascotState.sleep,
     );
   }
 }

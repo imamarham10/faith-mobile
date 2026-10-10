@@ -4,11 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -287,14 +290,11 @@ class _IconAction extends StatelessWidget {
 class _NoRemedy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return PoppyCard(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Text(
-        'No remedy is associated with this mood yet — but your reflection still matters.',
-        style: theme.textTheme.bodyMedium,
-      ),
+    return const IllustratedEmptyState(
+      title: 'No remedy yet',
+      message: 'No remedy is associated with this mood yet — but your reflection still matters.',
+      slot: ArtSlot.emptyDormant,
+      mascot: MascotState.sleep,
     );
   }
 }

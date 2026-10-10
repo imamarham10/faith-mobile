@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
-import '../controllers/story_collections_controller.dart';
 import '../controllers/stories_by_collection_controller.dart';
+import '../controllers/story_collections_controller.dart';
 import '../widgets/story_list_tile.dart';
 
 /// `/hadiths/hindu-stories/collection/:slug` — list of all stories inside
@@ -21,7 +24,6 @@ class StoryCollectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final storiesAsync = ref.watch(storiesByCollectionProvider(collectionSlug));
     final collectionsAsync = ref.watch(storyCollectionsProvider);
 
@@ -53,24 +55,12 @@ class StoryCollectionScreen extends ConsumerWidget {
           ),
           data: (stories) {
             if (stories.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.inbox_outlined,
-                        size: 36,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const Gap(AppSpacing.md),
-                      Text(
-                        'No stories in this collection yet.',
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
+              return const Center(
+                child: IllustratedEmptyState(
+                  title: 'Nothing here yet',
+                  message: 'No stories in this collection yet.',
+                  slot: ArtSlot.emptyCollection,
+                  mascot: MascotState.sleep,
                 ),
               );
             }

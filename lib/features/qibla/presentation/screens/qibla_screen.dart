@@ -4,11 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/location/location_service.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/qibla_data.dart';
@@ -335,27 +338,13 @@ class _NoCompass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-      child: Column(
-        children: [
-          Icon(Icons.explore_outlined, size: 48, color: cs.onSurfaceVariant),
-          const Gap(AppSpacing.base),
-          Text(
-            'No compass on this device',
-            style: theme.textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          const Gap(AppSpacing.sm),
-          Text(
-            'Your bearing to Makkah is shown above.\nOpen this on a phone with a magnetometer to align.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return const IllustratedEmptyState(
+      title: 'No compass on this device',
+      message:
+          'Your bearing to Makkah is shown above.\n'
+          'Open this on a phone with a magnetometer to align.',
+      slot: ArtSlot.emptyDormant,
+      mascot: MascotState.sleep,
     );
   }
 }

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../controllers/story_favorites_controller.dart';
 import '../widgets/story_list_tile.dart';
 
@@ -41,30 +44,12 @@ class StoryFavoritesScreen extends ConsumerWidget {
           ),
           data: (list) {
             if (list.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.favorite_outline,
-                        size: 36,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const Gap(AppSpacing.md),
-                      Text(
-                        'No favorites yet',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const Gap(AppSpacing.xs),
-                      Text(
-                        'Tap the heart on any story to save it here.',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+              return const Center(
+                child: IllustratedEmptyState(
+                  title: 'No favorites yet',
+                  message: 'Tap the heart on any story to save it here.',
+                  slot: ArtSlot.emptyFavorites,
+                  mascot: MascotState.encourage,
                 ),
               );
             }

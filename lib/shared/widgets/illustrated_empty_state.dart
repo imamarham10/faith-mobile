@@ -27,7 +27,7 @@ class IllustratedEmptyState extends StatelessWidget {
     this.message,
     this.action,
     this.mascot = MascotState.sleep,
-    this.slot = ArtSlot.empty,
+    required this.slot,
   });
 
   final String title;
@@ -36,7 +36,23 @@ class IllustratedEmptyState extends StatelessWidget {
   /// Rendered under the copy — usually a `PoppyButton`.
   final Widget? action;
 
+  /// Which mascot mood this emptiness calls for.
+  ///
+  /// [MascotState.encourage] where there is something the user can go and do
+  /// — no bookmarks yet, no favourites yet. [MascotState.sleep] where there
+  /// is genuinely nothing to act on: a history with no entries, a search that
+  /// has not been typed into, a collection the server has not filled.
+  ///
+  /// Note that `encourage` (like `idle`) repeats forever, so any test that
+  /// renders one must use bounded `pump(duration)` rather than
+  /// `pumpAndSettle()`, which would spin until it times out. That is the
+  /// convention already used in `faith_selection_screen_test.dart` and
+  /// `mascot_view_test.dart`.
   final MascotState mascot;
+
+  /// Which artwork family to draw from. Required rather than defaulted: with
+  /// around forty empty surfaces, picking the family is the one decision
+  /// each call site genuinely has to make.
   final ArtSlot slot;
 
   static const double _bandHeight = 104;

@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -274,6 +276,8 @@ class _EmptyCounters extends StatelessWidget {
       child: IllustratedEmptyState(
         title: 'Begin a japa',
         message: 'Create your first counter from a known mantra or your own.',
+        slot: ArtSlot.emptyCollection,
+        mascot: MascotState.encourage,
         action: PoppyButton(
           label: 'New counter',
           icon: Icons.add,

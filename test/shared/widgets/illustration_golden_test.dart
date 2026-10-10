@@ -5,6 +5,7 @@ import 'package:faith_mobile/core/theme/faith_palette.dart';
 import 'package:faith_mobile/core/theme/faith_theme_extension.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/shared/widgets/illustrated_empty_state.dart';
+import 'package:faith_mobile/shared/widgets/mascot_view.dart';
 import 'package:faith_mobile/shared/widgets/illustrated_header.dart';
 import 'package:faith_mobile/shared/widgets/poppy_button.dart';
 import 'package:flutter/material.dart';
@@ -177,8 +178,9 @@ void main() {
               faith: faith,
               brightness: brightness,
               child: IllustratedEmptyState(
-                title: 'No bookmarks yet',
-                message: 'Tap any ayah to bookmark it.',
+                title: 'A quiet month',
+                message: 'No major events this month.',
+                slot: ArtSlot.emptyDormant,
                 action: PoppyButton(label: 'Browse', onPressed: () {}),
               ),
             ),
@@ -188,6 +190,44 @@ void main() {
             find.byType(IllustratedEmptyState),
             matchesGoldenFile(
               'goldens/illustrated_empty_${faith.name}${suffix(brightness)}.png',
+            ),
+          );
+        });
+      }
+    }
+  });
+
+  // `encourage` is now the mascot on every "go and do something" empty state,
+  // so it needs looking at. It repeats forever, which rules out
+  // `pumpAndSettle` — bounded pumps instead, the convention already used by
+  // faith_selection_screen_test.dart and mascot_view_test.dart.
+  group('IllustratedEmptyState, encouraging', () {
+    for (final faith in FaithId.values) {
+      for (final brightness in Brightness.values) {
+        testWidgets('${faith.name}${suffix(brightness)}', (tester) async {
+          useViewport(tester, phone);
+          await warmArtwork(tester);
+          await tester.pumpWidget(
+            host(
+              faith: faith,
+              brightness: brightness,
+              child: const IllustratedEmptyState(
+                title: 'No bookmarks yet',
+                message: 'Tap any ayah to bookmark it.',
+                slot: ArtSlot.emptyBookmarks,
+                mascot: MascotState.encourage,
+              ),
+            ),
+          );
+          // Lands the first frame of the repeating animation at a fixed
+          // point, so the golden is deterministic rather than a race.
+          await tester.pump(const Duration(milliseconds: 50));
+
+          await expectLater(
+            find.byType(IllustratedEmptyState),
+            matchesGoldenFile(
+              'goldens/illustrated_empty_encourage_'
+              '${faith.name}${suffix(brightness)}.png',
             ),
           );
         });

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
@@ -170,34 +173,11 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenEdge,
-        AppSpacing.xxl,
-        AppSpacing.screenEdge,
-        AppSpacing.xxl,
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.history,
-            size: 36,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const Gap(12),
-          Text(
-            'Your history will appear here',
-            style: theme.textTheme.titleMedium,
-          ),
-          const Gap(4),
-          Text(
-            'as you remember.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return const IllustratedEmptyState(
+      title: 'Your history will appear here',
+      message: 'as you remember.',
+      slot: ArtSlot.emptyHistory,
+      mascot: MascotState.sleep,
     );
   }
 }

@@ -5,10 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -189,30 +192,12 @@ class _NotFoundView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.screenEdge),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search_off_outlined,
-              size: 56,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const Gap(AppSpacing.base),
-            Text('Event not found', style: theme.textTheme.headlineMedium),
-            const Gap(AppSpacing.xs),
-            Text(
-              'It may have been removed.',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const Gap(AppSpacing.lg),
-            PoppyButton(label: 'Back to calendar', onPressed: onBack),
-          ],
-        ),
-      ),
+    return IllustratedEmptyState(
+      title: 'Event not found',
+      message: 'It may have been removed.',
+      slot: ArtSlot.emptySearch,
+      mascot: MascotState.sleep,
+      action: PoppyButton(label: 'Back to calendar', onPressed: onBack),
     );
   }
 }

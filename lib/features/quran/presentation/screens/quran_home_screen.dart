@@ -9,7 +9,9 @@ import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
 import '../../../../shared/widgets/illustrated_header.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -257,18 +259,12 @@ class _ResultsList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filtered = ref.watch(filteredSurahsProvider);
     if (filtered.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenEdge,
-            vertical: AppSpacing.xl,
-          ),
-          child: Center(
-            child: Text(
-              'No surahs match that search.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
+      return const SliverToBoxAdapter(
+        child: IllustratedEmptyState(
+          title: 'Nothing matched',
+          message: 'No surahs match that search.',
+          slot: ArtSlot.emptySearch,
+          mascot: MascotState.encourage,
         ),
       );
     }

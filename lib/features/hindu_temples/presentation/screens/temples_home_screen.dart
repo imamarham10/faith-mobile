@@ -3,11 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/location/location_service.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -205,13 +208,11 @@ class _NearbySection extends ConsumerWidget {
           );
         }
         if (temples.isEmpty) {
-          return PoppyCard(
-            radius: AppRadius.lg,
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text(
-              'No temples found nearby yet.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+          return const IllustratedEmptyState(
+            title: 'Nothing nearby yet',
+            message: 'No temples found near you yet.',
+            slot: ArtSlot.emptyCollection,
+            mascot: MascotState.sleep,
           );
         }
         return Column(

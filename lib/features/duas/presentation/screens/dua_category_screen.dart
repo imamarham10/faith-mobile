@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../controllers/dua_categories_controller.dart';
@@ -20,7 +23,6 @@ class DuaCategoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final duasAsync = ref.watch(duasByCategoryProvider(categoryId));
     final categoriesAsync = ref.watch(duaCategoriesProvider);
     final favs = ref.watch(duaFavoritesControllerProvider);
@@ -53,24 +55,12 @@ class DuaCategoryScreen extends ConsumerWidget {
           ),
           data: (duas) {
             if (duas.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.inbox_outlined,
-                        size: 36,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const Gap(AppSpacing.md),
-                      Text(
-                        'No duas in this category yet.',
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
+              return const Center(
+                child: IllustratedEmptyState(
+                  title: 'Nothing here yet',
+                  message: 'No duas in this category yet.',
+                  slot: ArtSlot.emptyCollection,
+                  mascot: MascotState.sleep,
                 ),
               );
             }

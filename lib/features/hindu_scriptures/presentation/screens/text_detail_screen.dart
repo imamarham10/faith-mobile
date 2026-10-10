@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/sanskrit_text.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -58,10 +61,12 @@ class _ChapterList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (chapters.isEmpty) {
-      return Center(
-        child: Text(
-          'No chapters found for this text.',
-          style: Theme.of(context).textTheme.bodyMedium,
+      return const Center(
+        child: IllustratedEmptyState(
+          title: 'Nothing here yet',
+          message: 'No chapters found for this text.',
+          slot: ArtSlot.emptyCollection,
+          mascot: MascotState.sleep,
         ),
       );
     }
