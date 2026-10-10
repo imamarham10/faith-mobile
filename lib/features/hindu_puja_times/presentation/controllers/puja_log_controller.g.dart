@@ -6,7 +6,7 @@ part of 'puja_log_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$todayPujaLogsHash() => r'd38ed0528a660281d830b8afe57d5e078368303c';
+String _$todayPujaLogsHash() => r'121f8b23f8c57ff349a2db38f54fae0ac506f53c';
 
 /// Today's logs, keyed by sandhya name. Mirrors `TodayLogs` (prayers).
 ///

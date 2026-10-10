@@ -18,6 +18,7 @@
 ///     response plus the queue must still move the numbers.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -27,6 +28,7 @@ import 'package:faith_mobile/core/providers.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/today_dashboard_controller.dart';
 import 'package:faith_mobile/shared/habit/activity_event.dart';
+import 'package:faith_mobile/shared/habit/device_day.dart';
 import 'package:faith_mobile/shared/habit/local_event_queue.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,7 +49,23 @@ class _Api implements HttpClientAdapter {
   /// When set, every call throws it — the offline case.
   DioException? failure;
 
+  /// When set, no response is produced until it completes. The seam the
+  /// concurrency tests need: without it, "both were called" is satisfied by
+  /// the serial implementation too, and the test proves nothing.
+  Completer<void>? gate;
+
   final List<Uri> calls = <Uri>[];
+
+  /// Every `/activity/history` request, so a test can assert on the window
+  /// that was actually asked for — and on how many were sent.
+  Iterable<Uri> get historyCalls =>
+      calls.where((u) => u.path.endsWith('/activity/history'));
+
+  Uri get todayCall =>
+      calls.firstWhere((u) => u.path.endsWith('/activity/today'));
+
+  bool get calledPrayerLog =>
+      calls.any((u) => u.path.endsWith('/prayers/log'));
 
   @override
   Future<ResponseBody> fetch(
@@ -56,9 +74,10 @@ class _Api implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     calls.add(options.uri);
+    await gate?.future;
     final failure = this.failure;
     if (failure != null) throw failure;
-    final body = options.path.endsWith('/today')
+    final body = options.path.endsWith('/activity/today')
         ? today
         : <String, Object?>{'days': history};
     return ResponseBody.fromString(
@@ -72,6 +91,19 @@ class _Api implements HttpClientAdapter {
 
   @override
   void close({bool force = false}) {}
+}
+
+/// A clock pinned to [day].
+///
+/// Every window these tests assert on is built from the device's day, so an
+/// unpinned clock would make them pass today and drift tomorrow — and the
+/// disagreement cases, which are *about* two days differing, could not be
+/// written at all.
+class _FixedClock extends DeviceDayClock {
+  const _FixedClock(this.day);
+  final String day;
+  @override
+  String today() => day;
 }
 
 Map<String, Object?> _todayBody({
@@ -113,7 +145,7 @@ List<Map<String, Object?>> _metRun(int n) => [
     },
 ];
 
-ProviderContainer _container(_Api api) {
+ProviderContainer _container(_Api api, {String clientDay = _today}) {
   final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
     ..httpClientAdapter = api;
   final container = ProviderContainer(
@@ -121,6 +153,7 @@ ProviderContainer _container(_Api api) {
       dioProvider.overrideWithValue(dio),
       localEventQueueProvider.overrideWith((ref) async => _queue),
       selectedFaithProvider.overrideWith(() => _FixedFaith(FaithId.islam)),
+      deviceDayClockProvider.overrideWithValue(_FixedClock(clientDay)),
     ],
   );
   addTearDown(container.dispose);
@@ -159,6 +192,167 @@ void main() {
     if (_dir.existsSync()) _dir.deleteSync(recursive: true);
   });
 
+  group('the reads go out together', () {
+    test('today, history and the checklist are all in flight at once', () async {
+      // The regression this pins: `/history`'s range used to be derived
+      // from the `localDay` `/today` echoed, so it could not be sent until
+      // `/today` had returned, and the checklist's `/prayers/log` was
+      // awaited after both. Three ~1s requests in series is ~2.4s before a
+      // single card can draw; concurrently it is one.
+      //
+      // The gate is what makes this a real assertion. "All three were
+      // called" is true of the serial version too — just not until the
+      // previous one has answered. Holding every response open and
+      // checking what has already been *sent* is the only version of this
+      // test the old code fails.
+      final api = _Api(today: _todayBody(), history: const [])
+        ..gate = Completer<void>();
+
+      final pending = _container(api).read(todayDashboardProvider.future);
+      await pumpEventQueue();
+
+      expect(
+        api.historyCalls,
+        hasLength(1),
+        reason: '/history must not wait for /today to come back',
+      );
+      expect(
+        api.calledPrayerLog,
+        isTrue,
+        reason: 'the checklist depends on nothing in the snapshot',
+      );
+
+      api.gate!.complete();
+      await pending;
+    });
+
+    test('the window is built without being told what day it is', () async {
+      // 28 days ending on the device's day, padded one at each end so a
+      // midnight disagreement is already covered.
+      final api = _Api(today: _todayBody(), history: const []);
+
+      await _container(api).read(todayDashboardProvider.future);
+
+      final window = api.historyCalls.single.queryParameters;
+      expect(window['from'], '2026-09-11', reason: '27 + 1 days back');
+      expect(window['to'], '2026-10-10', reason: '1 day forward');
+    });
+  });
+
+  group('when the device and the server disagree about the day', () {
+    // §5.2 — the response is the authority. The device's day is only ever
+    // used to choose a *window*, never to decide what is rendered.
+
+    test('a midnight-race day is absorbed, with no second request', () async {
+      // The device has ticked over to the 10th; the server is still
+      // describing the 9th. One pad day each side already covers it.
+      final api = _Api(
+        today: _todayBody(
+          counts: {'quran_verse': 5},
+          goal: _verses(progress: 5),
+          current: 7,
+          longest: 7,
+          lastGoalMetDay: _today,
+        ),
+        history: _metRun(7),
+      );
+
+      final dashboard = await _container(
+        api,
+        clientDay: '2026-10-10',
+      ).read(todayDashboardProvider.future);
+
+      expect(api.historyCalls, hasLength(1), reason: 'no refetch');
+      expect(dashboard.localDay, _today, reason: 'the server decides');
+      // The bug this guards: a window off by a day shifting the strip, so
+      // that a met day lands in the wrong cell and the week looks broken.
+      expect(dashboard.week.last.isToday, isTrue);
+      expect(dashboard.week.last.day, DateTime.parse(_today));
+      expect(dashboard.week.first.day, DateTime.parse('2026-10-03'));
+      expect(
+        dashboard.week.where((d) => d.goalMet),
+        hasLength(7),
+        reason: 'all seven met days must still land in their own cells',
+      );
+      expect(dashboard.streak!.current, 7);
+    });
+
+    test('a device a day behind is absorbed too', () async {
+      final api = _Api(
+        today: _todayBody(
+          counts: {'quran_verse': 5},
+          goal: _verses(progress: 5),
+          current: 7,
+          longest: 7,
+          lastGoalMetDay: _today,
+        ),
+        history: _metRun(7),
+      );
+
+      final dashboard = await _container(
+        api,
+        clientDay: '2026-10-08',
+      ).read(todayDashboardProvider.future);
+
+      expect(api.historyCalls, hasLength(1));
+      expect(api.historyCalls.single.queryParameters['from'], '2026-09-10');
+      expect(dashboard.localDay, _today);
+      expect(dashboard.week.last.day, DateTime.parse(_today));
+      expect(dashboard.week.where((d) => d.goalMet), hasLength(7));
+    });
+
+    test('a clock further out than that is refetched, not papered over', () async {
+      // Two days' drift is not a midnight race, it is a wrong clock, and
+      // the window genuinely misses days the week strip needs. Those cells
+      // would fall back to `goalMet: false` and a user who met their goal
+      // every day would see a hole in the week — a streak that looks
+      // broken. One extra request is the right price.
+      final api = _Api(
+        today: _todayBody(
+          counts: {'quran_verse': 5},
+          goal: _verses(progress: 5),
+          current: 7,
+          longest: 7,
+          lastGoalMetDay: _today,
+        ),
+        history: _metRun(7),
+      );
+
+      final dashboard = await _container(
+        api,
+        clientDay: '2026-11-20',
+      ).read(todayDashboardProvider.future);
+
+      expect(api.historyCalls, hasLength(2), reason: 'one refetch');
+      final refetch = api.historyCalls.last.queryParameters;
+      expect(refetch['from'], '2026-09-12', reason: 'anchored on the server');
+      expect(refetch['to'], _today);
+      expect(dashboard.localDay, _today);
+      expect(dashboard.week.where((d) => d.goalMet), hasLength(7));
+    });
+
+    test('a stale snapshot still renders when the refetch fails', () async {
+      // The refetch is on the critical path, so it must not be able to
+      // turn a readable screen into an error card on its own.
+      final api = _Api(
+        today: _todayBody(goal: _verses(progress: 5), current: 3),
+        history: _metRun(3),
+      );
+      final container = _container(api);
+      await container.read(todayDashboardProvider.future);
+
+      api.failure = DioException.connectionError(
+        requestOptions: RequestOptions(path: '/api/v1/activity/history'),
+        reason: 'Network is unreachable',
+      );
+      container.invalidate(activitySnapshotProvider);
+
+      final offline = await container.read(todayDashboardProvider.future);
+      expect(offline.isStale, isTrue);
+      expect(offline.streak!.current, 3);
+    });
+  });
+
   group('the server is the authority', () {
     test('a short history window never shortens a long streak', () async {
       // The bug this exists to prevent: feeding a 7-day window to
@@ -191,7 +385,10 @@ void main() {
       return _container(api).read(todayDashboardProvider.future).then((d) {
         expect(d.localDay, _today);
         expect(
-          api.calls.first.queryParameters['timezone'],
+          // Found by path, not by position: the reads now go out together,
+          // so which one the adapter sees first is not a property worth
+          // asserting on.
+          api.todayCall.queryParameters['timezone'],
           isNotNull,
           reason: '§5.2 makes timezone required',
         );

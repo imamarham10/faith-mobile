@@ -43,6 +43,7 @@
 /// subtraction run over the same window, so the window cancels out.
 library;
 
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,6 +54,7 @@ import '../../../../core/theme/faith_id.dart';
 import '../../../../core/time/device_timezone.dart';
 import '../../../../shared/habit/activity_event.dart';
 import '../../../../shared/habit/activity_flush_scheduler.dart';
+import '../../../../shared/habit/device_day.dart';
 import '../../../../shared/habit/faith_habit_pack.dart';
 import '../../../../shared/habit/local_event_queue.dart';
 import '../../../../shared/habit/streak_engine.dart' as engine;
@@ -74,6 +76,23 @@ const _historyWindowDays = 28;
 
 /// The seven days the week strip shows, today included.
 const _weekDays = 7;
+
+/// How far the requested window is padded beyond the device's own day, at
+/// both ends.
+///
+/// The range is asked for before the server has said which day it is
+/// describing (see [DeviceDayClock]), so the two can disagree — by a day,
+/// for the minute either side of midnight when one clock has ticked over
+/// and the other has not. One pad day at each end makes the requested
+/// window a superset of `[serverDay - 27, serverDay]` for **any** such
+/// disagreement, so the common case costs no second request: the window is
+/// already right, and the extra day is simply never read, because
+/// everything downstream indexes history by date string and walks backward
+/// from the server's `localDay`.
+///
+/// Costed before being chosen: 30 days instead of 28 measured 0.73s against
+/// 0.74s on production, and §6.2's cap is 92.
+const _clockDriftPadDays = 1;
 
 /// The last good response per faith, so a lost connection does not blank
 /// the screen.
@@ -129,29 +148,124 @@ activitySnapshot(Ref ref, ActivityFaith faith) async {
   // §1.5 — the IANA name from the device, never `DateTime.timeZoneName`.
   // §5.2 — required, and the server derives `localDay` from it.
   final timezone = DeviceTimezone.instance.current;
+  final clientDay = ref.watch(deviceDayClockProvider).today();
 
   try {
-    final today = await repo.getToday(faith: faith, timezone: timezone);
-    // Anchored on the server's `localDay`, not the device's: the response
-    // is the authority on which day is being described (§5.2), and a window
-    // hung off the device's idea of today would be off by one for anyone
-    // whose zone disagrees.
-    final history = await repo.getHistory(
+    // Both in flight at once. The range below used to be hung off the
+    // `localDay` the *response* echoed, which meant `/history` could not be
+    // sent until `/today` had come back — two independent ~1s requests in
+    // series, and nothing on the Today screen could draw until both had
+    // landed. The device knows what day it is (§1.5 gives it the same zone
+    // the request carries), so the window is computed here and the two go
+    // out together.
+    final todayCall = repo.getToday(faith: faith, timezone: timezone);
+    final historyCall = repo.getHistory(
       faith: faith,
-      from: engine.addDays(today.localDay, -(_historyWindowDays - 1)),
-      to: today.localDay,
+      from: engine.addDays(
+        clientDay,
+        -(_historyWindowDays - 1) - _clockDriftPadDays,
+      ),
+      to: engine.addDays(clientDay, _clockDriftPadDays),
     );
+    // Record `.wait` rather than two sequential awaits: it awaits both even
+    // when one fails, so an abandoned request cannot surface its own
+    // failure later as an unhandled async error. The cost is paid in
+    // [_firstFailure], which unwraps the result back to the `ApiException`
+    // the repository threw.
+    final (today, window) = await (todayCall, historyCall).wait;
+
+    // §5.2 — the response is the authority on which day is being described,
+    // and everything rendered downstream is anchored on it. All that is
+    // settled here is whether the window actually *covers* that day.
+    final drift = engine.daysBetween(clientDay, today.localDay);
+    final history = drift.abs() <= _clockDriftPadDays
+        ? window
+        : await _refetchForServerDay(
+            repo,
+            faith: faith,
+            serverDay: today.localDay,
+            clientDay: clientDay,
+            drift: drift,
+          );
+
     cache.store(faith, today, history);
     return (today: today, history: history, isStale: false);
-  } on Object catch (e) {
+  } on Object catch (e, st) {
+    final (cause, causeStack) = _firstFailure(e, st);
     final cached = ref.read(activitySnapshotCacheProvider)[faith];
-    if (cached == null) rethrow;
+    if (cached == null) Error.throwWithStackTrace(cause, causeStack);
     developer.log(
       'activity read failed; rendering the last good response',
       name: 'habit.today',
-      error: e,
+      error: cause,
     );
     return (today: cached.today, history: cached.history, isStale: true);
+  }
+}
+
+/// Re-asks for the window the server's day actually needs.
+///
+/// Only reachable when the device clock is wrong by more than a midnight
+/// race — more than [_clockDriftPadDays] days out. That is not a tolerable
+/// miss: at two days' drift the week strip's oldest cell has no history
+/// entry, falls to `goalMet: false`, and a user who met their goal every
+/// day sees a hole in the week and a streak that looks broken. Paying a
+/// second request to be right is the correct trade, and it is paid by
+/// nobody whose clock is roughly correct.
+///
+/// Anchored on the server's day, which is the one §5.2 makes authoritative.
+Future<List<ActivityHistoryDay>> _refetchForServerDay(
+  ActivityRepository repo, {
+  required ActivityFaith faith,
+  required String serverDay,
+  required String clientDay,
+  required int drift,
+}) {
+  developer.log(
+    'device clock is $drift day(s) from the server: asked for a window '
+    'ending $clientDay, server is describing $serverDay — refetching',
+    name: 'habit.today',
+  );
+  return repo.getHistory(
+    faith: faith,
+    from: engine.addDays(serverDay, -(_historyWindowDays - 1)),
+    to: serverDay,
+  );
+}
+
+/// The error a record `.wait` is actually reporting.
+///
+/// `(a, b).wait` reports a [ParallelWaitError] whose `errors` is a record of
+/// nullable [AsyncError]s. Letting that reach the caller would replace the
+/// repository's [ApiException] — which carries the status and the message —
+/// with a wrapper that carries neither, so it is unwrapped to the first
+/// real failure. Anything that is not a parallel error passes through
+/// untouched.
+(Object, StackTrace) _firstFailure(Object error, StackTrace stack) {
+  if (error is ParallelWaitError) {
+    final AsyncError? first = switch (error.errors) {
+      (final AsyncError? a, final AsyncError? b) => a ?? b,
+      (final AsyncError? a, final AsyncError? b, final AsyncError? c) =>
+        a ?? b ?? c,
+      _ => null,
+    };
+    if (first != null) return (first.error, first.stackTrace);
+  }
+  return (error, stack);
+}
+
+/// Awaits a record `.wait`, reporting what actually failed.
+///
+/// Without this the Today screen's error branch would be handed a
+/// [ParallelWaitError] in place of the `ApiException` the repository threw,
+/// and every log line about a failed read would name the wrapper instead of
+/// the status code.
+Future<T> _joined<T>(Future<T> wait) async {
+  try {
+    return await wait;
+  } on Object catch (e, st) {
+    final (cause, causeStack) = _firstFailure(e, st);
+    Error.throwWithStackTrace(cause, causeStack);
   }
 }
 
@@ -173,19 +287,40 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
   // recomputed.
   ref.watch(activityFlushRequestProvider);
 
-  final snapshot = await ref.watch(activitySnapshotProvider(pack.faith).future);
+  // Nothing below needs the server's answer in order to *start*, so nothing
+  // below waits for it. The checklist reads a different endpoint entirely
+  // (`GET /prayers/log`) and the overlay reads the local queue — both were
+  // awaited after the snapshot purely because that is the order they are
+  // written in, which cost a third serial network round trip and a cold
+  // sqflite open on the critical path.
+  final clientDay = ref.watch(deviceDayClockProvider).today();
+  final snapshotCall = ref.watch(activitySnapshotProvider(pack.faith).future);
+  final checklistCall = ref.watch(
+    practiceChecklistProvider(pack.faithId).future,
+  );
+  // Padded like the server window and for the same reason: the day the
+  // overlay is keyed by comes from the response, which may not be the day
+  // this range was built from. Keys outside `[localDay - 27, localDay]` are
+  // simply never looked up.
+  final pendingCall = _pendingCountsByDay(
+    ref,
+    faith: pack.faith,
+    from: engine.addDays(
+      clientDay,
+      -(_historyWindowDays - 1) - _clockDriftPadDays,
+    ),
+    to: engine.addDays(clientDay, _clockDriftPadDays),
+  );
+
+  // `.wait` again, so a snapshot failure cannot abandon the other two.
+  final (snapshot, checklist, pendingByDay) = await _joined(
+    (snapshotCall, checklistCall, pendingCall).wait,
+  );
+
   final today = snapshot.today;
   final localDay = today.localDay;
 
   final historyByDay = {for (final day in snapshot.history) day.localDay: day};
-
-  // Everything the server has not seen yet, by the day it was filed under.
-  final pendingByDay = await _pendingCountsByDay(
-    ref,
-    faith: pack.faith,
-    from: engine.addDays(localDay, -(_historyWindowDays - 1)),
-    to: localDay,
-  );
 
   final goal = today.goal;
   final dailyGoal = goal == null
@@ -237,7 +372,7 @@ Future<TodayDashboard> todayDashboard(Ref ref) async {
             target: goal.target,
             unit: pack.unitFor(goal.goalType, todayProgress.progress),
           ),
-    checklist: await ref.watch(practiceChecklistProvider(pack.faithId).future),
+    checklist: checklist,
     stats: [
       for (final type in pack.activityTypes)
         StatSeries(

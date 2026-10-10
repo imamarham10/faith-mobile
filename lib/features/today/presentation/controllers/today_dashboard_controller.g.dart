@@ -6,7 +6,7 @@ part of 'today_dashboard_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activitySnapshotHash() => r'48e69e483106365cdd4936cecf5f69a7c783a829';
+String _$activitySnapshotHash() => r'6aebacad70bcb92e150610f57cee6733ef987a93';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -255,7 +255,7 @@ class _ActivitySnapshotProviderElement
   ActivityFaith get faith => (origin as ActivitySnapshotProvider).faith;
 }
 
-String _$todayDashboardHash() => r'2ebd28ed02f9b1528670eb3ba06e109cf2f4845b';
+String _$todayDashboardHash() => r'b02650721a453816ff07fa0473417d34b900e517';
 
 /// The Today screen's numbers, for whichever faith is selected.
 ///
@@ -296,10 +296,13 @@ String _$practiceChecklistHash() => r'227b68754bb1af30cb1c89915c4b87fbe967ffc6';
 /// **Its own provider, so it is memoised.** [todayDashboard] watches the
 /// record counter and therefore re-runs its whole body on every recorded
 /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
-/// past. Twenty verses was twenty requests. The ticks only change when a
-/// prayer or sandhya is actually logged, and those call sites already
-/// invalidate [todayDashboardProvider] — which now invalidates this too,
-/// because it is watched from there.
+/// past. Twenty verses was twenty requests.
+///
+/// Being memoised, it must be invalidated explicitly when a prayer or
+/// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+/// reach it, because invalidating a watcher does nothing to what it
+/// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+/// is the only thing that changes a tick.
 ///
 /// Copied from [practiceChecklist].
 @ProviderFor(practiceChecklist)
@@ -318,10 +321,13 @@ const practiceChecklistProvider = PracticeChecklistFamily();
 /// **Its own provider, so it is memoised.** [todayDashboard] watches the
 /// record counter and therefore re-runs its whole body on every recorded
 /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
-/// past. Twenty verses was twenty requests. The ticks only change when a
-/// prayer or sandhya is actually logged, and those call sites already
-/// invalidate [todayDashboardProvider] — which now invalidates this too,
-/// because it is watched from there.
+/// past. Twenty verses was twenty requests.
+///
+/// Being memoised, it must be invalidated explicitly when a prayer or
+/// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+/// reach it, because invalidating a watcher does nothing to what it
+/// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+/// is the only thing that changes a tick.
 ///
 /// Copied from [practiceChecklist].
 class PracticeChecklistFamily extends Family<AsyncValue<List<ChecklistItem>>> {
@@ -338,10 +344,13 @@ class PracticeChecklistFamily extends Family<AsyncValue<List<ChecklistItem>>> {
   /// **Its own provider, so it is memoised.** [todayDashboard] watches the
   /// record counter and therefore re-runs its whole body on every recorded
   /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
-  /// past. Twenty verses was twenty requests. The ticks only change when a
-  /// prayer or sandhya is actually logged, and those call sites already
-  /// invalidate [todayDashboardProvider] — which now invalidates this too,
-  /// because it is watched from there.
+  /// past. Twenty verses was twenty requests.
+  ///
+  /// Being memoised, it must be invalidated explicitly when a prayer or
+  /// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+  /// reach it, because invalidating a watcher does nothing to what it
+  /// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+  /// is the only thing that changes a tick.
   ///
   /// Copied from [practiceChecklist].
   const PracticeChecklistFamily();
@@ -359,10 +368,13 @@ class PracticeChecklistFamily extends Family<AsyncValue<List<ChecklistItem>>> {
   /// **Its own provider, so it is memoised.** [todayDashboard] watches the
   /// record counter and therefore re-runs its whole body on every recorded
   /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
-  /// past. Twenty verses was twenty requests. The ticks only change when a
-  /// prayer or sandhya is actually logged, and those call sites already
-  /// invalidate [todayDashboardProvider] — which now invalidates this too,
-  /// because it is watched from there.
+  /// past. Twenty verses was twenty requests.
+  ///
+  /// Being memoised, it must be invalidated explicitly when a prayer or
+  /// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+  /// reach it, because invalidating a watcher does nothing to what it
+  /// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+  /// is the only thing that changes a tick.
   ///
   /// Copied from [practiceChecklist].
   PracticeChecklistProvider call(FaithId faith) {
@@ -404,10 +416,13 @@ class PracticeChecklistFamily extends Family<AsyncValue<List<ChecklistItem>>> {
 /// **Its own provider, so it is memoised.** [todayDashboard] watches the
 /// record counter and therefore re-runs its whole body on every recorded
 /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
-/// past. Twenty verses was twenty requests. The ticks only change when a
-/// prayer or sandhya is actually logged, and those call sites already
-/// invalidate [todayDashboardProvider] — which now invalidates this too,
-/// because it is watched from there.
+/// past. Twenty verses was twenty requests.
+///
+/// Being memoised, it must be invalidated explicitly when a prayer or
+/// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+/// reach it, because invalidating a watcher does nothing to what it
+/// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+/// is the only thing that changes a tick.
 ///
 /// Copied from [practiceChecklist].
 class PracticeChecklistProvider
@@ -425,10 +440,13 @@ class PracticeChecklistProvider
   /// **Its own provider, so it is memoised.** [todayDashboard] watches the
   /// record counter and therefore re-runs its whole body on every recorded
   /// act; inlined, this read fired a `GET /prayers/log` per verse scrolled
-  /// past. Twenty verses was twenty requests. The ticks only change when a
-  /// prayer or sandhya is actually logged, and those call sites already
-  /// invalidate [todayDashboardProvider] — which now invalidates this too,
-  /// because it is watched from there.
+  /// past. Twenty verses was twenty requests.
+  ///
+  /// Being memoised, it must be invalidated explicitly when a prayer or
+  /// sandhya is logged — invalidating [todayDashboardProvider] does *not*
+  /// reach it, because invalidating a watcher does nothing to what it
+  /// watches. `TodayLogs.log` and `TodayPujaLogs.log` both do so, and that
+  /// is the only thing that changes a tick.
   ///
   /// Copied from [practiceChecklist].
   PracticeChecklistProvider(FaithId faith)
