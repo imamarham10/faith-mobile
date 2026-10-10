@@ -134,6 +134,19 @@ const String kWebBaseUrl = String.fromEnvironment(
   defaultValue: 'https://www.siraat.website',
 );
 
+/// Request-extra key that opts a single request out of [_RetryInterceptor].
+///
+/// Retrying is safe for the reads that make up almost all of this app's
+/// traffic, and wrong for a request that is not idempotent from the caller's
+/// point of view. `DELETE /users/me` is the case that forced this: it does
+/// enough work to outrun a timeout, the server deletes the user row last so a
+/// retry after a partial success finds nothing, and the resulting 404 would
+/// be reported to the user as a failure on a deletion that actually
+/// succeeded.
+///
+/// Pass it as `Options(extra: {kNoRetry: true})`.
+const String kNoRetry = 'no_retry';
+
 /// Builds the project's [Dio] instance.
 ///
 /// Behavior:
@@ -226,6 +239,7 @@ class _RetryInterceptor extends Interceptor {
   }
 
   bool _isRetriable(DioException err) {
+    if (err.requestOptions.extra[kNoRetry] == true) return false;
     if (err.type == DioExceptionType.connectionError ||
         err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.receiveTimeout) {

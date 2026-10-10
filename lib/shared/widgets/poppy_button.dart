@@ -3,7 +3,15 @@ import 'package:flutter/services.dart';
 
 import '../../core/theme/faith_theme_extension.dart';
 
-enum PoppyButtonVariant { primary, secondary }
+enum PoppyButtonVariant {
+  primary,
+  secondary,
+
+  /// For an action that destroys something the user cannot get back. Reads
+  /// as a button in every other way — the sticker shadow stays, because the
+  /// shadow is the press affordance and this one really is pressable.
+  destructive,
+}
 
 /// Chunky 56px-tall button with the same offset-shadow "press" language as
 /// [PoppyCard]. `variant: secondary` uses the faith's secondary/accent color
@@ -53,6 +61,20 @@ class _PoppyButtonState extends State<PoppyButton> {
       PoppyButtonVariant.secondary => (
         _pressed ? palette.secondaryPressed : palette.secondary,
         Theme.of(context).colorScheme.onSecondary,
+      ),
+      // The palette carries no `errorPressed` — `error` is one shared value
+      // across all four palettes, not a per-faith token — so the pressed
+      // shade is composed here. Blending toward black (rather than lowering
+      // alpha) keeps it opaque, which matters for the same Impeller
+      // compositing reason documented on PoppyCard's fill.
+      PoppyButtonVariant.destructive => (
+        _pressed
+            ? Color.alphaBlend(
+                const Color(0x26000000),
+                Theme.of(context).colorScheme.error,
+              )
+            : Theme.of(context).colorScheme.error,
+        Theme.of(context).colorScheme.onError,
       ),
     };
 

@@ -255,6 +255,14 @@ class LocalEventQueue {
       ) ??
       0;
 
+  /// Drops every queued event.
+  ///
+  /// For account deletion only. These rows are the user's activity history —
+  /// the raw material the streak is computed from — so they have to go when
+  /// the account does, and unlike everything else on this device they cannot
+  /// be reached through SharedPreferences.
+  Future<int> deleteAll() => _db.delete(_table);
+
   /// Closes the underlying database. The file, and everything in it,
   /// survives.
   Future<void> close() => _db.close();

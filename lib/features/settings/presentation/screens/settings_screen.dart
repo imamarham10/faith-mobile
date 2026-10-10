@@ -176,6 +176,23 @@ class SettingsScreen extends ConsumerWidget {
               ),
               onTap: () => _confirmSignOut(context, ref),
             ),
+
+            _SectionHeader(label: 'Account'),
+            ListTile(
+              leading: Icon(Icons.delete_forever_outlined, color: cs.error),
+              title: Text(
+                'Delete account',
+                style: theme.textTheme.bodyLarge?.copyWith(color: cs.error),
+              ),
+              subtitle: const Text(
+                'Permanently erase your account and all your data',
+              ),
+              trailing: Icon(Icons.chevron_right, color: cs.error),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.push(Routes.deleteAccount);
+              },
+            ),
             const SizedBox(height: AppSpacing.xl),
           ],
         ),

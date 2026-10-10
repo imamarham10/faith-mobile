@@ -10,6 +10,7 @@ class Routes {
   static const onboarding = '/onboarding';
   static const faithSelection = '/onboarding/faith';
   static const switchFaith = '/settings/switch-faith';
+  static const deleteAccount = '/settings/delete-account';
 
   static const today = '/today';
   static const quran = '/quran';
