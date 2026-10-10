@@ -6,10 +6,17 @@ part of 'app_router.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$splashGateHash() => r'833a970a4aee4461d27c06691b79503901adec4d';
+String _$splashGateHash() => r'bf0360f8d27af7a9376cd64b227ad24ea6790403';
 
 /// Holds the splash for a minimum window so the brand reveal animation can
-/// breathe even on warm starts where auth + onboarding resolve instantly.
+/// play through even on warm starts where auth + onboarding resolve
+/// instantly.
+///
+/// The window is [kSplashDwell], which the splash screen derives from its
+/// own choreography rather than naming here — this gate and the animation
+/// are one decision, and a number duplicated in two files is a number that
+/// drifts. Nothing is on the wire while this runs, so every millisecond of
+/// it is paid in full on every cold start.
 ///
 /// Copied from [splashGate].
 @ProviderFor(splashGate)

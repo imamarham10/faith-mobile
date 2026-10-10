@@ -25,10 +25,17 @@ import 'routes.dart';
 part 'app_router.g.dart';
 
 /// Holds the splash for a minimum window so the brand reveal animation can
-/// breathe even on warm starts where auth + onboarding resolve instantly.
+/// play through even on warm starts where auth + onboarding resolve
+/// instantly.
+///
+/// The window is [kSplashDwell], which the splash screen derives from its
+/// own choreography rather than naming here — this gate and the animation
+/// are one decision, and a number duplicated in two files is a number that
+/// drifts. Nothing is on the wire while this runs, so every millisecond of
+/// it is paid in full on every cold start.
 @Riverpod(keepAlive: true)
 Future<bool> splashGate(Ref ref) async {
-  await Future<void>.delayed(const Duration(milliseconds: 1700));
+  await Future<void>.delayed(kSplashDwell);
   return true;
 }
 

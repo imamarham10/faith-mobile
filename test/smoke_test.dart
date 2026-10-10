@@ -1,3 +1,4 @@
+import 'package:faith_mobile/features/auth/presentation/screens/splash_screen.dart';
 import 'package:faith_mobile/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,10 +10,12 @@ void main() {
     await tester.pump();
     expect(find.text('Siraat'), findsOneWidget);
 
-    // The router holds the splash for a 1700ms minimum dwell (app_router.dart)
-    // and the splash's ambient animations repeat forever, so pumpAndSettle
+    // The router holds the splash for [kSplashDwell] (app_router.dart) and
+    // the splash's ambient animations repeat forever, so pumpAndSettle
     // would never settle. Pump past the dwell so its Timer does not outlive
-    // the widget tree.
-    await tester.pump(const Duration(milliseconds: 2000));
+    // the widget tree. Read from the constant rather than restated here —
+    // a literal would have to be edited in lockstep with the choreography,
+    // and silently hangs the suite when it isn't.
+    await tester.pump(kSplashDwell + const Duration(milliseconds: 300));
   });
 }
