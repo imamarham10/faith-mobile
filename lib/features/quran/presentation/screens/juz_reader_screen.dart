@@ -110,16 +110,52 @@ class _JuzTopBar extends StatelessWidget {
   }
 }
 
-class _ReaderBody extends ConsumerWidget {
+class _ReaderBody extends ConsumerStatefulWidget {
   const _ReaderBody({required this.state});
 
   final JuzReaderState state;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ReaderBody> createState() => _ReaderBodyState();
+}
+
+class _ReaderBodyState extends ConsumerState<_ReaderBody> {
+  /// Owned here so a new verse can start where a verse starts.
+  ///
+  /// The scroll view is one element reused across verses — only its child
+  /// is swapped — so without this the offset carries over. 2:282 is the
+  /// longest verse in the Qur'an and sits in juz 3, well inside the range
+  /// someone reads this way, and the verse after it would otherwise open
+  /// scrolled into its middle (or, being shorter, at a clamped offset part
+  /// way down).
+  final _scrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_ReaderBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state.cursor == widget.state.cursor) return;
+    // After the frame, not during it: jumping mid-build can rebuild the
+    // Scrollable that is already building. One frame at the old offset is
+    // invisible under the 180ms cross-fade.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollCtrl.hasClients) return;
+      _scrollCtrl.jumpTo(0);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
     final verse = state.currentVerse;
 
     return SingleChildScrollView(
+      controller: _scrollCtrl,
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),

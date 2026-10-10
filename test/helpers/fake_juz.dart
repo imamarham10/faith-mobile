@@ -34,6 +34,7 @@ class FakeJuz {
     required this.segments,
     this.limit = JuzRepository.defaultPageLimit,
     this.translated = true,
+    this.long = false,
   });
 
   /// 120 verses over three surahs and three pages. See the class doc.
@@ -295,6 +296,21 @@ class FakeJuz {
     ],
   );
 
+  /// Verses long enough to overflow any phone viewport — 2:282's role, the
+  /// longest verse in the Qur'an, which sits in juz 3.
+  factory FakeJuz.withLongVerses() => FakeJuz(
+    number: 3,
+    segments: const [
+      FakeJuzSegment(
+        surahId: 2,
+        surahName: 'Al-Baqarah',
+        firstVerseNumber: 282,
+        count: 3,
+      ),
+    ],
+    long: true,
+  );
+
   /// Verses with no translation at all — what the public juz endpoints
   /// return when the requested edition is premium or unknown. The server
   /// does not 400 for that, so the reader must render the Arabic alone.
@@ -338,6 +354,9 @@ class FakeJuz {
   /// When false every verse comes back with `translation: null`.
   final bool translated;
 
+  /// When true each verse carries enough text to overflow the viewport.
+  final bool long;
+
   int get verseCount => segments.fold<int>(0, (total, s) => total + s.count);
 
   int get totalPages => (verseCount / limit).ceil();
@@ -357,7 +376,9 @@ class FakeJuz {
             surahName: segment.surahName,
             verseNumber: verseNumber,
             indexInJuz: index,
-            textArabic: 'arabic-$index',
+            textArabic: long
+                ? 'arabic-$index ${'word ' * 300}'
+                : 'arabic-$index',
             textUthmani: 'uthmani-$index',
             translation: translated ? 'translation-$index' : null,
           ),

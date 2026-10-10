@@ -168,4 +168,25 @@ void main() {
       reason: 'the rule above the translation has nothing to separate',
     );
   });
+
+  testWidgets('a new verse starts at the top, however far the last was read', (
+    tester,
+  ) async {
+    await pump(tester, FakeJuz.withLongVerses());
+
+    final scrollView = find.byType(SingleChildScrollView);
+    expect(scrollView, findsOneWidget);
+    double offset() =>
+        tester.widget<SingleChildScrollView>(scrollView).controller!.offset;
+
+    await tester.drag(scrollView, const Offset(0, -400));
+    await tester.pump();
+    expect(offset(), greaterThan(0), reason: 'the fixture must overflow');
+
+    await tapNav(tester, 'Next');
+
+    // Without this the scroll view — one element, reused, only its child
+    // swapped — would open the next verse part way down.
+    expect(offset(), 0);
+  });
 }
