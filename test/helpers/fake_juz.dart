@@ -35,6 +35,8 @@ class FakeJuz {
     this.limit = JuzRepository.defaultPageLimit,
     this.translated = true,
     this.long = false,
+    this.indopak = false,
+    this.uthmani = true,
   });
 
   /// 120 verses over three surahs and three pages. See the class doc.
@@ -327,6 +329,21 @@ class FakeJuz {
     translated: false,
   );
 
+  /// A juz whose verses carry all three scripts, as they will once the
+  /// backend seed has run.
+  factory FakeJuz.inEveryScript() => FakeJuz(
+    number: 2,
+    segments: const [
+      FakeJuzSegment(
+        surahId: 2,
+        surahName: 'Al-Baqarah',
+        firstVerseNumber: 142,
+        count: 3,
+      ),
+    ],
+    indopak: true,
+  );
+
   /// The shortest juz the reader can be asked to render: two verses, so both
   /// ends of it are one tap apart.
   factory FakeJuz.twoVerses() => FakeJuz(
@@ -357,6 +374,16 @@ class FakeJuz {
   /// When true each verse carries enough text to overflow the viewport.
   final bool long;
 
+  /// When false every verse comes back with `textUthmani: null`, the shape
+  /// the *surah* payload has: it carries no Uthmani variant at all.
+  final bool uthmani;
+
+  /// When false every verse comes back with `textIndopak: null` — which is
+  /// what the live API returns today and will keep returning for any verse
+  /// the backend seed misses. The default is therefore the *fallback* path,
+  /// deliberately: it is the one that ships first.
+  final bool indopak;
+
   int get verseCount => segments.fold<int>(0, (total, s) => total + s.count);
 
   int get totalPages => (verseCount / limit).ceil();
@@ -379,7 +406,8 @@ class FakeJuz {
             textArabic: long
                 ? 'arabic-$index ${'word ' * 300}'
                 : 'arabic-$index',
-            textUthmani: 'uthmani-$index',
+            textUthmani: uthmani ? 'uthmani-$index' : null,
+            textIndopak: indopak ? 'indopak-$index' : null,
             translation: translated ? 'translation-$index' : null,
           ),
         );

@@ -15,7 +15,17 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Verse {
 
- String get id; int get surahId; int get verseNumber; String get textArabic; String? get textSimple; List<Translation> get translations;
+ String get id; int get surahId; int get verseNumber; String get textArabic;/// The Indo-Pak orthography of the same verse — different characters,
+/// not a different font. Additive and nullable: null until the backend
+/// seed runs and for any verse it misses, in which case the reader
+/// falls back to [textArabic] (see `arabicTextForScript`).
+///
+/// There is deliberately no `textUthmani` here to match it. The surah
+/// payload does not carry one — only the juz payload does — so an
+/// Uthmani reader falls back to [textArabic], which is already
+/// Uthmani-family. Adding a field this endpoint never sends would be
+/// inventing a contract.
+ String? get textIndopak; String? get textSimple; List<Translation> get translations;
 /// Create a copy of Verse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +38,16 @@ $VerseCopyWith<Verse> get copyWith => _$VerseCopyWithImpl<Verse>(this as Verse, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Verse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textSimple, textSimple) || other.textSimple == textSimple)&&const DeepCollectionEquality().equals(other.translations, translations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Verse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textIndopak, textIndopak) || other.textIndopak == textIndopak)&&(identical(other.textSimple, textSimple) || other.textSimple == textSimple)&&const DeepCollectionEquality().equals(other.translations, translations));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,surahId,verseNumber,textArabic,textSimple,const DeepCollectionEquality().hash(translations));
+int get hashCode => Object.hash(runtimeType,id,surahId,verseNumber,textArabic,textIndopak,textSimple,const DeepCollectionEquality().hash(translations));
 
 @override
 String toString() {
-  return 'Verse(id: $id, surahId: $surahId, verseNumber: $verseNumber, textArabic: $textArabic, textSimple: $textSimple, translations: $translations)';
+  return 'Verse(id: $id, surahId: $surahId, verseNumber: $verseNumber, textArabic: $textArabic, textIndopak: $textIndopak, textSimple: $textSimple, translations: $translations)';
 }
 
 
@@ -48,7 +58,7 @@ abstract mixin class $VerseCopyWith<$Res>  {
   factory $VerseCopyWith(Verse value, $Res Function(Verse) _then) = _$VerseCopyWithImpl;
 @useResult
 $Res call({
- String id, int surahId, int verseNumber, String textArabic, String? textSimple, List<Translation> translations
+ String id, int surahId, int verseNumber, String textArabic, String? textIndopak, String? textSimple, List<Translation> translations
 });
 
 
@@ -65,13 +75,14 @@ class _$VerseCopyWithImpl<$Res>
 
 /// Create a copy of Verse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? surahId = null,Object? verseNumber = null,Object? textArabic = null,Object? textSimple = freezed,Object? translations = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? surahId = null,Object? verseNumber = null,Object? textArabic = null,Object? textIndopak = freezed,Object? textSimple = freezed,Object? translations = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,surahId: null == surahId ? _self.surahId : surahId // ignore: cast_nullable_to_non_nullable
 as int,verseNumber: null == verseNumber ? _self.verseNumber : verseNumber // ignore: cast_nullable_to_non_nullable
 as int,textArabic: null == textArabic ? _self.textArabic : textArabic // ignore: cast_nullable_to_non_nullable
-as String,textSimple: freezed == textSimple ? _self.textSimple : textSimple // ignore: cast_nullable_to_non_nullable
+as String,textIndopak: freezed == textIndopak ? _self.textIndopak : textIndopak // ignore: cast_nullable_to_non_nullable
+as String?,textSimple: freezed == textSimple ? _self.textSimple : textSimple // ignore: cast_nullable_to_non_nullable
 as String?,translations: null == translations ? _self.translations : translations // ignore: cast_nullable_to_non_nullable
 as List<Translation>,
   ));
@@ -158,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int surahId,  int verseNumber,  String textArabic,  String? textSimple,  List<Translation> translations)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int surahId,  int verseNumber,  String textArabic,  String? textIndopak,  String? textSimple,  List<Translation> translations)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Verse() when $default != null:
-return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.textSimple,_that.translations);case _:
+return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.textIndopak,_that.textSimple,_that.translations);case _:
   return orElse();
 
 }
@@ -179,10 +190,10 @@ return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int surahId,  int verseNumber,  String textArabic,  String? textSimple,  List<Translation> translations)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int surahId,  int verseNumber,  String textArabic,  String? textIndopak,  String? textSimple,  List<Translation> translations)  $default,) {final _that = this;
 switch (_that) {
 case _Verse():
-return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.textSimple,_that.translations);case _:
+return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.textIndopak,_that.textSimple,_that.translations);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +210,10 @@ return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int surahId,  int verseNumber,  String textArabic,  String? textSimple,  List<Translation> translations)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int surahId,  int verseNumber,  String textArabic,  String? textIndopak,  String? textSimple,  List<Translation> translations)?  $default,) {final _that = this;
 switch (_that) {
 case _Verse() when $default != null:
-return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.textSimple,_that.translations);case _:
+return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.textIndopak,_that.textSimple,_that.translations);case _:
   return null;
 
 }
@@ -214,13 +225,24 @@ return $default(_that.id,_that.surahId,_that.verseNumber,_that.textArabic,_that.
 @JsonSerializable()
 
 class _Verse implements Verse {
-  const _Verse({required this.id, required this.surahId, required this.verseNumber, required this.textArabic, this.textSimple, final  List<Translation> translations = const <Translation>[]}): _translations = translations;
+  const _Verse({required this.id, required this.surahId, required this.verseNumber, required this.textArabic, this.textIndopak, this.textSimple, final  List<Translation> translations = const <Translation>[]}): _translations = translations;
   factory _Verse.fromJson(Map<String, dynamic> json) => _$VerseFromJson(json);
 
 @override final  String id;
 @override final  int surahId;
 @override final  int verseNumber;
 @override final  String textArabic;
+/// The Indo-Pak orthography of the same verse — different characters,
+/// not a different font. Additive and nullable: null until the backend
+/// seed runs and for any verse it misses, in which case the reader
+/// falls back to [textArabic] (see `arabicTextForScript`).
+///
+/// There is deliberately no `textUthmani` here to match it. The surah
+/// payload does not carry one — only the juz payload does — so an
+/// Uthmani reader falls back to [textArabic], which is already
+/// Uthmani-family. Adding a field this endpoint never sends would be
+/// inventing a contract.
+@override final  String? textIndopak;
 @override final  String? textSimple;
  final  List<Translation> _translations;
 @override@JsonKey() List<Translation> get translations {
@@ -243,16 +265,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Verse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textSimple, textSimple) || other.textSimple == textSimple)&&const DeepCollectionEquality().equals(other._translations, _translations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Verse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textIndopak, textIndopak) || other.textIndopak == textIndopak)&&(identical(other.textSimple, textSimple) || other.textSimple == textSimple)&&const DeepCollectionEquality().equals(other._translations, _translations));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,surahId,verseNumber,textArabic,textSimple,const DeepCollectionEquality().hash(_translations));
+int get hashCode => Object.hash(runtimeType,id,surahId,verseNumber,textArabic,textIndopak,textSimple,const DeepCollectionEquality().hash(_translations));
 
 @override
 String toString() {
-  return 'Verse(id: $id, surahId: $surahId, verseNumber: $verseNumber, textArabic: $textArabic, textSimple: $textSimple, translations: $translations)';
+  return 'Verse(id: $id, surahId: $surahId, verseNumber: $verseNumber, textArabic: $textArabic, textIndopak: $textIndopak, textSimple: $textSimple, translations: $translations)';
 }
 
 
@@ -263,7 +285,7 @@ abstract mixin class _$VerseCopyWith<$Res> implements $VerseCopyWith<$Res> {
   factory _$VerseCopyWith(_Verse value, $Res Function(_Verse) _then) = __$VerseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int surahId, int verseNumber, String textArabic, String? textSimple, List<Translation> translations
+ String id, int surahId, int verseNumber, String textArabic, String? textIndopak, String? textSimple, List<Translation> translations
 });
 
 
@@ -280,13 +302,14 @@ class __$VerseCopyWithImpl<$Res>
 
 /// Create a copy of Verse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? surahId = null,Object? verseNumber = null,Object? textArabic = null,Object? textSimple = freezed,Object? translations = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? surahId = null,Object? verseNumber = null,Object? textArabic = null,Object? textIndopak = freezed,Object? textSimple = freezed,Object? translations = null,}) {
   return _then(_Verse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,surahId: null == surahId ? _self.surahId : surahId // ignore: cast_nullable_to_non_nullable
 as int,verseNumber: null == verseNumber ? _self.verseNumber : verseNumber // ignore: cast_nullable_to_non_nullable
 as int,textArabic: null == textArabic ? _self.textArabic : textArabic // ignore: cast_nullable_to_non_nullable
-as String,textSimple: freezed == textSimple ? _self.textSimple : textSimple // ignore: cast_nullable_to_non_nullable
+as String,textIndopak: freezed == textIndopak ? _self.textIndopak : textIndopak // ignore: cast_nullable_to_non_nullable
+as String?,textSimple: freezed == textSimple ? _self.textSimple : textSimple // ignore: cast_nullable_to_non_nullable
 as String?,translations: null == translations ? _self._translations : translations // ignore: cast_nullable_to_non_nullable
 as List<Translation>,
   ));

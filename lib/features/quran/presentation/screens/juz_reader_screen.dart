@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/preferences/arabic_script_text.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
@@ -24,15 +25,27 @@ import '../controllers/surah_controller.dart';
 
 /// `/quran/juz/:number` — one verse at a time, with back and forward.
 ///
-/// ## Why this reader is not a card
+/// ## Why the verse sits on a page, not in a card
 ///
-/// The screen it is modelled on puts the verse in a raised card. In this
-/// design system a card is a button, and the verse is the one thing on the
-/// page you cannot press — so the verse, its position line and the juz
-/// progress line are all set directly on the page, and the only cards here
-/// are the two navigation buttons at the foot. Same rule as [PageMasthead]
-/// and [Colophon]: *what you can press sits on the page; what you can only
-/// read is the page.*
+/// The verse does get its own surface — readers asked for one, and bare
+/// text floating on the ground gave a single ayah nothing to be. But in
+/// this design system a card *is* a button: thick outline, flat fill, hard
+/// offset shadow, inset from the screen edge. [PageMasthead] and [Colophon]
+/// exist because removing only the shadow was not enough — users went on
+/// tapping surfaces that still shared four of a button's five traits.
+///
+/// So the verse surface is built from the traits a card cannot have:
+///
+/// * it **reaches both screen edges**, and nothing tappable in this app
+///   ever does — every card is inset by [AppSpacing.screenEdge];
+/// * **no outline and no corner radius**, the two loudest parts of the
+///   card signature. It is framed by its fill alone (white paper on the
+///   cream ground), fenced by hairlines rather than bounded by a border;
+/// * **no shadow**, and nothing inside it to press.
+///
+/// The rule is unchanged — *what you can press sits on the page; what you
+/// can only read is the page* — and the only cards here are still the two
+/// navigation buttons at the foot. This verse surface **is** page.
 class JuzReaderScreen extends ConsumerWidget {
   const JuzReaderScreen({super.key, required this.juzNumber});
 
@@ -265,20 +278,27 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenEdge,
-        AppSpacing.base,
-        AppSpacing.screenEdge,
-        AppSpacing.xl,
+      // No horizontal padding: the verse surface below bleeds to both
+      // screen edges, which is the one thing a card never does, and
+      // wrapping it in page padding would defeat that. Everything else
+      // insets itself — the same device [PageMasthead] uses.
+      padding: const EdgeInsets.only(
+        top: AppSpacing.base,
+        bottom: AppSpacing.xl,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _JuzProgress(
-            juzNumber: state.juzNumber,
-            versesLeft: state.versesLeft,
-            cursor: state.cursor,
-            verseCount: state.verseCount,
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdge,
+            ),
+            child: _JuzProgress(
+              juzNumber: state.juzNumber,
+              versesLeft: state.versesLeft,
+              cursor: state.cursor,
+              verseCount: state.verseCount,
+            ),
           ),
           const Gap(AppSpacing.lg),
           // Keyed on the cursor so each step cross-fades rather than
@@ -290,8 +310,14 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeOutCubic,
             child: verse == null
-                ? const _VerseSkeleton(key: ValueKey('loading'))
-                : _VerseSurface(key: ValueKey(state.cursor), verse: verse),
+                ? const Padding(
+                    key: ValueKey('loading'),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenEdge,
+                    ),
+                    child: _VerseSkeleton(),
+                  )
+                : _VersePage(key: ValueKey(state.cursor), verse: verse),
           ),
         ],
       ),
@@ -357,9 +383,32 @@ class _JuzProgress extends StatelessWidget {
   }
 }
 
-/// The verse itself: position, Arabic, translation. Set on the page.
-class _VerseSurface extends ConsumerWidget {
-  const _VerseSurface({super.key, required this.verse});
+/// The verse itself — position, Arabic, translation — on a page of its own.
+///
+/// See the class doc on [JuzReaderScreen] for why this surface is built the
+/// way it is. In short: it is a reading surface, so it is made of the traits
+/// a button in this design system cannot wear — it bleeds to both screen
+/// edges, has no outline, no corner and no shadow, and holds nothing to
+/// press.
+class _VersePage extends ConsumerWidget {
+  const _VersePage({super.key, required this.verse});
+
+  /// How much larger the Arabic is here than in the continuous reader.
+  ///
+  /// Applied to the reader's own font-size preference rather than replacing
+  /// it, so the settings slider still means what it says — this reader is
+  /// a constant multiple louder, not a second opinion.
+  ///
+  /// It earns the multiple by showing one verse: the surah reader has to
+  /// fit a whole surah into a scroll, where display-size Arabic would mean
+  /// three lines a screen, while here the verse *is* the screen and should
+  /// fill it the way an open mushaf does.
+  static const double _displayScale = 1.45;
+
+  /// Ceiling on the scaled size. The preference tops out at 40, which would
+  /// otherwise scale to 58 — and that is before [MediaQuery.textScaler],
+  /// which multiplies again for anyone reading at large system text.
+  static const double _maxArabicSize = 48;
 
   final JuzVerse verse;
 
@@ -369,6 +418,7 @@ class _VerseSurface extends ConsumerWidget {
     final cs = theme.colorScheme;
     final palette = theme.extension<FaithThemeExtension>()!.palette;
     final prefs = ref.watch(readerPreferencesControllerProvider);
+    final script = activeArabicScript(ref);
 
     // The juz payload names the surah but does not say how long it is, and
     // "148/286" needs the 286. It comes from the 114-surah index, which the
@@ -381,37 +431,87 @@ class _VerseSurface extends ConsumerWidget {
         ? 'Verse ${verse.verseNumber}'
         : '${verse.verseNumber}/$surahVerseCount';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '${verse.surahId}. ${verse.surahName}  ·  $position',
-          style: theme.textTheme.titleSmall?.copyWith(color: palette.inkMuted),
+    final hairline = BorderSide(
+      color: palette.outline.withValues(alpha: 0.12),
+      width: 1,
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        // Fill alone does the framing: white paper on the cream ground
+        // (and the lighter of the two greys in dark mode). An outline here
+        // would be the card signature, which is this app's button.
+        color: palette.surfaceCard,
+        // Fences, not a border. They close the page top and bottom where
+        // the fill contrast is slight, and leave the sides open to the
+        // screen edge — which is what says "page" rather than "object".
+        border: Border(top: hairline, bottom: hairline),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenEdge,
+          AppSpacing.xl,
+          AppSpacing.screenEdge,
+          AppSpacing.xl,
         ),
-        const Gap(AppSpacing.lg),
-        Directionality(
-          textDirection: TextDirection.rtl,
-          child: Text(
-            verse.textArabic,
-            textAlign: TextAlign.right,
-            // Same call, same line height as AyahView — the juz reader must
-            // not be a second opinion on Arabic typography.
-            style: arabicTextStyleOf(
-              ref,
-              fontSize: prefs.arabicFontSize,
-              height: 2.2,
-              color: cs.onSurface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${verse.surahId}. ${verse.surahName}  ·  $position',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: palette.inkMuted,
+                letterSpacing: 0.4,
+              ),
             ),
-          ),
+            const Gap(AppSpacing.xl),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                arabicTextForScript(
+                  script,
+                  textArabic: verse.textArabic,
+                  textIndopak: verse.textIndopak,
+                  textUthmani: verse.textUthmani,
+                ),
+                // Centred, not right-aligned: a single ayah held alone on
+                // a page is a plate, and a mushaf sets those centred. The
+                // continuous reader stays right-aligned, where a ragged
+                // right edge between consecutive verses would read as a
+                // mistake.
+                textAlign: TextAlign.center,
+                style: arabicTextStyle(
+                  script,
+                  fontSize: (prefs.arabicFontSize * _displayScale).clamp(
+                    prefs.arabicFontSize,
+                    _maxArabicSize,
+                  ),
+                  // Leading comes from the script — Indo-Pak's stacked
+                  // sukuns and Uthmani's superscript alef need different
+                  // amounts of air, and at this size the difference is no
+                  // longer academic.
+                  color: cs.onSurface,
+                ),
+              ),
+            ),
+            if (prefs.showTranslation &&
+                (verse.translation?.isNotEmpty ?? false)) ...[
+              const Gap(AppSpacing.xl),
+              Divider(
+                color: palette.outline.withValues(alpha: 0.12),
+                height: 1,
+              ),
+              const Gap(AppSpacing.xl),
+              Text(
+                verse.translation!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+              ),
+            ],
+          ],
         ),
-        if (prefs.showTranslation &&
-            (verse.translation?.isNotEmpty ?? false)) ...[
-          const Gap(AppSpacing.lg),
-          Divider(color: cs.outline, height: 1),
-          const Gap(AppSpacing.lg),
-          Text(verse.translation!, style: theme.textTheme.bodyLarge),
-        ],
-      ],
+      ),
     );
   }
 
@@ -428,7 +528,7 @@ class _VerseSurface extends ConsumerWidget {
 /// — the controller prefetches the next page a full page ahead, so in normal
 /// reading this never appears.
 class _VerseSkeleton extends StatelessWidget {
-  const _VerseSkeleton({super.key});
+  const _VerseSkeleton();
 
   @override
   Widget build(BuildContext context) {

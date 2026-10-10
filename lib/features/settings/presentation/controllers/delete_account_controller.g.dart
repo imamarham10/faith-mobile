@@ -7,7 +7,7 @@ part of 'delete_account_controller.dart';
 // **************************************************************************
 
 String _$deleteAccountControllerHash() =>
-    r'87899deb957e3c32addf380a2c8268d3439e6453';
+    r'01093cf03b920e1b1f34c1cf78c308b336363b60';
 
 /// Drives the irreversible account deletion.
 ///

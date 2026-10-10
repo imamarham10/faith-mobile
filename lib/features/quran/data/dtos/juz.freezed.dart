@@ -601,7 +601,7 @@ $JuzBoundaryCopyWith<$Res> get end {
 /// @nodoc
 mixin _$JuzVerse {
 
- String get id; int get surahId; String get surahName; int get verseNumber; int get indexInJuz; String get textArabic; String? get textUthmani; String? get translation;
+ String get id; int get surahId; String get surahName; int get verseNumber; int get indexInJuz; String get textArabic; String? get textUthmani; String? get textIndopak; String? get translation;
 /// Create a copy of JuzVerse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -614,16 +614,16 @@ $JuzVerseCopyWith<JuzVerse> get copyWith => _$JuzVerseCopyWithImpl<JuzVerse>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is JuzVerse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.surahName, surahName) || other.surahName == surahName)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.indexInJuz, indexInJuz) || other.indexInJuz == indexInJuz)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textUthmani, textUthmani) || other.textUthmani == textUthmani)&&(identical(other.translation, translation) || other.translation == translation));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is JuzVerse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.surahName, surahName) || other.surahName == surahName)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.indexInJuz, indexInJuz) || other.indexInJuz == indexInJuz)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textUthmani, textUthmani) || other.textUthmani == textUthmani)&&(identical(other.textIndopak, textIndopak) || other.textIndopak == textIndopak)&&(identical(other.translation, translation) || other.translation == translation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,surahId,surahName,verseNumber,indexInJuz,textArabic,textUthmani,translation);
+int get hashCode => Object.hash(runtimeType,id,surahId,surahName,verseNumber,indexInJuz,textArabic,textUthmani,textIndopak,translation);
 
 @override
 String toString() {
-  return 'JuzVerse(id: $id, surahId: $surahId, surahName: $surahName, verseNumber: $verseNumber, indexInJuz: $indexInJuz, textArabic: $textArabic, textUthmani: $textUthmani, translation: $translation)';
+  return 'JuzVerse(id: $id, surahId: $surahId, surahName: $surahName, verseNumber: $verseNumber, indexInJuz: $indexInJuz, textArabic: $textArabic, textUthmani: $textUthmani, textIndopak: $textIndopak, translation: $translation)';
 }
 
 
@@ -634,7 +634,7 @@ abstract mixin class $JuzVerseCopyWith<$Res>  {
   factory $JuzVerseCopyWith(JuzVerse value, $Res Function(JuzVerse) _then) = _$JuzVerseCopyWithImpl;
 @useResult
 $Res call({
- String id, int surahId, String surahName, int verseNumber, int indexInJuz, String textArabic, String? textUthmani, String? translation
+ String id, int surahId, String surahName, int verseNumber, int indexInJuz, String textArabic, String? textUthmani, String? textIndopak, String? translation
 });
 
 
@@ -651,7 +651,7 @@ class _$JuzVerseCopyWithImpl<$Res>
 
 /// Create a copy of JuzVerse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? surahId = null,Object? surahName = null,Object? verseNumber = null,Object? indexInJuz = null,Object? textArabic = null,Object? textUthmani = freezed,Object? translation = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? surahId = null,Object? surahName = null,Object? verseNumber = null,Object? indexInJuz = null,Object? textArabic = null,Object? textUthmani = freezed,Object? textIndopak = freezed,Object? translation = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,surahId: null == surahId ? _self.surahId : surahId // ignore: cast_nullable_to_non_nullable
@@ -660,6 +660,7 @@ as String,verseNumber: null == verseNumber ? _self.verseNumber : verseNumber // 
 as int,indexInJuz: null == indexInJuz ? _self.indexInJuz : indexInJuz // ignore: cast_nullable_to_non_nullable
 as int,textArabic: null == textArabic ? _self.textArabic : textArabic // ignore: cast_nullable_to_non_nullable
 as String,textUthmani: freezed == textUthmani ? _self.textUthmani : textUthmani // ignore: cast_nullable_to_non_nullable
+as String?,textIndopak: freezed == textIndopak ? _self.textIndopak : textIndopak // ignore: cast_nullable_to_non_nullable
 as String?,translation: freezed == translation ? _self.translation : translation // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -746,10 +747,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int surahId,  String surahName,  int verseNumber,  int indexInJuz,  String textArabic,  String? textUthmani,  String? translation)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int surahId,  String surahName,  int verseNumber,  int indexInJuz,  String textArabic,  String? textUthmani,  String? textIndopak,  String? translation)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _JuzVerse() when $default != null:
-return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.indexInJuz,_that.textArabic,_that.textUthmani,_that.translation);case _:
+return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.indexInJuz,_that.textArabic,_that.textUthmani,_that.textIndopak,_that.translation);case _:
   return orElse();
 
 }
@@ -767,10 +768,10 @@ return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int surahId,  String surahName,  int verseNumber,  int indexInJuz,  String textArabic,  String? textUthmani,  String? translation)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int surahId,  String surahName,  int verseNumber,  int indexInJuz,  String textArabic,  String? textUthmani,  String? textIndopak,  String? translation)  $default,) {final _that = this;
 switch (_that) {
 case _JuzVerse():
-return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.indexInJuz,_that.textArabic,_that.textUthmani,_that.translation);case _:
+return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.indexInJuz,_that.textArabic,_that.textUthmani,_that.textIndopak,_that.translation);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -787,10 +788,10 @@ return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int surahId,  String surahName,  int verseNumber,  int indexInJuz,  String textArabic,  String? textUthmani,  String? translation)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int surahId,  String surahName,  int verseNumber,  int indexInJuz,  String textArabic,  String? textUthmani,  String? textIndopak,  String? translation)?  $default,) {final _that = this;
 switch (_that) {
 case _JuzVerse() when $default != null:
-return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.indexInJuz,_that.textArabic,_that.textUthmani,_that.translation);case _:
+return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.indexInJuz,_that.textArabic,_that.textUthmani,_that.textIndopak,_that.translation);case _:
   return null;
 
 }
@@ -802,7 +803,7 @@ return $default(_that.id,_that.surahId,_that.surahName,_that.verseNumber,_that.i
 @JsonSerializable()
 
 class _JuzVerse implements JuzVerse {
-  const _JuzVerse({required this.id, required this.surahId, required this.surahName, required this.verseNumber, required this.indexInJuz, required this.textArabic, this.textUthmani, this.translation});
+  const _JuzVerse({required this.id, required this.surahId, required this.surahName, required this.verseNumber, required this.indexInJuz, required this.textArabic, this.textUthmani, this.textIndopak, this.translation});
   factory _JuzVerse.fromJson(Map<String, dynamic> json) => _$JuzVerseFromJson(json);
 
 @override final  String id;
@@ -812,6 +813,7 @@ class _JuzVerse implements JuzVerse {
 @override final  int indexInJuz;
 @override final  String textArabic;
 @override final  String? textUthmani;
+@override final  String? textIndopak;
 @override final  String? translation;
 
 /// Create a copy of JuzVerse
@@ -827,16 +829,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _JuzVerse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.surahName, surahName) || other.surahName == surahName)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.indexInJuz, indexInJuz) || other.indexInJuz == indexInJuz)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textUthmani, textUthmani) || other.textUthmani == textUthmani)&&(identical(other.translation, translation) || other.translation == translation));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _JuzVerse&&(identical(other.id, id) || other.id == id)&&(identical(other.surahId, surahId) || other.surahId == surahId)&&(identical(other.surahName, surahName) || other.surahName == surahName)&&(identical(other.verseNumber, verseNumber) || other.verseNumber == verseNumber)&&(identical(other.indexInJuz, indexInJuz) || other.indexInJuz == indexInJuz)&&(identical(other.textArabic, textArabic) || other.textArabic == textArabic)&&(identical(other.textUthmani, textUthmani) || other.textUthmani == textUthmani)&&(identical(other.textIndopak, textIndopak) || other.textIndopak == textIndopak)&&(identical(other.translation, translation) || other.translation == translation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,surahId,surahName,verseNumber,indexInJuz,textArabic,textUthmani,translation);
+int get hashCode => Object.hash(runtimeType,id,surahId,surahName,verseNumber,indexInJuz,textArabic,textUthmani,textIndopak,translation);
 
 @override
 String toString() {
-  return 'JuzVerse(id: $id, surahId: $surahId, surahName: $surahName, verseNumber: $verseNumber, indexInJuz: $indexInJuz, textArabic: $textArabic, textUthmani: $textUthmani, translation: $translation)';
+  return 'JuzVerse(id: $id, surahId: $surahId, surahName: $surahName, verseNumber: $verseNumber, indexInJuz: $indexInJuz, textArabic: $textArabic, textUthmani: $textUthmani, textIndopak: $textIndopak, translation: $translation)';
 }
 
 
@@ -847,7 +849,7 @@ abstract mixin class _$JuzVerseCopyWith<$Res> implements $JuzVerseCopyWith<$Res>
   factory _$JuzVerseCopyWith(_JuzVerse value, $Res Function(_JuzVerse) _then) = __$JuzVerseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int surahId, String surahName, int verseNumber, int indexInJuz, String textArabic, String? textUthmani, String? translation
+ String id, int surahId, String surahName, int verseNumber, int indexInJuz, String textArabic, String? textUthmani, String? textIndopak, String? translation
 });
 
 
@@ -864,7 +866,7 @@ class __$JuzVerseCopyWithImpl<$Res>
 
 /// Create a copy of JuzVerse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? surahId = null,Object? surahName = null,Object? verseNumber = null,Object? indexInJuz = null,Object? textArabic = null,Object? textUthmani = freezed,Object? translation = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? surahId = null,Object? surahName = null,Object? verseNumber = null,Object? indexInJuz = null,Object? textArabic = null,Object? textUthmani = freezed,Object? textIndopak = freezed,Object? translation = freezed,}) {
   return _then(_JuzVerse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,surahId: null == surahId ? _self.surahId : surahId // ignore: cast_nullable_to_non_nullable
@@ -873,6 +875,7 @@ as String,verseNumber: null == verseNumber ? _self.verseNumber : verseNumber // 
 as int,indexInJuz: null == indexInJuz ? _self.indexInJuz : indexInJuz // ignore: cast_nullable_to_non_nullable
 as int,textArabic: null == textArabic ? _self.textArabic : textArabic // ignore: cast_nullable_to_non_nullable
 as String,textUthmani: freezed == textUthmani ? _self.textUthmani : textUthmani // ignore: cast_nullable_to_non_nullable
+as String?,textIndopak: freezed == textIndopak ? _self.textIndopak : textIndopak // ignore: cast_nullable_to_non_nullable
 as String?,translation: freezed == translation ? _self.translation : translation // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

@@ -3,16 +3,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'arabic_script.g.dart';
 
-/// Which script the app renders Arabic text in. Controls the font choice;
-/// the underlying Unicode is unchanged across selections.
+/// Which script the app renders Arabic text in.
+///
+/// Each value selects **both the text and the face**: the scripts are
+/// different orthographies of the same revelation, not three fonts over one
+/// string. `arabicTextForScript` picks the verse text; `arabicTextStyle`
+/// picks the typeface that orthography was drawn for. Changing one without
+/// the other is the bug this enum shipped with — see `arabic_script_text.dart`.
 enum ArabicScript {
-  /// South Asian Mushaf feel — traditional Naskh shaping (Scheherazade New).
+  /// The South Asian mushaf orthography: plain alef-lam, dotless final ya,
+  /// explicit sukun over long vowels, `ؕ` and friends for the waqf marks.
+  /// The spelling printed across India, Pakistan and Bangladesh — for this
+  /// app's first market, simply what a Qur'an looks like. The default.
   indoPak,
 
-  /// Saudi Mushaf — Amiri Quran (Uthmani-style ligatures).
+  /// The Madinah/King Fahd mushaf orthography: alef-wasla, small high marks
+  /// over silent letters, superscript alef.
   uthmani,
 
-  /// Modern Naskh — Noto Naskh Arabic.
+  /// Contemporary Naskh — the plain modern spelling, for reading rather than
+  /// recitation-marking.
   naskh;
 
   String get label => switch (this) {
@@ -21,10 +31,25 @@ enum ArabicScript {
     ArabicScript.naskh => 'Naskh',
   };
 
+  /// Describes the **script**, never the font. The font is an implementation
+  /// detail of rendering the script, and naming it here (as this once named
+  /// Amiri Quran) told the user the preference picked a typeface — which was
+  /// both wrong and the reason the bug went unnoticed.
   String get subtitle => switch (this) {
-    ArabicScript.indoPak => 'South Asian Mushaf style',
-    ArabicScript.uthmani => 'Saudi Mushaf (Amiri Quran)',
-    ArabicScript.naskh => 'Modern Naskh',
+    ArabicScript.indoPak => 'The South Asian mushaf spelling',
+    ArabicScript.uthmani => 'The Madinah mushaf spelling',
+    ArabicScript.naskh => 'Plain modern Naskh',
+  };
+
+  /// A fragment of 2:142 in this script, for the settings preview.
+  ///
+  /// The three differ in characters, not only in shape — dotless `ٱلَّتِى`
+  /// against dotted `الَّتِیْ` — so the preview shows what the preference
+  /// actually does. A single shared sample could only ever show three fonts.
+  String get sample => switch (this) {
+    ArabicScript.indoPak => 'الَّتِیْ',
+    ArabicScript.uthmani => 'ٱلَّتِى',
+    ArabicScript.naskh => 'الَّتِي',
   };
 }
 

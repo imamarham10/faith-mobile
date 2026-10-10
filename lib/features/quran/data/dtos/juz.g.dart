@@ -48,6 +48,7 @@ _JuzVerse _$JuzVerseFromJson(Map<String, dynamic> json) => _JuzVerse(
   indexInJuz: (json['indexInJuz'] as num).toInt(),
   textArabic: json['textArabic'] as String,
   textUthmani: json['textUthmani'] as String?,
+  textIndopak: json['textIndopak'] as String?,
   translation: json['translation'] as String?,
 );
 
@@ -59,6 +60,7 @@ Map<String, dynamic> _$JuzVerseToJson(_JuzVerse instance) => <String, dynamic>{
   'indexInJuz': instance.indexInJuz,
   'textArabic': instance.textArabic,
   'textUthmani': instance.textUthmani,
+  'textIndopak': instance.textIndopak,
   'translation': instance.translation,
 };
 

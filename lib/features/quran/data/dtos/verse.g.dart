@@ -11,6 +11,7 @@ _Verse _$VerseFromJson(Map<String, dynamic> json) => _Verse(
   surahId: (json['surahId'] as num).toInt(),
   verseNumber: (json['verseNumber'] as num).toInt(),
   textArabic: json['textArabic'] as String,
+  textIndopak: json['textIndopak'] as String?,
   textSimple: json['textSimple'] as String?,
   translations:
       (json['translations'] as List<dynamic>?)
@@ -24,6 +25,7 @@ Map<String, dynamic> _$VerseToJson(_Verse instance) => <String, dynamic>{
   'surahId': instance.surahId,
   'verseNumber': instance.verseNumber,
   'textArabic': instance.textArabic,
+  'textIndopak': instance.textIndopak,
   'textSimple': instance.textSimple,
   'translations': instance.translations,
 };

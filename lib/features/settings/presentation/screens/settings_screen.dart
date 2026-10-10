@@ -146,12 +146,15 @@ class SettingsScreen extends ConsumerWidget {
                   },
                   title: Text(s.label),
                   subtitle: Text(s.subtitle),
+                  // Each row previews its own script's text, not one
+                  // shared string in three fonts: the preference picks an
+                  // orthography, and only different text can show that.
                   secondary: SizedBox(
-                    width: 48,
+                    width: 64,
                     child: Directionality(
                       textDirection: TextDirection.rtl,
                       child: Text(
-                        'بِسْمِ',
+                        s.sample,
                         textAlign: TextAlign.right,
                         style: arabicTextStyle(
                           s,

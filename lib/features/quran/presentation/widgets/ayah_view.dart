@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/preferences/arabic_script_text.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
@@ -41,6 +42,18 @@ class AyahView extends ConsumerWidget {
     final translation = verse.translations.isNotEmpty
         ? verse.translations.first.text
         : null;
+    // The script preference selects the *text*, not only the face — the
+    // same call the juz reader makes, so the two readers can never show
+    // one verse in two spellings. The surah payload carries no Uthmani
+    // variant, so that selection falls back to `textArabic` (itself
+    // Uthmani-family); Indo-Pak falls back the same way until the backend
+    // seed lands.
+    final script = activeArabicScript(ref);
+    final arabic = arabicTextForScript(
+      script,
+      textArabic: verse.textArabic,
+      textIndopak: verse.textIndopak,
+    );
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -71,12 +84,14 @@ class AyahView extends ConsumerWidget {
             Directionality(
               textDirection: TextDirection.rtl,
               child: Text(
-                verse.textArabic,
+                arabic,
                 textAlign: TextAlign.right,
-                style: arabicTextStyleOf(
-                  ref,
+                // No explicit line height: each script brings its own, and
+                // the flat 2.2 this used to pass aired out Naskh while
+                // leaving Uthmani's superscript marks tight.
+                style: arabicTextStyle(
+                  script,
                   fontSize: arabicFontSize,
-                  height: 2.2,
                   color: cs.onSurface,
                 ),
               ),

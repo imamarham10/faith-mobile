@@ -52,10 +52,16 @@ abstract class JuzSummary with _$JuzSummary {
 /// ([verseNumber]) resets at every surah boundary, and a juz crosses up to
 /// 37 of them.
 ///
-/// [textUthmani] is parsed because the contract carries it, but nothing
-/// renders it today: the app's Arabic-script preference swaps *fonts*
-/// (`arabicTextStyleOf`), never the text, and inventing text-swapping here
-/// would make the juz reader behave unlike every other Arabic surface.
+/// [textUthmani] and [textIndopak] are the same verse in the other two
+/// orthographies, and the reader picks between all three by the user's
+/// script preference (`arabicTextForScript`). They are not styling: the
+/// characters differ — Uthmani's `ٱلَّتِى كَانُوا۟` against Indo-Pak's
+/// `الَّتِیْ كَانُوۡا` — and no font bridges that.
+///
+/// [textIndopak] is nullable and *is* null today: it is an additive field
+/// and arrives only once the backend seed has run, and may stay null for
+/// individual verses after. The reader falls back to [textArabic] rather
+/// than showing an empty verse.
 ///
 /// [translation] is nullable and genuinely arrives null: the juz endpoints
 /// are public, so premium editions are filtered out server-side and a
@@ -71,6 +77,7 @@ abstract class JuzVerse with _$JuzVerse {
     required int indexInJuz,
     required String textArabic,
     String? textUthmani,
+    String? textIndopak,
     String? translation,
   }) = _JuzVerse;
 
