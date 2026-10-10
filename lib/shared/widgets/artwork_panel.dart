@@ -49,6 +49,7 @@ class ArtworkPanel extends StatelessWidget {
     this.fit = BoxFit.cover,
     this.alignment = Alignment.center,
     this.fallback,
+    this.decorative = true,
   });
 
   final ArtSlot slot;
@@ -65,6 +66,16 @@ class ArtworkPanel extends StatelessWidget {
   /// which is the right answer for purely decorative positions.
   final Widget? fallback;
 
+  /// Whether this artwork is purely decoration, and so hidden from assistive
+  /// technology. **Defaults to true**, because most slots sit on a card that
+  /// already carries a title and a subtitle: announcing a line of museum
+  /// catalogue copy before each one would put four extra strings between a
+  /// TalkBack user and the word "Dhikr" on the Practice grid alone.
+  ///
+  /// Pass false only where the artwork is genuinely the card's content — an
+  /// empty state, where there is nothing else to describe.
+  final bool decorative;
+
   @override
   Widget build(BuildContext context) {
     final ext = Theme.of(context).extension<FaithThemeExtension>()!;
@@ -76,7 +87,7 @@ class ArtworkPanel extends StatelessWidget {
 
     return RepaintBoundary(
       child: Builder(
-        builder: (context) {
+        builder: (_) {
           // No `cacheWidth`. Every asset in `assets/art/` is already encoded
           // at its display size (360px for a grid tile, 900px for a
           // full-width band), so a decode target derived from layout is at
@@ -88,7 +99,8 @@ class ArtworkPanel extends StatelessWidget {
             art.assetKey,
             fit: fit,
             alignment: alignment,
-            semanticLabel: art.semanticLabel,
+            excludeFromSemantics: decorative,
+            semanticLabel: decorative ? null : art.semanticLabel,
             // Settle in rather than pop: the fade is driven by the decode
             // itself, so it reads as the image arriving, and it is finite —
             // an infinitely repeating decoration would hang every

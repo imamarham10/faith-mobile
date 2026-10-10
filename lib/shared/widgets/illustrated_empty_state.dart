@@ -75,6 +75,10 @@ class IllustratedEmptyState extends StatelessWidget {
                       slot: slot,
                       faith: ext.faithId,
                       scrim: ArtworkScrim.bottom,
+                      // Announced here: on an empty screen the artwork and
+                      // the mascot are the only non-text content, and there
+                      // is no competing list for it to get in the way of.
+                      decorative: false,
                     ),
                   ),
                 ),

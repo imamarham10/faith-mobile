@@ -8,6 +8,7 @@ import 'package:faith_mobile/features/today/presentation/widgets/stat_tile_row.d
 import 'package:faith_mobile/features/today/presentation/widgets/streak_chip.dart';
 import 'package:faith_mobile/features/today/presentation/widgets/today_progress_section.dart';
 import 'package:faith_mobile/features/today/presentation/widgets/week_strip.dart';
+import 'package:faith_mobile/shared/widgets/mascot_view.dart';
 import 'package:faith_mobile/shared/widgets/milestone_ring.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -399,6 +400,66 @@ void main() {
       await expectLater(
         find.byType(TodayProgressSection),
         matchesGoldenFile('goldens/today_progress_hindu_320.png'),
+      );
+    });
+
+    // The never-set-a-goal card, which is the only place `MascotState.sleep`
+    // ships. It had no golden and no reachable device state, so without
+    // these the one state the illustration pass set out to render was the
+    // one nobody had looked at.
+    //
+    // `sleep` is also the only MascotState safe in this file: `idle` and
+    // `encourage` call `.animate(onPlay: (c) => c.repeat(...))`, and an
+    // endlessly repeating animation hangs `pumpAndSettle` forever.
+    testWidgets('islam with no goal set', (tester) async {
+      await pumpSection(
+        tester,
+        faith: FaithId.islam,
+        dashboard: FakeTodayDashboard.noGoal(),
+      );
+      expect(find.byType(MascotView), findsOneWidget);
+      await expectLater(
+        find.byType(TodayProgressSection),
+        matchesGoldenFile('goldens/today_progress_islam_nogoal.png'),
+      );
+    });
+
+    testWidgets('hindu with no goal set', (tester) async {
+      await pumpSection(
+        tester,
+        faith: FaithId.hindu,
+        dashboard: FakeTodayDashboard.noGoal(pack: hinduHabitPack),
+      );
+      expect(find.byType(MascotView), findsOneWidget);
+      await expectLater(
+        find.byType(TodayProgressSection),
+        matchesGoldenFile('goldens/today_progress_hindu_nogoal.png'),
+      );
+    });
+
+    testWidgets('islam with no goal set, dark', (tester) async {
+      await pumpSection(
+        tester,
+        faith: FaithId.islam,
+        dashboard: FakeTodayDashboard.noGoal(),
+        brightness: Brightness.dark,
+      );
+      await expectLater(
+        find.byType(TodayProgressSection),
+        matchesGoldenFile('goldens/today_progress_islam_nogoal_dark.png'),
+      );
+    });
+
+    testWidgets('hindu with no goal set, dark', (tester) async {
+      await pumpSection(
+        tester,
+        faith: FaithId.hindu,
+        dashboard: FakeTodayDashboard.noGoal(pack: hinduHabitPack),
+        brightness: Brightness.dark,
+      );
+      await expectLater(
+        find.byType(TodayProgressSection),
+        matchesGoldenFile('goldens/today_progress_hindu_nogoal_dark.png'),
       );
     });
   });

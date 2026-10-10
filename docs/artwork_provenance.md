@@ -80,7 +80,8 @@ path serves Dhikr under Islam and Japa under Hindu.
 |---|---|---|
 | `practiceHero`, `scriptureHeader` | `illumination_band` | `tent_panel_band` |
 | `narrativeHeader` | `lamp_band` | `shawl_paisley_band` |
-| `practiceTile1`, `todayGoal`, `empty` | `star_tile` / `illumination_corner` | `floral_arch` |
+| `practiceTile1`, `empty` | `star_tile` | `floral_arch` |
+| `todayGoal` | `illumination_corner` | `floral_arch` |
 | `practiceTile2` | `illumination_corner` | `sari_border` |
 | `practiceTile3` | `lamp_enamel` | `jali_lattice` |
 | `practiceTile4` | `tile_interlace` | `patola_ikat` |

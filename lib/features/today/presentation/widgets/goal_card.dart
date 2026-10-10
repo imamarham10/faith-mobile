@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/habit/faith_habit_pack.dart';
+import '../../../../shared/widgets/artwork_panel.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
@@ -41,6 +43,11 @@ class GoalCard extends StatelessWidget {
   /// Opens the picker.
   final VoidCallback onEdit;
 
+  /// How much of the card's right edge the motif occupies. Narrow enough
+  /// that the count and the progress bar keep a clean ground under them at
+  /// the narrowest width the project supports (320pt).
+  static const double _artWidth = 116;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -51,81 +58,107 @@ class GoalCard extends StatelessWidget {
       return _GoalPrompt(prompt: pack.goalPrompt, onTap: onEdit);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // The count sits on the left and the right half of this card has always
+    // been empty, so the motif goes there — inset and fading leftward into
+    // the card rather than sitting behind the numbers, which must stay at
+    // full contrast.
+    return Stack(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                "TODAY'S GOAL",
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+        Positioned(
+          top: 0,
+          bottom: 0,
+          right: 0,
+          width: _artWidth,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: const ArtworkPanel(
+              slot: ArtSlot.todayGoal,
+              scrim: ArtworkScrim.leftFade,
+              alignment: Alignment.centerRight,
             ),
-            if (goal.isComplete) ...[
-              Icon(Icons.check_circle, size: 16, color: palette.primary),
-              const Gap.h(AppSpacing.xs),
-              Text(
-                'Complete',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: palette.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-            // Always present, complete or not. Hiding it on a met goal
-            // locks the user out of changing their target for the rest of
-            // the day — and the day they most want to raise it is the day
-            // they have just met it.
-            Semantics(
-              button: true,
-              label: 'Change daily goal',
-              excludeSemantics: true,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onEdit();
-                },
-                // 44pt tap target around a 16pt glyph.
-                child: SizedBox(
-                  width: 44,
-                  height: 24,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Icon(Icons.tune, size: 16, color: palette.inkMuted),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const Gap(AppSpacing.sm),
-        // RichText so the count reads as one phrase to a screen reader
-        // instead of three separate nodes.
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: '${goal.done}',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: goal.done > 0 ? palette.ink : palette.inkMuted,
-                ),
-              ),
-              TextSpan(
-                text: ' / ${goal.target} ${goal.unit}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: palette.inkMuted,
-                ),
-              ),
-            ],
           ),
         ),
-        const Gap(AppSpacing.md),
-        _GoalBar(fraction: goal.fraction),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "TODAY'S GOAL",
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                if (goal.isComplete) ...[
+                  Icon(Icons.check_circle, size: 16, color: palette.primary),
+                  const Gap.h(AppSpacing.xs),
+                  Text(
+                    'Complete',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: palette.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                // Always present, complete or not. Hiding it on a met goal
+                // locks the user out of changing their target for the rest of
+                // the day — and the day they most want to raise it is the day
+                // they have just met it.
+                Semantics(
+                  button: true,
+                  label: 'Change daily goal',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onEdit();
+                    },
+                    // 44pt tap target around a 16pt glyph.
+                    child: SizedBox(
+                      width: 44,
+                      height: 24,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(
+                          Icons.tune,
+                          size: 16,
+                          color: palette.inkMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Gap(AppSpacing.sm),
+            // RichText so the count reads as one phrase to a screen reader
+            // instead of three separate nodes.
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${goal.done}',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: goal.done > 0 ? palette.ink : palette.inkMuted,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' / ${goal.target} ${goal.unit}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: palette.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Gap(AppSpacing.md),
+            _GoalBar(fraction: goal.fraction),
+          ],
+        ),
       ],
     );
   }
@@ -169,11 +202,7 @@ class _GoalPrompt extends StatelessWidget {
             // Asleep because the streak has not started yet — and because
             // `sleep` is the only MascotState that does not animate forever,
             // which matters: this card is inside the Today goldens.
-            MascotView(
-              faith: ext.faithId,
-              state: MascotState.sleep,
-              size: 56,
-            ),
+            MascotView(faith: ext.faithId, state: MascotState.sleep, size: 56),
           ],
         ),
         const Gap(AppSpacing.md),
