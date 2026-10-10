@@ -180,6 +180,11 @@ object itself.
 | 449562, 450362 | Both `primaryImage` files are **monochrome archival photographs**, not colour. Same flaw as 455054 — rejected on quality, not content. |
 | 452912 — Textile Fragment | Photographed through glass; glare streaks and the mount board are visible across the piece. Rejected on quality. |
 | 24306, 24298, 31681, 449568 (and other arms) | Weapons, and a carved steatite penbox too plain to read at tile size. |
+| 457791 — Ka'ba Tile | **Non-figurative, and still rejected.** It depicts the Ka'ba. The rule is not merely "no human figures" — it is that nothing may read as a religious *representation*, and a building that is itself an object of orientation in prayer plainly does. Decoration drawn from a sanctuary is fine; a picture of the sanctuary is not. |
+| 450358 — Luster Star-Shaped Tile | Innocuous title, but the record is tagged Birds / Kings / Women. |
+| 781487 — Portuguese Goa Carpet | Tagged tigers. |
+| 447583 — Garden Carpet | Passed every tag filter, but Persian garden carpets routinely carry fish and birds in the water channels — not worth the per-crop risk when alternatives exist. |
+| 453587 — Coptic Manuscript | Non-figurative, but a Christian liturgical text has no business in either faith's slot. |
 | AIC 180287 — "Patolu" | Metadata and title read as pure geometry; at zoom the field is densely figurative (elephants with riders, human figures, tigers). Caught only by looking. |
 
 ### A partially zoomorphic source, used for its abstract region only
