@@ -48,6 +48,9 @@ class GoalCard extends StatelessWidget {
   /// the narrowest width the project supports (320pt).
   static const double _artWidth = 116;
 
+  /// Clears the label-and-tune row above it.
+  static const double _artTopInset = 30;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -65,7 +68,11 @@ class GoalCard extends StatelessWidget {
     return Stack(
       children: [
         Positioned(
-          top: 0,
+          // Starts below the header row. At `top: 0` the motif ran under the
+          // 24pt "Change daily goal" control, which is `inkMuted` on a busy
+          // gold-and-lapis ground — it disappeared in light mode. The header
+          // row keeps clean card under it.
+          top: _artTopInset,
           bottom: 0,
           right: 0,
           width: _artWidth,
