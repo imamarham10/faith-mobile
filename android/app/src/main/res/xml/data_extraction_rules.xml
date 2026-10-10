@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 31+ equivalent of backup_rules.xml. Android 12 split Auto Backup into
+  two transports and ignores fullBackupContent on new devices, so both files
+  have to exist and agree.
+
+  cloud-backup  — Google Drive.
+  device-transfer — direct phone-to-phone migration.
+
+  Both exclude the same things. Device transfer is the more tempting one to
+  allow, since it never leaves the user's hands, but the journal is excluded
+  there too: the app's own copy says device-only, and a transferred journal
+  landing on a handset where someone else signs in is the same leak we just
+  fixed in sign-out, arriving by another route.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="FlutterSharedPreferences.xml"/>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+        <exclude domain="database" path="activity_queue.db"/>
+        <exclude domain="database" path="activity_queue.db-journal"/>
+        <exclude domain="database" path="activity_queue.db-wal"/>
+        <exclude domain="database" path="activity_queue.db-shm"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="FlutterSharedPreferences.xml"/>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+        <exclude domain="database" path="activity_queue.db"/>
+        <exclude domain="database" path="activity_queue.db-journal"/>
+        <exclude domain="database" path="activity_queue.db-wal"/>
+        <exclude domain="database" path="activity_queue.db-shm"/>
+    </device-transfer>
+</data-extraction-rules>

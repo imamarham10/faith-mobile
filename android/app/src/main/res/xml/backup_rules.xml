@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto Backup rules for API 30 and below (android:fullBackupContent).
+
+  The app tells users, in the sign-out dialog, that reflections and mood
+  history are "device-only". Auto Backup is on by default, so that claim was
+  false: SharedPreferences and the sqflite activity queue were being copied to
+  the user's Google Drive. A reinstall then repopulated the journal — observed
+  on a real device, where a "fresh install" came back with entries already in
+  it, which also means one person's reflections could reappear for whoever
+  signs in next.
+
+  Device setup is still backed up, because losing your theme and calculation
+  method on a new phone is a bad trade for nothing. What is excluded is
+  everything a person authored or that identifies them.
+-->
+<full-backup-content>
+    <!-- Authored content and anything user-identifying. -->
+    <exclude domain="sharedpref" path="FlutterSharedPreferences.xml"/>
+
+    <!-- Queued activity events: rows carry no user id, so a restore under a
+         different account would upload one person's reading as another's. -->
+    <exclude domain="database" path="activity_queue.db"/>
+    <exclude domain="database" path="activity_queue.db-journal"/>
+    <exclude domain="database" path="activity_queue.db-wal"/>
+    <exclude domain="database" path="activity_queue.db-shm"/>
+
+    <!-- Tokens. flutter_secure_storage is backed by EncryptedSharedPreferences
+         on Android; a restored blob cannot be decrypted on a new device and
+         leaves the app holding an undecryptable credential. -->
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+</full-backup-content>
