@@ -57,6 +57,55 @@ void main() {
     });
   });
 
+  group('variety', () {
+    // Slots that are on screen at the same time. The Practice tab shows its
+    // masthead, its grid and its closing panel all at once, so if any two of
+    // them resolve to the same file the screen looks like the app owns one
+    // picture — which is the specific weakness this expanded set exists to
+    // fix, and exactly the kind of thing that silently creeps back when a
+    // slot is remapped.
+    const coVisible = <String, List<ArtSlot>>{
+      'Practice (Islam: 4 tiles)': [
+        ArtSlot.practiceHero,
+        ArtSlot.practiceTile1,
+        ArtSlot.practiceTile2,
+        ArtSlot.practiceTile3,
+        ArtSlot.practiceTile4,
+        ArtSlot.narrativeHeader,
+      ],
+      'Practice (Hindu: 3 tiles)': [
+        ArtSlot.practiceHero,
+        ArtSlot.practiceTile1,
+        ArtSlot.practiceTile2,
+        ArtSlot.practiceTile3,
+        ArtSlot.narrativeHeader,
+      ],
+    };
+
+    for (final entry in coVisible.entries) {
+      for (final faith in FaithId.values) {
+        test('${entry.key} shows no artwork twice under ${faith.name}', () {
+          final keys = [
+            for (final slot in entry.value) artworkFor(faith, slot)!.assetKey,
+          ];
+          expect(
+            keys.toSet(),
+            hasLength(keys.length),
+            reason: 'repeated on one screen: $keys',
+          );
+        });
+      }
+    }
+
+    test('the catalog draws on at least 24 distinct files', () {
+      final all = <String>{
+        for (final faith in FaithId.values)
+          for (final slot in ArtSlot.values) artworkFor(faith, slot)!.assetKey,
+      };
+      expect(all.length, greaterThanOrEqualTo(24), reason: 'only $all');
+    });
+  });
+
   group('bundle integrity', () {
     test('every assetKey names a file that exists on disk', () {
       for (final faith in FaithId.values) {

@@ -58,6 +58,14 @@ are listed at the end, with the reason.
 | `islam/tile_interlace.webp` | 450428 | *(second crop of the same tile)* | 13th–14th century | Iran | Stonepaste, luster-painted | Islamic Art | `true` | [450428](https://www.metmuseum.org/art/collection/search/450428) |
 | `islam/lamp_enamel.webp` | 444718 | Mosque Lamp | 14th century | Egypt (Cairo) or Syria | Glass; blown, enameled, gilded | Islamic Art | `true` | [444718](https://www.metmuseum.org/art/collection/search/444718) |
 | `islam/lamp_band.webp` | 444718 | *(wide crop of the same lamp)* | 14th century | Egypt (Cairo) or Syria | Glass; blown, enameled, gilded | Islamic Art | `true` | [444718](https://www.metmuseum.org/art/collection/search/444718) |
+| `islam/mihrab_lattice.webp` | 449537 | Mihrab (Prayer Niche) | 755 AH / 1354–55 CE | Iran | Mosaic of polychrome-glazed cut tiles | Islamic Art | `true` | [449537](https://www.metmuseum.org/art/collection/search/449537) |
+| `islam/mihrab_hood.webp` | 449537 | *(vault crop of the same mihrab)* | 755 AH / 1354–55 CE | Iran | Mosaic of polychrome-glazed cut tiles | Islamic Art | `true` | [449537](https://www.metmuseum.org/art/collection/search/449537) |
+| `islam/mihrab_field_band.webp` | 449537 | *(lower field crop of the same mihrab)* | 755 AH / 1354–55 CE | Iran | Mosaic of polychrome-glazed cut tiles | Islamic Art | `true` | [449537](https://www.metmuseum.org/art/collection/search/449537) |
+| `islam/lustre_calligraphy.webp` | 447281 | Partial Niche-Form Tile | second half 13th century | Iran | Stonepaste; luster-painted on opaque white glaze | Islamic Art | `true` | [447281](https://www.metmuseum.org/art/collection/search/447281) |
+| `islam/lustre_floral.webp` | 447281 | *(lower field crop of the same tile)* | second half 13th century | Iran | Stonepaste; luster-painted on opaque white glaze | Islamic Art | `true` | [447281](https://www.metmuseum.org/art/collection/search/447281) |
+| `islam/rug_border.webp` | 458739 | Prayer Rug with Niche Design | late 18th–early 19th century | Turkey | Wool and cotton; symmetrically knotted pile | Islamic Art | `true` | [458739](https://www.metmuseum.org/art/collection/search/458739) |
+| `islam/rug_band.webp` | 458739 | *(wide border crop of the same rug)* | late 18th–early 19th century | Turkey | Wool and cotton; symmetrically knotted pile | Islamic Art | `true` | [458739](https://www.metmuseum.org/art/collection/search/458739) |
+| `islam/bowl_rays.webp` | 449544 | Bowl | 9th–10th century | present-day Uzbekistan | Earthenware; white slip with polychrome slip decoration | Islamic Art | `true` | [449544](https://www.metmuseum.org/art/collection/search/449544) |
 
 ## Hindu
 
@@ -69,6 +77,12 @@ are listed at the end, with the reason.
 | `hindu/jali_lattice.webp` | 453344 | Pierced Window Screen (Jali) | second half 16th century | India | Red sandstone; pierced, carved | Islamic Art | `true` | [453344](https://www.metmuseum.org/art/collection/search/453344) |
 | `hindu/patola_ikat.webp` | 308007 | Indian Trade Cloth (Patola) | 19th century or earlier | India, Gujarat region | Silk | The Michael C. Rockefeller Wing | `true` | [308007](https://www.metmuseum.org/art/collection/search/308007) |
 | `hindu/sari_border.webp` | 127540 | Sari | 19th century | India | Silk, metal thread | Asian Art | `true` | [127540](https://www.metmuseum.org/art/collection/search/127540) |
+| `hindu/marble_jali.webp` | 453241 | Pierced Window Screen (Jali) | early 17th century | India | Marble | Islamic Art | `true` | [453241](https://www.metmuseum.org/art/collection/search/453241) |
+| `hindu/marble_jali_band.webp` | 453241 | *(wide crop of the same screen)* | early 17th century | India | Marble | Islamic Art | `true` | [453241](https://www.metmuseum.org/art/collection/search/453241) |
+| `hindu/carpet_field.webp` | 446646 | Carpet with Scrolling Vines and Blossoms | ca. 1650 | Northern India or Pakistan | Silk and pashmina wool pile | Islamic Art | `true` | [446646](https://www.metmuseum.org/art/collection/search/446646) |
+| `hindu/carpet_border.webp` | 446646 | *(border crop of the same carpet)* | ca. 1650 | Northern India or Pakistan | Silk and pashmina wool pile | Islamic Art | `true` | [446646](https://www.metmuseum.org/art/collection/search/446646) |
+| `hindu/carpet_band.webp` | 446646 | *(wide field crop of the same carpet)* | ca. 1650 | Northern India or Pakistan | Silk and pashmina wool pile | Islamic Art | `true` | [446646](https://www.metmuseum.org/art/collection/search/446646) |
+| `hindu/carpet_medallion.webp` | 446646 | *(medallion crop of the same carpet)* | ca. 1650 | Northern India or Pakistan | Silk and pashmina wool pile | Islamic Art | `true` | [446646](https://www.metmuseum.org/art/collection/search/446646) |
 
 ### Slot assignment
 
@@ -78,13 +92,40 @@ path serves Dhikr under Islam and Japa under Hindu.
 
 | Slot | Islam | Hindu |
 |---|---|---|
-| `practiceHero`, `scriptureHeader` | `illumination_band` | `tent_panel_band` |
-| `narrativeHeader` | `lamp_band` | `shawl_paisley_band` |
-| `practiceTile1`, `empty` | `star_tile` | `floral_arch` |
-| `todayGoal` | `illumination_corner` | `floral_arch` |
-| `practiceTile2` | `illumination_corner` | `sari_border` |
+| `practiceHero` | `illumination_band` | `tent_panel_band` |
+| `practiceTile1` | `star_tile` | `marble_jali` |
+| `practiceTile2` | `lustre_calligraphy` | `sari_border` |
 | `practiceTile3` | `lamp_enamel` | `jali_lattice` |
-| `practiceTile4` | `tile_interlace` | `patola_ikat` |
+| `practiceTile4` | `bowl_rays` | `carpet_border` |
+| `narrativeHeader` | `rug_band` | `shawl_paisley_band` |
+| `scriptureHeader` | `mihrab_field_band` | `carpet_band` |
+| `todayGoal` | `mihrab_lattice` | `carpet_field` |
+| `emptyBookmarks` | `illumination_corner` | `floral_arch` |
+| `emptyFavorites` | `tile_interlace` | `carpet_medallion` |
+| `emptyHistory` | `lustre_floral` | `patola_ikat` |
+| `emptySearch` | `mihrab_hood` | `marble_jali_band` |
+| `emptyCollection` | `rug_border` | `carpet_border` |
+| `emptyDormant` | `lamp_band` | `marble_jali` |
+
+**No object appears twice on one screen.** The Practice tab renders its
+masthead, every grid tile and its closing panel simultaneously, so those six
+slots resolve to six different museum objects under each faith. A test
+(`artwork_test.dart`, group `variety`) enforces this rather than leaving it to
+care, because a remapped slot would otherwise reintroduce the repetition
+silently.
+
+Under Islam all fourteen slots resolve to fourteen distinct files. Under Hindu
+there are two deliberate reuses — `carpet_border` serves `practiceTile4` and
+`emptyCollection`, and `marble_jali` serves `practiceTile1` and
+`emptyDormant`. Neither pair can co-occur: the Hindu Practice grid has only
+three tiles, so `practiceTile4` is never rendered at all, and an empty state
+never shares a screen with the Practice grid.
+
+**Colour ground was chosen for contrast, not just availability.** The original
+twelve were overwhelmingly lapis-and-gold. The set now spans turquoise and
+cobalt tile mosaic (449537), olive and cream lustre (447281), deep red and
+indigo wool (458739), cream, ochre and black slipware (449544), white marble
+(453241) and crimson with teal (446646).
 
 ---
 
@@ -132,7 +173,33 @@ object itself.
 | 24306, 24298, 31681 — Daggers (Mughal) | Non-figurative and public domain, but weapons are wrong for a prayer app. |
 | Tibetan / Nepali "mandala" results | The Met and AIC `mandala` and `lotus ornament` searches return overwhelmingly Tibetan Buddhist thangkas with a deity at the centre — fails the content rule — plus Chinese and Japanese decorative work, which is the wrong tradition for the Hindu slot even when non-figurative. |
 | 452521 — Pawn in the Form of an Indian Lady | Figurative. |
+| 446166 — Tile from a Frieze (mina'i) | **Title and medium give no hint.** The molded turquoise relief resolves at full size into two facing stylized quadrupeds with legs and bodies. Figurative; rejected on sight. |
+| 948753 — Maharana Raj Singh II receiving courtiers | Figurative, and a named historical ruler. |
+| 452310 — Fragment of an Animal Carpet | Animals. |
+| 450322 — Tile Fragment | Eroded to bare clay across most of its surface; almost no decoration survives. Rejected on quality. |
+| 449562, 450362 | Both `primaryImage` files are **monochrome archival photographs**, not colour. Same flaw as 455054 — rejected on quality, not content. |
+| 452912 — Textile Fragment | Photographed through glass; glare streaks and the mount board are visible across the piece. Rejected on quality. |
+| 24306, 24298, 31681, 449568 (and other arms) | Weapons, and a carved steatite penbox too plain to read at tile size. |
 | AIC 180287 — "Patolu" | Metadata and title read as pure geometry; at zoom the field is densely figurative (elephants with riders, human figures, tigers). Caught only by looking. |
+
+### A partially zoomorphic source, used for its abstract region only
+
+`449544` (Bowl, 9th–10th c.) was the single best piece in the set for colour —
+cream, ochre, black and coral, exactly the warm contrast the lapis-heavy
+original set lacked. Its **centre is not usable**: the interlace knot at the
+bowl's base resolves into almond eyes and stylized bird heads, which is a
+creature form and fails the rule.
+
+The shipped crop (`bowl_rays.webp`) is taken from the rim and the radiating
+band **above** the centre, and stops well short of it — the bowl is 1570×1536
+with the knot filling roughly a 500px circle around (785, 768), and the crop
+ends at y=510. The result is purely abstract: dotted rim, radiating bars, no
+figure.
+
+This is the same principle as taking an illuminated border from a manuscript
+whose painted scenes are figurative: **the rule applies to what ships, not to
+what the object contains**. Anyone re-cropping this source must re-check it,
+because moving the frame down by a couple of hundred pixels breaks the rule.
 
 ### A note on patola and sari borders specifically
 

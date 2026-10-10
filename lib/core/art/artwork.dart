@@ -75,8 +75,8 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.practiceTile2) => const Artwork(
-    assetKey: 'assets/art/islam/illumination_corner.webp',
-    semanticLabel: 'Gold and lapis illumination border',
+    assetKey: 'assets/art/islam/lustre_calligraphy.webp',
+    semanticLabel: 'Lustre-painted calligraphic tile, Kashan',
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.practiceTile3) => const Artwork(
@@ -85,29 +85,28 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.practiceTile4) => const Artwork(
-    assetKey: 'assets/art/islam/tile_interlace.webp',
-    semanticLabel: 'Lustreware tile with floral interlace',
+    assetKey: 'assets/art/islam/bowl_rays.webp',
+    semanticLabel: 'Slip-painted earthenware bowl rim, Nishapur',
     aspectRatio: 360 / 168,
-  ),
-  (FaithId.islam, ArtSlot.todayGoal) => const Artwork(
-    assetKey: 'assets/art/islam/illumination_corner.webp',
-    semanticLabel: 'Gold and lapis illumination border',
-    aspectRatio: 360 / 168,
-  ),
-  (FaithId.islam, ArtSlot.scriptureHeader) => const Artwork(
-    assetKey: 'assets/art/islam/illumination_band.webp',
-    semanticLabel: 'Illuminated frontispiece from a 1514 Bustan of Saʿdi',
-    aspectRatio: 900 / 418,
   ),
   (FaithId.islam, ArtSlot.narrativeHeader) => const Artwork(
-    assetKey: 'assets/art/islam/lamp_band.webp',
-    semanticLabel: 'Calligraphic band from an enamelled mosque lamp',
+    assetKey: 'assets/art/islam/rug_band.webp',
+    semanticLabel: 'Woven border bands of a Turkish prayer rug',
     aspectRatio: 900 / 418,
   ),
-  // PROVISIONAL: these six share four files until the expanded set lands.
+  (FaithId.islam, ArtSlot.scriptureHeader) => const Artwork(
+    assetKey: 'assets/art/islam/mihrab_field_band.webp',
+    semanticLabel: 'Glazed tile mosaic from a 1354 mihrab, Isfahan',
+    aspectRatio: 900 / 418,
+  ),
+  (FaithId.islam, ArtSlot.todayGoal) => const Artwork(
+    assetKey: 'assets/art/islam/mihrab_lattice.webp',
+    semanticLabel: 'Tile-mosaic star lattice from a 1354 mihrab, Isfahan',
+    aspectRatio: 360 / 168,
+  ),
   (FaithId.islam, ArtSlot.emptyBookmarks) => const Artwork(
-    assetKey: 'assets/art/islam/star_tile.webp',
-    semanticLabel: 'Star-shaped lustreware tile, 13th–14th century Iran',
+    assetKey: 'assets/art/islam/illumination_corner.webp',
+    semanticLabel: 'Gold and lapis illumination border',
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.emptyFavorites) => const Artwork(
@@ -116,24 +115,24 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.emptyHistory) => const Artwork(
-    assetKey: 'assets/art/islam/illumination_corner.webp',
-    semanticLabel: 'Gold and lapis illumination border',
+    assetKey: 'assets/art/islam/lustre_floral.webp',
+    semanticLabel: 'Lustre-painted floral tilework, Kashan',
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.emptySearch) => const Artwork(
-    assetKey: 'assets/art/islam/lamp_enamel.webp',
-    semanticLabel: 'Enamelled and gilded mosque lamp, 14th century',
+    assetKey: 'assets/art/islam/mihrab_hood.webp',
+    semanticLabel: 'Tile-mosaic vault from a 1354 mihrab, Isfahan',
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.emptyCollection) => const Artwork(
-    assetKey: 'assets/art/islam/star_tile.webp',
-    semanticLabel: 'Star-shaped lustreware tile, 13th–14th century Iran',
+    assetKey: 'assets/art/islam/rug_border.webp',
+    semanticLabel: 'Border of a Turkish prayer rug',
     aspectRatio: 360 / 168,
   ),
   (FaithId.islam, ArtSlot.emptyDormant) => const Artwork(
-    assetKey: 'assets/art/islam/illumination_corner.webp',
-    semanticLabel: 'Gold and lapis illumination border',
-    aspectRatio: 360 / 168,
+    assetKey: 'assets/art/islam/lamp_band.webp',
+    semanticLabel: 'Calligraphic band from an enamelled mosque lamp',
+    aspectRatio: 900 / 418,
   ),
 
   // ---- Hindu ------------------------------------------------------------
@@ -143,8 +142,8 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 900 / 418,
   ),
   (FaithId.hindu, ArtSlot.practiceTile1) => const Artwork(
-    assetKey: 'assets/art/hindu/floral_arch.webp',
-    semanticLabel: 'Floral arch from a gold-embroidered Indian tent panel',
+    assetKey: 'assets/art/hindu/marble_jali.webp',
+    semanticLabel: 'Pierced marble jali window screen, India',
     aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.practiceTile2) => const Artwork(
@@ -158,24 +157,24 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.practiceTile4) => const Artwork(
-    assetKey: 'assets/art/hindu/patola_ikat.webp',
-    semanticLabel: 'Patola double-ikat silk, Gujarat',
+    assetKey: 'assets/art/hindu/carpet_border.webp',
+    semanticLabel: 'Flowering-plant border of a Mughal carpet',
     aspectRatio: 360 / 168,
-  ),
-  (FaithId.hindu, ArtSlot.todayGoal) => const Artwork(
-    assetKey: 'assets/art/hindu/floral_arch.webp',
-    semanticLabel: 'Floral arch from a gold-embroidered Indian tent panel',
-    aspectRatio: 360 / 168,
-  ),
-  (FaithId.hindu, ArtSlot.scriptureHeader) => const Artwork(
-    assetKey: 'assets/art/hindu/tent_panel_band.webp',
-    semanticLabel: 'Gold-embroidered floral arcade from an Indian tent panel',
-    aspectRatio: 900 / 418,
   ),
   (FaithId.hindu, ArtSlot.narrativeHeader) => const Artwork(
     assetKey: 'assets/art/hindu/shawl_paisley_band.webp',
     semanticLabel: 'Painted Kashmir shawl paisley motif',
     aspectRatio: 900 / 418,
+  ),
+  (FaithId.hindu, ArtSlot.scriptureHeader) => const Artwork(
+    assetKey: 'assets/art/hindu/carpet_band.webp',
+    semanticLabel: 'Scrolling vines and blossoms, Mughal carpet',
+    aspectRatio: 900 / 418,
+  ),
+  (FaithId.hindu, ArtSlot.todayGoal) => const Artwork(
+    assetKey: 'assets/art/hindu/carpet_field.webp',
+    semanticLabel: 'Palmette field of a Mughal pashmina carpet',
+    aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.emptyBookmarks) => const Artwork(
     assetKey: 'assets/art/hindu/floral_arch.webp',
@@ -183,8 +182,8 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.emptyFavorites) => const Artwork(
-    assetKey: 'assets/art/hindu/sari_border.webp',
-    semanticLabel: 'Floral border band from an Indian sari',
+    assetKey: 'assets/art/hindu/carpet_medallion.webp',
+    semanticLabel: 'Star medallion of a Mughal pashmina carpet',
     aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.emptyHistory) => const Artwork(
@@ -193,18 +192,18 @@ Artwork? artworkFor(FaithId faith, ArtSlot slot) => switch ((faith, slot)) {
     aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.emptySearch) => const Artwork(
-    assetKey: 'assets/art/hindu/jali_lattice.webp',
-    semanticLabel: 'Pierced sandstone jali window screen, India',
-    aspectRatio: 360 / 168,
+    assetKey: 'assets/art/hindu/marble_jali_band.webp',
+    semanticLabel: 'Star lattice of a pierced marble jali, India',
+    aspectRatio: 900 / 418,
   ),
   (FaithId.hindu, ArtSlot.emptyCollection) => const Artwork(
-    assetKey: 'assets/art/hindu/floral_arch.webp',
-    semanticLabel: 'Floral arch from a gold-embroidered Indian tent panel',
+    assetKey: 'assets/art/hindu/carpet_border.webp',
+    semanticLabel: 'Flowering-plant border of a Mughal carpet',
     aspectRatio: 360 / 168,
   ),
   (FaithId.hindu, ArtSlot.emptyDormant) => const Artwork(
-    assetKey: 'assets/art/hindu/patola_ikat.webp',
-    semanticLabel: 'Patola double-ikat silk, Gujarat',
+    assetKey: 'assets/art/hindu/marble_jali.webp',
+    semanticLabel: 'Pierced marble jali window screen, India',
     aspectRatio: 360 / 168,
   ),
 };
