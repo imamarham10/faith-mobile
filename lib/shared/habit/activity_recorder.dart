@@ -44,6 +44,24 @@ import 'local_event_queue.dart';
 part 'activity_recorder.g.dart';
 
 /// Mints, stamps and durably enqueues one act of worship.
+///
+/// ## The one corner `dedupeKey` does not cover
+///
+/// A deterministic `clientEventId` (see [record]) carries no user
+/// component, because the server's unique index is
+/// `(userId, clientEventId)` and scopes it already. The local queue's
+/// index is not scoped that way, and `AuthController.signOut()` does not
+/// purge the queue — only account deletion does, via `LocalDataPurge`. So
+/// if user A reads 2:142, signs out before the queue flushes, and user B
+/// signs in on the same handset and reads 2:142 the same day, B's event is
+/// swallowed by `INSERT OR IGNORE` against A's row.
+///
+/// Left as-is deliberately. `AuthAuthenticated` carries an access token
+/// and an email, no stable user id, and keying on a token that rotates on
+/// every refresh would destroy the determinism this exists for. The same
+/// unpurged queue already has the larger version of this problem — A's
+/// events flush under B's credentials — so the fix belongs in `signOut`,
+/// not in the key.
 class ActivityRecorder {
   /// Builds a recorder over [queue].
   ///
@@ -64,6 +82,15 @@ class ActivityRecorder {
 
   static const Uuid _uuid = Uuid();
   static String _uuidV4() => _uuid.v4();
+
+  /// Namespace for the deterministic ids [record]'s `dedupeKey` mints.
+  ///
+  /// A fixed, arbitrary UUID, and it must stay fixed forever: changing it
+  /// re-keys every act, and the server's first-write-wins (§4.3) would
+  /// then count a re-read of a verse already stored under the old key as a
+  /// second verse. It is private for the same reason — nothing outside
+  /// this class should be able to mint an id in this namespace.
+  static const String _dedupeNamespace = '8f14d6b2-4c71-4a0e-9f3b-5d2e71c8a640';
 
   /// The device's civil timezone, as the platform names it.
   ///
@@ -124,10 +151,45 @@ class ActivityRecorder {
   /// An unbounded backfill is not something to hand a caller by accident.
   /// Task 1.12 can add one, with its own bound, when a call site needs it —
   /// logging a prayer made earlier in the day is the obvious candidate.
+  ///
+  /// ## [dedupeKey] — "this act, at most once a day"
+  ///
+  /// Left null (the default, and what every counter call site wants) each
+  /// call mints a fresh UUID v4 and is its own event: thirty-three taps of
+  /// a dhikr counter are thirty-three acts.
+  ///
+  /// Passed, the `clientEventId` becomes a **UUID v5 over
+  /// `type | dedupeKey | localDay`** instead, so the same key recorded
+  /// twice on the same local day is the *same* event — collapsed by the
+  /// queue's `UNIQUE(client_event_id)` on the way in and by the server's
+  /// `@@unique([userId, clientEventId])` (§4.3) on the way out, whichever
+  /// gets there first. That is what a *reader* wants: re-opening a surah
+  /// and scrolling over a verse already read today is not a second verse.
+  ///
+  /// Three properties make this safe rather than clever:
+  ///
+  /// * **The day comes from the same clock reading as the event's own
+  ///   `localDay`** — see [_stamp]. A key derived by the caller could name
+  ///   one day while the event it keys is filed under another, across
+  ///   midnight or a timezone change.
+  /// * **The id is a real UUID.** The server validates shape, not version
+  ///   (`activity.service.ts`), and rejects a non-UUID *permanently* — a
+  ///   plain `quran:2:142:2026-10-10` would be dropped silently for ever.
+  ///   v5 is the deterministic UUID, so there is no trade here.
+  /// * **The key is not user-scoped, and does not need to be.** The
+  ///   server's unique index is `(userId, clientEventId)`, so two users
+  ///   cannot collide where it counts. See the class doc for the one
+  ///   on-device corner this leaves.
+  ///
+  /// Because the id *is* the content, reusing a key for different content
+  /// is the one thing a caller must not do: §4.3 is first-write-wins, so
+  /// the second act would be counted a duplicate and lost. Key on what was
+  /// done (`quran:2:142`), never on where the user was when they did it.
   Future<bool> record(
     ActivityType type, {
     int quantity = 1,
     String? sourceRef,
+    String? dedupeKey,
   }) async {
     final ActivityEvent event;
     try {
@@ -135,7 +197,12 @@ class ActivityRecorder {
       // database on first use, and that await can take long enough to cross
       // midnight on an unlucky night; stamping afterwards would file the
       // act under the wrong day and break the streak it was meant to feed.
-      event = _stamp(type, quantity: quantity, sourceRef: sourceRef);
+      event = _stamp(
+        type,
+        quantity: quantity,
+        sourceRef: sourceRef,
+        dedupeKey: dedupeKey,
+      );
     } on Object catch (e, st) {
       // Only reachable from ActivityEvent's own validation — a quantity
       // outside 1…10000, an over-long sourceRef. Every one of those is a
@@ -184,14 +251,26 @@ class ActivityRecorder {
   /// §2.2 would still accept the pair (they are within a day of each other)
   /// — so the bug would not surface as a rejection, it would surface as a
   /// streak that broke for no visible reason.
+  ///
+  /// A [dedupeKey] is folded in here, against this same reading, for the
+  /// same reason: an id that named yesterday on an event stamped today
+  /// would dedupe against the wrong day's act — and would do it silently,
+  /// because the server has no way to know the two disagree.
   ActivityEvent _stamp(
     ActivityType type, {
     required int quantity,
     required String? sourceRef,
+    String? dedupeKey,
   }) {
     final moment = _now().toLocal();
+    final localDay = _localDay(moment);
     return ActivityEvent(
-      clientEventId: _newId(),
+      clientEventId: dedupeKey == null
+          ? _newId()
+          : _uuid.v5(
+              _dedupeNamespace,
+              '${type.wireValue}|$dedupeKey|$localDay',
+            ),
       activityType: type,
       quantity: quantity,
       // The instant, in UTC.
@@ -200,7 +279,7 @@ class ActivityRecorder {
       // the device's own local components. Never recomputed from
       // `occurredAt` at flush time — that is the whole point of §2.2, and
       // why a batch sent six days late still lands on the right day.
-      localDay: _localDay(moment),
+      localDay: localDay,
       timezone: normaliseActivityTimezone(_timezoneName()),
       sourceRef: sourceRef,
     );

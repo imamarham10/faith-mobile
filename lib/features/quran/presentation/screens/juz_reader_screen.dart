@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,11 +10,14 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/habit/activity_recorder.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/juz.dart';
 import '../../data/dtos/surah.dart';
+import '../../domain/quran_verse_ref.dart';
 import '../controllers/juz_reader_controller.dart';
 import '../controllers/quran_home_controller.dart';
 import '../controllers/surah_controller.dart';
@@ -120,6 +126,17 @@ class _ReaderBody extends ConsumerStatefulWidget {
 }
 
 class _ReaderBodyState extends ConsumerState<_ReaderBody> {
+  /// How long a verse must stay on screen before it counts as read.
+  ///
+  /// The same 350ms the surah reader hangs its `quran_verse` recording
+  /// off, and deliberately the same number rather than a tuned one: the
+  /// two readers must not disagree about what reading is. There it is a
+  /// scroll debounce, so a verse counts once the reader has come to *rest*
+  /// on it and a fling past under-counts. Here the equivalent of coming to
+  /// rest is the cursor staying put — so holding Next through forty verses
+  /// records the one you stop on, not forty.
+  static const Duration _dwell = Duration(milliseconds: 350);
+
   /// Owned here so a new verse can start where a verse starts.
   ///
   /// The scroll view is one element reused across verses — only its child
@@ -130,8 +147,33 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
   /// way down).
   final _scrollCtrl = ScrollController();
 
+  /// Runs while the verse on screen is being dwelt on. Cancelled, never
+  /// allowed to fire late, the moment the verse under it changes.
+  Timer? _dwellTimer;
+
+  /// The verse [_dwellTimer] is counting down for, as its `sourceRef`.
+  /// Null while a page is in flight and no verse is rendered.
+  String? _dwellingOn;
+
+  /// Verses already handed to the activity engine this session.
+  ///
+  /// A short-circuit only — stepping back and forward over a verse should
+  /// not re-queue it, but the *guarantee* that it is not re-counted is the
+  /// deterministic `dedupeKey` below, which survives this screen.
+  final _recorded = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    // Verse 1 is on screen from the first frame and never arrives through
+    // didUpdateWidget, so it would otherwise be the one verse of a juz
+    // that never counts.
+    _watchForDwell();
+  }
+
   @override
   void dispose() {
+    _dwellTimer?.cancel();
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -139,6 +181,10 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
   @override
   void didUpdateWidget(_ReaderBody oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Runs on every update, not only on a cursor change: a page can arrive
+    // under a cursor that has not moved, which is the moment the skeleton
+    // becomes a verse and the only moment that verse can start dwelling.
+    _watchForDwell();
     if (oldWidget.state.cursor == widget.state.cursor) return;
     // After the frame, not during it: jumping mid-build can rebuild the
     // Scrollable that is already building. One frame at the old offset is
@@ -147,6 +193,66 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
       if (!mounted || !_scrollCtrl.hasClients) return;
       _scrollCtrl.jumpTo(0);
     });
+  }
+
+  /// Starts [_dwell] running against whatever verse is now on screen.
+  ///
+  /// Idempotent per verse: called on every rebuild, and does nothing at all
+  /// while the verse under the cursor is unchanged, so a rebuild for an
+  /// unrelated reason (a font-size change, a page merging into state) can
+  /// neither restart nor duplicate the countdown.
+  void _watchForDwell() {
+    final verse = widget.state.currentVerse;
+    final sourceRef = verse == null
+        ? null
+        : quranVerseRef(
+            surahId: verse.surahId,
+            verseNumber: verse.verseNumber,
+          );
+    if (sourceRef == _dwellingOn) return;
+
+    // The verse changed, so whatever was counting down belongs to a verse
+    // the user has already left. It does not get to land.
+    _dwellTimer?.cancel();
+    _dwellingOn = sourceRef;
+    if (sourceRef == null || _recorded.contains(sourceRef)) return;
+
+    _dwellTimer = Timer(_dwell, () {
+      if (!mounted || !_recorded.add(sourceRef)) return;
+      unawaited(_record(sourceRef));
+    });
+  }
+
+  /// One verse, one event — fire-and-forget, and swallowing everything.
+  ///
+  /// Reading is the user's act; logging it is this screen's bookkeeping.
+  /// Nothing that goes wrong in the bookkeeping may reach the reader, so
+  /// the `ref.read` (which can throw) and the future (which is documented
+  /// not to, but is not this screen's to trust) are both inside the catch.
+  ///
+  /// There is no loop here and cannot be one: a step is one verse, and the
+  /// pages the controller prefetches are never enumerated into events —
+  /// prefetching fifty verses is not reading them.
+  Future<void> _record(String sourceRef) async {
+    try {
+      await ref
+          .read(activityRecorderProvider)
+          .record(
+            ActivityType.quranVerse,
+            sourceRef: sourceRef,
+            // Identical to the key the surah reader derives for the same
+            // verse. Read 2:142 here and again there on the same day and
+            // it is one event, because it is one verse read.
+            dedupeKey: sourceRef,
+          );
+    } on Object catch (e, st) {
+      developer.log(
+        'failed to record $sourceRef from the juz reader',
+        name: 'quran.juz',
+        error: e,
+        stackTrace: st,
+      );
+    }
   }
 
   @override

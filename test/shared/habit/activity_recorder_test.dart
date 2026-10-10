@@ -133,6 +133,107 @@ void main() {
     );
   });
 
+  // The readers' side of §4.3. A verse read twice in a day is one verse
+  // read, and the thing that makes that true — in both readers, across
+  // screen instances and app launches — is that the id is a function of
+  // the act rather than of the moment it was recorded.
+  group('dedupeKey', () {
+    /// A recorder with the *real* id generator, so nothing here can pass
+    /// because a pinned `newId` happened to repeat.
+    ActivityRecorder realIds({DateTime? now}) => ActivityRecorder(
+      queue: Future.value(_queue),
+      now: () => now ?? DateTime(2026, 10, 9, 14, 3, 22),
+      timezoneName: () => 'Asia/Kolkata',
+    );
+
+    test('the same verse on the same day is one event', () async {
+      final recorder = realIds();
+      await recorder.record(
+        ActivityType.quranVerse,
+        sourceRef: 'quran:2:142',
+        dedupeKey: 'quran:2:142',
+      );
+      await recorder.record(
+        ActivityType.quranVerse,
+        sourceRef: 'quran:2:142',
+        dedupeKey: 'quran:2:142',
+      );
+
+      expect(
+        await _queue.peek(),
+        hasLength(1),
+        reason: 'reading 2:142 in the juz reader and again in the surah '
+            'reader is one verse read, not two',
+      );
+    });
+
+    test('a different verse is a different event', () async {
+      final recorder = realIds();
+      await recorder.record(
+        ActivityType.quranVerse,
+        dedupeKey: 'quran:2:142',
+      );
+      await recorder.record(
+        ActivityType.quranVerse,
+        dedupeKey: 'quran:2:143',
+      );
+
+      expect(await _queue.peek(), hasLength(2));
+    });
+
+    test('the same verse tomorrow is a new event', () async {
+      // Otherwise the key would be a one-time lock on a verse rather than
+      // a daily one, and a user reading the same page every morning would
+      // see their count stop moving.
+      await realIds(
+        now: DateTime(2026, 10, 9, 22),
+      ).record(ActivityType.quranVerse, dedupeKey: 'quran:2:142');
+      await realIds(
+        now: DateTime(2026, 10, 10, 6),
+      ).record(ActivityType.quranVerse, dedupeKey: 'quran:2:142');
+
+      expect(await _queue.peek(), hasLength(2));
+    });
+
+    test('the same key under a different activity type does not collide',
+        () async {
+      await realIds().record(ActivityType.quranVerse, dedupeKey: 'x:1');
+      await realIds().record(ActivityType.dhikr, dedupeKey: 'x:1');
+
+      expect(await _queue.peek(), hasLength(2));
+    });
+
+    test('mints a UUID the server will accept, not a readable key', () async {
+      // The server validates clientEventId against a hex-dashed UUID
+      // shape and rejects anything else *permanently* (§4.5
+      // invalid_client_event_id) — a permanent rejection is "settled", so
+      // the flusher would delete the row and the verse would be lost in
+      // silence. A key like "quran:2:142:2026-10-09" passes every local
+      // test and never counts.
+      await realIds().record(ActivityType.quranVerse, dedupeKey: 'quran:2:142');
+
+      expect(
+        (await _queue.peek()).single.clientEventId,
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-'
+            r'[0-9a-f]{4}-[0-9a-f]{12}$',
+          ),
+        ),
+      );
+    });
+
+    test('omitting it leaves every act its own event', () async {
+      // The counters depend on this: thirty-three taps of a dhikr counter
+      // are thirty-three acts, not one deduped one.
+      final recorder = realIds();
+      await recorder.record(ActivityType.dhikr, sourceRef: 'dhikr:abc');
+      await recorder.record(ActivityType.dhikr, sourceRef: 'dhikr:abc');
+
+      expect(await _queue.peek(), hasLength(2));
+    });
+  });
+
   group('stamping', () {
     test('localDay is the device calendar date, not the UTC date', () async {
       // 00:30 on 9 October in Asia/Kolkata is 19:00 on 8 October UTC. The

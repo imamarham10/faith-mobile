@@ -14,6 +14,7 @@ import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/verse.dart';
+import '../../domain/quran_verse_ref.dart';
 import '../controllers/audio_controller.dart';
 import '../controllers/bookmarks_controller.dart';
 import '../controllers/quran_home_controller.dart';
@@ -92,14 +93,26 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
   /// network — it is a local queue write — so a verse read with no signal
   /// counts exactly like one read on wifi, and nothing here can turn a
   /// scroll into an error dialog.
+  ///
+  /// `dedupeKey` is the verse's own `quran:<surah>:<ayah>`, which makes
+  /// [_recordedAyahs] a cheap short-circuit rather than the guarantee.
+  /// The set only knows about this screen instance; the key is what stops
+  /// a verse counting twice after the user has left the surah and come
+  /// back, and — because the juz reader derives the identical key — what
+  /// stops the same verse counting once in each reader.
   void _recordAyah(int ayah) {
     if (!_recordedAyahs.add(ayah)) return;
+    final sourceRef = quranVerseRef(
+      surahId: widget.surahId,
+      verseNumber: ayah,
+    );
     unawaited(
       ref
           .read(activityRecorderProvider)
           .record(
             ActivityType.quranVerse,
-            sourceRef: 'quran:${widget.surahId}:$ayah',
+            sourceRef: sourceRef,
+            dedupeKey: sourceRef,
           ),
     );
   }
