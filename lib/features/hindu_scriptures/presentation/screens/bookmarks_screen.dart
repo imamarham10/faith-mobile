@@ -8,6 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../core/theme/sanskrit_text.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../data/dtos/scripture_bookmark.dart';
@@ -169,38 +170,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdge),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.bookmark_border_rounded,
-                size: 32,
-                color: cs.primary,
-              ),
-            ),
-            const Gap(AppSpacing.lg),
-            Text('No bookmarks yet', style: theme.textTheme.titleLarge),
-            const Gap(AppSpacing.sm),
-            Text(
-              'Tap any verse to bookmark it.',
-              style: theme.textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return const Center(
+      child: IllustratedEmptyState(
+        title: 'No bookmarks yet',
+        message: 'Tap any verse to bookmark it.',
       ),
     );
   }

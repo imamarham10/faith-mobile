@@ -75,21 +75,19 @@ class ArtworkPanel extends StatelessWidget {
     final card = ext.palette.surfaceCard;
 
     return RepaintBoundary(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Decode at display size rather than the encoded size. Capped at
-          // the widest asset in the set so a loose/unbounded constraint can
-          // never ask for an upscale.
-          final dpr = MediaQuery.devicePixelRatioOf(context);
-          final target = constraints.hasBoundedWidth
-              ? (constraints.maxWidth * dpr).round().clamp(1, 900)
-              : 900;
-
+      child: Builder(
+        builder: (context) {
+          // No `cacheWidth`. Every asset in `assets/art/` is already encoded
+          // at its display size (360px for a grid tile, 900px for a
+          // full-width band), so a decode target derived from layout is at
+          // best a no-op and at worst an upscale — a 167pt tile on a 3x
+          // screen asks for 501px, which would decode a 360px file larger
+          // than it is and cost memory for no sharpness. Natural size is the
+          // right size, and it keeps the provider a plain `AssetImage`.
           final image = Image.asset(
             art.assetKey,
             fit: fit,
             alignment: alignment,
-            cacheWidth: target,
             semanticLabel: art.semanticLabel,
             // Settle in rather than pop: the fade is driven by the decode
             // itself, so it reads as the image arriving, and it is finite —

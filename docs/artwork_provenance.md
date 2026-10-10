@@ -14,6 +14,21 @@ department, or a search term. For The Metropolitan Museum of Art that is the
 `isPublicDomain` boolean on `GET /public/collection/v1/objects/{id}`; the value
 recorded below is the verbatim field value as returned on 2026-10-10.
 
+Two precisions worth stating, because they are easy to get wrong in an audit:
+
+* `isPublicDomain` is the Met's own designated Open Access flag — the field
+  that marks an object's images as released under CC0. It is the right field
+  to rely on. The neighbouring `rightsAndReproduction` field is an **empty
+  string** on all nine objects below; that is normal for OA records and is
+  *not* a licence statement either way. Do not read the empty value as a
+  restriction, and do not cite it as the permission.
+* A collection-level licence never transferred to any object here. In
+  particular, the Art Institute of Chicago's API advertises CC0 in
+  `info.license_text`, but that covers **the API metadata, not the artwork
+  images**. No AIC image is shipped in this app, so the distinction does not
+  bear on anything below — it is recorded so nobody later assumes it would
+  have been safe to treat it as one.
+
 > Met API note: the v1 **search** endpoint was retired and now returns HTTP 410.
 > Search is `GET /public/collection/v1.1/search` (`offset`/`limit` paginated).
 > Object detail is still `GET /public/collection/v1/objects/{id}`.
@@ -105,6 +120,22 @@ object itself.
 | 24306, 24298, 31681 — Daggers (Mughal) | Non-figurative and public domain, but weapons are wrong for a prayer app. |
 | Tibetan / Nepali "mandala" results | The Met and AIC `mandala` and `lotus ornament` searches return overwhelmingly Tibetan Buddhist thangkas with a deity at the centre — fails the content rule — plus Chinese and Japanese decorative work, which is the wrong tradition for the Hindu slot even when non-figurative. |
 | 452521 — Pawn in the Form of an Indian Lady | Figurative. |
+| AIC 180287 — "Patolu" | Metadata and title read as pure geometry; at zoom the field is densely figurative (elephants with riders, human figures, tigers). Caught only by looking. |
+
+### A note on patola and sari borders specifically
+
+Indian textiles of exactly the kind used here routinely carry figurative rows —
+elephants-with-riders, birds, human processions — inside bands that read as
+abstract pattern at thumbnail size. `AIC 180287` above is one such trap, and
+`126455` is another.
+
+The two shipped assets most exposed to this, `patola_ikat.webp` (308007) and
+`sari_border.webp` (127540), were therefore re-rendered at 3× and inspected a
+second time **after cropping**, to confirm the shipped region specifically.
+`patola_ikat` is diamond-lattice geometry with floral and star fills;
+`sari_border` is rows of flowering plants and a rosette band. Neither contains
+a figure. Anyone re-cropping either source should repeat that check rather than
+trusting the existing crop's clearance.
 
 ## Sources that did not work
 

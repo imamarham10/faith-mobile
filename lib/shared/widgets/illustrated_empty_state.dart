@@ -54,7 +54,12 @@ class IllustratedEmptyState extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // Stretch, not center. Under `center` the children only get loose
+        // constraints, so the artwork band — a Stack whose only intrinsically
+        // sized child is the mascot — collapsed to the mascot's 76pt width
+        // and rendered as a stamp rather than a band. The copy below stays
+        // centred via `textAlign`.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
             height: _bandHeight,

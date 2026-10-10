@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_empty_state.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -230,32 +231,17 @@ class _EmptyCounters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     return PoppyCard(
       radius: AppRadius.lg,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xl,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.fingerprint, size: 28, color: cs.primary),
-          const Gap(12),
-          Text('Begin a remembrance', style: theme.textTheme.titleLarge),
-          const Gap(4),
-          Text(
-            'Create your first counter from a known phrase or your own.',
-            style: theme.textTheme.bodyMedium,
-          ),
-          const Gap(16),
-          PoppyButton(
-            label: 'New counter',
-            icon: Icons.add,
-            onPressed: onCreate,
-          ),
-        ],
+      padding: EdgeInsets.zero,
+      child: IllustratedEmptyState(
+        title: 'Begin a remembrance',
+        message: 'Create your first counter from a known phrase or your own.',
+        action: PoppyButton(
+          label: 'New counter',
+          icon: Icons.add,
+          onPressed: onCreate,
+        ),
       ),
     );
   }

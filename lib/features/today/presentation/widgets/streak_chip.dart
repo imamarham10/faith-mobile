@@ -70,7 +70,25 @@ class _Chip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.local_fire_department, size: 16, color: palette.ink),
+            // One-shot, and deliberately a `TweenAnimationBuilder` rather
+            // than flutter_animate: `Animate` schedules through a `Timer`,
+            // which outlives a widget tree torn down mid-animation and trips
+            // "A Timer is still pending even after the widget tree was
+            // disposed" in every test that renders this header. An implicit
+            // animation is driven by a controller owned by the element and
+            // dies with it.
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.6, end: 1),
+              duration: AppMotion.cardSpringBack,
+              curve: Curves.easeOutBack,
+              child: Icon(
+                Icons.local_fire_department,
+                size: 16,
+                color: palette.ink,
+              ),
+              builder: (context, value, child) =>
+                  Transform.scale(scale: value, child: child),
+            ),
             const SizedBox(width: AppSpacing.xs),
             // §2.7 — reconciliation animates rather than snaps. A silent
             // correction from 25 to 26 reads as a glitch; a brief cross-fade

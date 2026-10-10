@@ -70,16 +70,31 @@ class IllustratedHeader extends StatelessWidget {
                     AppSpacing.sm,
                     AppSpacing.lg,
                   ),
+                  // Capped and shrinkable rather than free-flowing. The band
+                  // is a fixed height, so a subtitle that wraps further than
+                  // expected — a longer translation, a larger textScaler, a
+                  // tall glyph like ﷺ, or simply a different font — must
+                  // ellipsize instead of overflowing the card.
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: titleStyle ?? theme.textTheme.headlineMedium,
                       ),
                       const Gap(4),
-                      Text(subtitle, style: theme.textTheme.bodyMedium),
+                      Flexible(
+                        child: Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -158,7 +158,10 @@ class _PracticeScaffold extends StatelessWidget {
                   mainAxisExtent: 150,
                 ),
                 itemCount: tiles.length,
-                itemBuilder: (_, i) => _PracticeTile(data: tiles[i]),
+                itemBuilder: (_, i) => _TileEntrance(
+                  index: i,
+                  child: _PracticeTile(data: tiles[i]),
+                ),
               ),
             ),
             const SliverPadding(
@@ -224,6 +227,39 @@ class _PracticeFooter extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Settles a tile in: a short fade and rise, staggered by grid position.
+///
+/// The stagger is an [Interval] inside one animation rather than a per-tile
+/// delay. flutter_animate's `delay:` is backed by a `Timer`, which survives a
+/// tree torn down mid-animation and fails tests with "A Timer is still
+/// pending even after the widget tree was disposed"; an interval shifts the
+/// same curve without scheduling anything.
+class _TileEntrance extends StatelessWidget {
+  const _TileEntrance({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    // Capped so a longer grid can never push the last tile past ~0.5s.
+    final start = (index * 0.1).clamp(0.0, 0.4);
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Interval(start, 1, curve: Curves.easeOutCubic),
+      child: child,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+          offset: Offset(0, (1 - t) * 10),
+          child: child,
         ),
       ),
     );
