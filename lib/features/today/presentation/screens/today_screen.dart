@@ -11,10 +11,12 @@ import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_icon.dart';
+import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../../../hindu_panchang/presentation/controllers/panchang_today_controller.dart';
 import '../../../hindu_puja_times/presentation/widgets/puja_countdown_card.dart';
+import '../widgets/below_fold.dart';
 import '../widgets/daily_hadith_card.dart';
 import '../widgets/daily_katha_card.dart';
 import '../widgets/daily_shloka_card.dart';
@@ -94,11 +96,20 @@ class _IslamTodayContent extends ConsumerWidget {
                   const Gap(32),
                   const SectionLabel('Verse for today'),
                   const Gap(16),
-                  const DailyVerseCard(),
+                  // Deferred: the verse is a whole-surah read, the largest
+                  // single payload on this screen, and it was competing
+                  // with the two activity reads that gate the habit loop.
+                  const BelowFold(
+                    placeholder: PoppySkeleton(height: 200),
+                    child: DailyVerseCard(),
+                  ),
                   const Gap(24),
                   const SectionLabel('Hadith of the day'),
                   const Gap(16),
-                  const DailyHadithCard(),
+                  const BelowFold(
+                    placeholder: PoppySkeleton(height: 200),
+                    child: DailyHadithCard(),
+                  ),
                   const Gap(24),
                   const MoodPrompt(),
                   const Gap(32),
@@ -160,11 +171,20 @@ class _HinduTodayContent extends ConsumerWidget {
                   const Gap(32),
                   const SectionLabel('Shloka for today'),
                   const Gap(16),
-                  const DailyShlokaCard(),
+                  // The Hindu peers of the verse/hadith pair, deferred for
+                  // the same reason and through the same gate — the habit
+                  // loop above is built once for both faiths.
+                  const BelowFold(
+                    placeholder: PoppySkeleton(height: 200),
+                    child: DailyShlokaCard(),
+                  ),
                   const Gap(24),
                   const SectionLabel('Katha for today'),
                   const Gap(16),
-                  const DailyKathaCard(),
+                  const BelowFold(
+                    placeholder: PoppySkeleton(height: 160),
+                    child: DailyKathaCard(),
+                  ),
                   const Gap(32),
                   const SectionLabel('Quick'),
                   const Gap(12),

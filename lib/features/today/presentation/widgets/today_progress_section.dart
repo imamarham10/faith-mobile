@@ -9,6 +9,7 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../domain/today_dashboard.dart';
+import '../controllers/below_fold_gate.dart';
 import '../controllers/today_dashboard_controller.dart';
 import 'goal_card.dart';
 import 'goal_sheet.dart';
@@ -24,12 +25,39 @@ import 'week_strip.dart';
 /// through [TodayDashboard] from the controller, and every colour comes from
 /// the active [FaithPalette] via the theme. There is no Islam copy of this
 /// widget and no Hindu one, which is what keeps the two from drifting.
-class TodayProgressSection extends ConsumerWidget {
+class TodayProgressSection extends ConsumerStatefulWidget {
   const TodayProgressSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayProgressSection> createState() =>
+      _TodayProgressSectionState();
+}
+
+class _TodayProgressSectionState extends ConsumerState<TodayProgressSection> {
+  /// Releases the cards below this section once the habit loop has drawn.
+  ///
+  /// Scheduled rather than called inline: this runs from `build`, and
+  /// moving provider state during a build is exactly what Riverpod
+  /// forbids. The post-frame callback also makes the signal literally
+  /// true — it fires after the frame carrying the loop has been painted,
+  /// not merely after its data arrived.
+  ///
+  /// Both settled states open it. An error is as final as data: the loop
+  /// is done asking, so there is no longer anything for the cards below to
+  /// yield to, and leaving them deferred because the habit loop failed
+  /// would blank the whole screen instead of one card.
+  void _releaseBelowFold() {
+    if (ref.read(belowFoldGateProvider)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(belowFoldGateProvider.notifier).open();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(todayDashboardProvider);
+    if (!async.isLoading) _releaseBelowFold();
     return async.when(
       loading: () => const _Skeleton(),
       error: (_, __) => _ErrorCard(

@@ -1,6 +1,16 @@
+import 'dart:async';
+
 import 'package:faith_mobile/core/preferences/selected_faith.dart';
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
+import 'package:faith_mobile/features/hadiths/data/dtos/hadith.dart';
+import 'package:faith_mobile/features/hadiths/presentation/controllers/daily_hadith_controller.dart';
+import 'package:faith_mobile/features/hindu_scriptures/data/dtos/scripture_verse.dart';
+import 'package:faith_mobile/features/hindu_scriptures/presentation/controllers/daily_shloka_controller.dart';
+import 'package:faith_mobile/features/hindu_stories/data/dtos/hindu_story.dart';
+import 'package:faith_mobile/features/hindu_stories/presentation/controllers/daily_katha_controller.dart';
+import 'package:faith_mobile/features/today/domain/daily_verse.dart';
+import 'package:faith_mobile/features/today/presentation/controllers/daily_verse_controller.dart';
 import 'package:faith_mobile/features/today/presentation/screens/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +41,16 @@ void main() {
   // loading (TodayScreen's `?? FaithId.islam` fallback applies), then a
   // microtask later the override resolves and TodayScreen rebuilds into the
   // *other* branch.
+  //
+  // The four content providers are stubbed with futures that never
+  // complete. They used to be left live, which meant these tests made real
+  // dio calls and passed only because the attempts happened early enough to
+  // have failed by the time the test ended — so deferring those same cards
+  // behind the below-the-fold gate started them a frame later and left
+  // dio's connect-timeout timer pending past teardown. That made five tests
+  // here fail for a reason that had nothing to do with what they assert.
+  // Stubbing is both the fix and what the paragraph above always claimed
+  // was happening.
   Future<void> pump(WidgetTester tester, FaithId faith) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -43,6 +63,21 @@ void main() {
             (ref) async => faith == FaithId.islam
                 ? FakeTodayDashboard.islam()
                 : FakeTodayDashboard.hindu(),
+          ),
+          // Pending forever: the cards sit in their skeletons, which is
+          // the state these tests have always actually rendered, and
+          // nothing reaches the network.
+          dailyVerseProvider.overrideWith(
+            (ref) => Completer<DailyVerse>().future,
+          ),
+          dailyHadithProvider.overrideWith(
+            (ref) => Completer<Hadith?>().future,
+          ),
+          dailyShlokaProvider.overrideWith(
+            (ref) => Completer<ScriptureVerse?>().future,
+          ),
+          dailyKathaProvider.overrideWith(
+            (ref) => Completer<HinduStory?>().future,
           ),
         ],
         child: MaterialApp(
