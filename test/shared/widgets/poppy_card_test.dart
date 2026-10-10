@@ -105,4 +105,92 @@ void main() {
       expect(find.byType(GestureDetector), findsNothing);
     },
   );
+
+  // The sticker shadow IS the press affordance. A card with no action must
+  // not paint it, or it promises a press that never happens — the dead-click
+  // confusion reported on the Practice tab's masthead and footer.
+  List<BoxShadow> shadowOf(WidgetTester tester, Finder text) {
+    final box = tester.widget<DecoratedBox>(
+      find
+          .ancestor(of: text, matching: find.byType(DecoratedBox))
+          .first,
+    );
+    return (box.decoration as BoxDecoration).boxShadow ?? const [];
+  }
+
+  testWidgets('decorative card paints no press shadow', (tester) async {
+    await tester.pumpWidget(
+      harness(const PoppyCard(child: Text('decorative'))),
+    );
+    expect(
+      shadowOf(tester, find.text('decorative')),
+      isEmpty,
+      reason:
+          'a card with no onTap painted the hard offset shadow, which reads '
+          'as a press affordance and produces dead clicks',
+    );
+  });
+
+  testWidgets('tappable card paints the press shadow at rest', (tester) async {
+    await tester.pumpWidget(
+      harness(PoppyCard(onTap: () {}, child: const Text('tappable'))),
+    );
+    final shadows = shadowOf(tester, find.text('tappable'));
+    expect(shadows, hasLength(1));
+    expect(
+      shadows.single.offset.dy,
+      4.0,
+      reason:
+          'the tappable card lost its sticker shadow; the contrast against a '
+          'decorative card is what tells users which cards respond',
+    );
+  });
+
+  testWidgets('decorative and tappable cards have identical geometry', (
+    tester,
+  ) async {
+    // Guards two distinct ways the flat look can go wrong:
+    //
+    // 1. The PRESSED look is also shadowless, but it gets there by
+    //    translating the body down by pressOffset. Reaching the decorative
+    //    look that way paints every decorative card 4px below the tappable
+    //    cards beside it in a grid row.
+    // 2. Container adds the border's own dimensions to its padding.
+    //    Hand-rolling it as DecoratedBox + Padding silently shrinks the card
+    //    by 2 * cardOutlineWidth per axis and slides its content under the
+    //    outline.
+    //
+    // Both are invisible in a Row, where centering cancels a small inset
+    // difference exactly — so measure each card on its own.
+    Future<(Size, double)> measure(VoidCallback? onTap) async {
+      await tester.pumpWidget(
+        harness(PoppyCard(onTap: onTap, child: const Text('x'))),
+      );
+      await tester.pumpAndSettle();
+      final card = find.byType(PoppyCard);
+      return (
+        tester.getSize(card),
+        tester.getTopLeft(find.text('x')).dy - tester.getTopLeft(card).dy,
+      );
+    }
+
+    final (decorativeSize, decorativeInset) = await measure(null);
+    final (tappableSize, tappableInset) = await measure(() {});
+
+    expect(
+      decorativeSize,
+      tappableSize,
+      reason:
+          'decorative card is a different size from an otherwise identical '
+          'tappable one; the flat look changed layout, not just paint',
+    );
+    expect(
+      decorativeInset,
+      tappableInset,
+      reason:
+          'decorative card content sits at a different offset from its own '
+          'top edge; it is rendering the pressed look, or losing the border '
+          'inset, rather than sitting flat at rest',
+    );
+  });
 }
