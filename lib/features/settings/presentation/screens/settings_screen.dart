@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../../core/notifications/permission_gate.dart';
 import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/preferences/arabic_script.dart';
 import '../../../../core/preferences/notification_preferences.dart';
 import '../../../../core/preferences/selected_faith.dart';
@@ -15,6 +18,12 @@ import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_id.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../prayers/presentation/controllers/prayer_times_controller.dart';
+
+/// Where the published legal pages live. Both are served by the web app
+/// (`faith-web-remix`), which is the URL the Play listing points at, so the
+/// app and the store declaration can never disagree.
+const String _privacyUrl = '$kWebBaseUrl/privacy';
+const String _termsUrl = '$kWebBaseUrl/terms';
 
 /// `/settings` — preferences for the app. Sections, top to bottom: theme
 /// (faith-neutral, always shown), then — only when the selected faith is
@@ -177,6 +186,20 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => _confirmSignOut(context, ref),
             ),
 
+            _SectionHeader(label: 'About'),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Privacy policy'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openLegal(context, _privacyUrl),
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('Terms of service'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openLegal(context, _termsUrl),
+            ),
+
             _SectionHeader(label: 'Account'),
             ListTile(
               leading: Icon(Icons.delete_forever_outlined, color: cs.error),
@@ -198,6 +221,32 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Opens one of the legal pages in the browser.
+  ///
+  /// Hosted on the web app rather than rendered in-app: Play's policy
+  /// requires the privacy policy to be reachable from a public URL it can
+  /// itself verify, and a page the app draws from a bundled string would
+  /// drift from the one the listing points at. [LaunchMode
+  /// .externalApplication] rather than an in-app webview, so a user who
+  /// wants to keep it, print it or read it later has a real browser tab —
+  /// matching how `temple_detail_screen` hands off to Maps.
+  Future<void> _openLegal(BuildContext context, String url) async {
+    HapticFeedback.lightImpact();
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Couldn\'t open $url'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
