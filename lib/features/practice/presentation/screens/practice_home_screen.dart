@@ -10,8 +10,9 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_id.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/artwork_panel.dart';
+import '../../../../shared/widgets/colophon.dart';
 import '../../../../shared/widgets/gap.dart';
-import '../../../../shared/widgets/illustrated_header.dart';
+import '../../../../shared/widgets/page_masthead.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_icon.dart';
 
@@ -128,15 +129,14 @@ class _PracticeScaffold extends StatelessWidget {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
+            // No horizontal padding: the masthead insets its own text and
+            // lets the motif run off the right edge of the screen. A card
+            // cannot reach the edge, so the bleed is what tells you this is
+            // the page and not something to press.
             const SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.screenEdge,
-                AppSpacing.lg,
-                AppSpacing.screenEdge,
-                AppSpacing.xl,
-              ),
+              padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xl),
               sliver: SliverToBoxAdapter(
-                child: IllustratedHeader(
+                child: PageMasthead(
                   title: 'Practice',
                   subtitle: 'Tend your practice.',
                   slot: ArtSlot.practiceHero,
@@ -180,55 +180,25 @@ class _PracticeScaffold extends StatelessWidget {
   }
 }
 
-/// Closes the grid with a wide motif and a steadying line.
+/// Closes the grid with a tailpiece: a small motif over a steadying line.
 ///
-/// Purely decorative — it adds no route and no action. The tab previously
-/// ran out of content halfway down the screen, and a blank half-screen is
-/// what "only boxes & texts" looks like at the bottom of a page.
+/// Was a full-width [PoppyCard] with the same art-band-over-title anatomy as
+/// a grid tile, and so was read as a button and tapped — twice reported. It
+/// carries no action and now wears no container; see [Colophon].
 class _PracticeFooter extends StatelessWidget {
   const _PracticeFooter();
 
-  static const double _artHeight = 96;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final ext = theme.extension<FaithThemeExtension>()!;
-
-    return PoppyCard(
-      radius: AppRadius.lg,
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(
-          AppRadius.lg - ext.cardOutlineWidth,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(
-              height: _artHeight,
-              child: ArtworkPanel(
-                slot: ArtSlot.narrativeHeader,
-                scrim: ArtworkScrim.none,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.base),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Little and often.', style: theme.textTheme.titleMedium),
-                  const Gap(2),
-                  Text(
-                    'A steady practice outlasts a strong one.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    // Same illuminated page as the masthead, sampled at its gold-and-blue
+    // border rather than its centre. The tab then opens and closes on the
+    // one manuscript, and the rule is an actual ornament instead of an
+    // arbitrary crop of a carpet.
+    return const Colophon(
+      line: 'Little and often.',
+      caption: 'A steady practice outlasts a strong one.',
+      slot: ArtSlot.practiceHero,
+      ornamentAlignment: Alignment.topCenter,
     );
   }
 }

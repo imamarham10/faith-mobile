@@ -11,6 +11,11 @@ import 'poppy_card.dart';
 /// A screen masthead: title and subtitle in a solid column, a museum motif
 /// in the other half.
 ///
+/// **Superseded by [PageMasthead], and no longer used by any screen.** This
+/// builds on [PoppyCard], and a card in this design system reads as a button
+/// — which is exactly what users reported twice about the Practice tab's
+/// masthead. Kept only for its golden tests; do not reach for it in new code.
+///
 /// The two regions are kept side by side rather than stacking text over a
 /// scrimmed image. Laying a scrim across the whole band was tried first and
 /// desaturated the artwork into a pale smear on-device; splitting the band

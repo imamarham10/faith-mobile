@@ -8,7 +8,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
-import '../../../../shared/widgets/illustrated_header.dart';
+import '../../../../shared/widgets/page_masthead.dart';
 import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
@@ -97,23 +97,18 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenEdge,
-        AppSpacing.lg,
-        AppSpacing.screenEdge,
-        AppSpacing.lg,
-      ),
-      child: IllustratedHeader(
+    // No horizontal padding: PageMasthead insets its own text and lets the
+    // motif run off the screen edge, which is the signal a card cannot fake.
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.lg),
+      child: PageMasthead(
         title: 'Hadiths',
         subtitle: 'The traditions of the Prophet ﷺ.',
         slot: ArtSlot.narrativeHeader,
-        titleStyle: theme.textTheme.displaySmall,
         // The ﷺ glyph is tall and forces an early wrap, so this subtitle
         // needs more of the width than the default split gives it.
         height: 148,
-        textFlex: 66,
+        artFlex: 34,
       ),
     );
   }

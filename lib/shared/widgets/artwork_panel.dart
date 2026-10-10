@@ -50,6 +50,7 @@ class ArtworkPanel extends StatelessWidget {
     this.alignment = Alignment.center,
     this.fallback,
     this.decorative = true,
+    this.scrimColor,
   });
 
   final ArtSlot slot;
@@ -76,6 +77,16 @@ class ArtworkPanel extends StatelessWidget {
   /// empty state, where there is nothing else to describe.
   final bool decorative;
 
+  /// What the scrim fades *to*. Defaults to `palette.surfaceCard`, which is
+  /// right for every artwork sitting inside a card.
+  ///
+  /// Uncontained artwork — art placed straight onto the page rather than in
+  /// a card — must pass `palette.surface` instead. The two are not
+  /// interchangeable: the card is white and the page is warm cream, so a
+  /// card-coloured scrim over the page ground leaves a pale wedge exactly
+  /// where the fade is supposed to disappear.
+  final Color? scrimColor;
+
   @override
   Widget build(BuildContext context) {
     final ext = Theme.of(context).extension<FaithThemeExtension>()!;
@@ -83,7 +94,7 @@ class ArtworkPanel extends StatelessWidget {
     final empty = fallback ?? const SizedBox.shrink();
     if (art == null) return empty;
 
-    final card = ext.palette.surfaceCard;
+    final card = scrimColor ?? ext.palette.surfaceCard;
 
     return RepaintBoundary(
       child: Builder(

@@ -9,7 +9,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
-import '../../../../shared/widgets/illustrated_header.dart';
+import '../../../../shared/widgets/page_masthead.dart';
 import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
@@ -95,19 +95,14 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenEdge,
-        AppSpacing.lg,
-        AppSpacing.screenEdge,
-        AppSpacing.lg,
-      ),
-      child: IllustratedHeader(
+    // No horizontal padding: PageMasthead insets its own text and lets the
+    // motif run off the screen edge, which is the signal a card cannot fake.
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.lg),
+      child: PageMasthead(
         title: 'Stories',
         subtitle: 'Timeless tales, retold.',
         slot: ArtSlot.narrativeHeader,
-        titleStyle: theme.textTheme.displaySmall,
         height: 140,
       ),
     );
