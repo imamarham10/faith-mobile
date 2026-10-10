@@ -7,6 +7,7 @@ import '../hindu_scriptures/presentation/screens/bookmarks_screen.dart'
 import '../hindu_scriptures/presentation/screens/hindu_scriptures_home_screen.dart';
 import '../shell/faith_tab_router.dart';
 import 'presentation/screens/bookmarks_screen.dart';
+import 'presentation/screens/juz_reader_screen.dart';
 import 'presentation/screens/quran_home_screen.dart';
 import 'presentation/screens/surah_reader_screen.dart';
 
@@ -19,6 +20,9 @@ import 'presentation/screens/surah_reader_screen.dart';
 ///   [FaithTabRouter].
 /// * `/quran/surah/:id` — continuous reader with audio mini-player.
 ///   Optional query: `?ayah=<n>` jumps to and highlights a specific verse.
+/// * `/quran/juz/:number` — the juz reader: one verse at a time, back and
+///   forward across surah boundaries. Islam only; the Hindu branch of this
+///   tab never links to it.
 /// * `/quran/bookmarks` — saved verses with swipe-to-delete (Islam), or
 ///   saved scripture verses (Hindu), switched by [FaithTabRouter].
 /// * `/quran/hindu-scripture/:slug`, `/quran/hindu-scripture/:slug/:chapter`
@@ -38,6 +42,16 @@ final quranRoutes = <RouteBase>[
           final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 1;
           final ayah = int.tryParse(state.uri.queryParameters['ayah'] ?? '');
           return SurahReaderScreen(surahId: id, initialAyah: ayah);
+        },
+      ),
+      GoRoute(
+        path: 'juz/:number',
+        builder: (_, state) {
+          // The contract rejects anything outside 1-30 with a 400. Clamping
+          // here means a hand-typed or stale deep link lands on a real juz
+          // instead of an error screen.
+          final raw = int.tryParse(state.pathParameters['number'] ?? '') ?? 1;
+          return JuzReaderScreen(juzNumber: raw.clamp(1, 30));
         },
       ),
       GoRoute(
