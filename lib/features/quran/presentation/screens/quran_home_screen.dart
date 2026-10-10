@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_header.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -123,13 +125,12 @@ class _Header extends StatelessWidget {
         AppSpacing.screenEdge,
         AppSpacing.lg,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Quran', style: theme.textTheme.displaySmall),
-          const SizedBox(height: 4),
-          Text('Read, listen, reflect.', style: theme.textTheme.bodyMedium),
-        ],
+      child: IllustratedHeader(
+        title: 'Quran',
+        subtitle: 'Read, listen, reflect.',
+        slot: ArtSlot.scriptureHeader,
+        titleStyle: theme.textTheme.displaySmall,
+        height: 140,
       ),
     );
   }

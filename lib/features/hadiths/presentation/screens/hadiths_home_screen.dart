@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/illustrated_header.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
@@ -101,16 +103,15 @@ class _Header extends StatelessWidget {
         AppSpacing.screenEdge,
         AppSpacing.lg,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Hadiths', style: theme.textTheme.displaySmall),
-          const SizedBox(height: 4),
-          Text(
-            'The traditions of the Prophet ﷺ.',
-            style: theme.textTheme.bodyMedium,
-          ),
-        ],
+      child: IllustratedHeader(
+        title: 'Hadiths',
+        subtitle: 'The traditions of the Prophet ﷺ.',
+        slot: ArtSlot.narrativeHeader,
+        titleStyle: theme.textTheme.displaySmall,
+        // The ﷺ glyph is tall and forces an early wrap, so this subtitle
+        // needs more of the width than the default split gives it.
+        height: 148,
+        textFlex: 66,
       ),
     );
   }

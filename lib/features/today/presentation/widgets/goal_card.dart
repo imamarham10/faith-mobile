@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/habit/faith_habit_pack.dart';
 import '../../../../shared/widgets/gap.dart';
+import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../domain/today_dashboard.dart';
 
@@ -140,18 +141,41 @@ class _GoalPrompt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final ext = theme.extension<FaithThemeExtension>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          "TODAY'S GOAL",
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "TODAY'S GOAL",
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Gap(AppSpacing.sm),
+                  Text(prompt, style: theme.textTheme.titleMedium),
+                ],
+              ),
+            ),
+            const Gap(AppSpacing.md, axis: Axis.horizontal),
+            // Asleep because the streak has not started yet — and because
+            // `sleep` is the only MascotState that does not animate forever,
+            // which matters: this card is inside the Today goldens.
+            MascotView(
+              faith: ext.faithId,
+              state: MascotState.sleep,
+              size: 56,
+            ),
+          ],
         ),
-        const Gap(AppSpacing.sm),
-        Text(prompt, style: theme.textTheme.titleMedium),
         const Gap(AppSpacing.md),
         SizedBox(
           width: double.infinity,

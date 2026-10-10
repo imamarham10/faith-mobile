@@ -118,3 +118,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/siraat_logo.png
+    # Directory entries do not recurse — each faith needs its own line.
+    - assets/art/islam/
+    - assets/art/hindu/
