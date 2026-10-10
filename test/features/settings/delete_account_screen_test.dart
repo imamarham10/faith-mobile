@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:faith_mobile/core/network/api_exception.dart';
 import 'package:faith_mobile/core/notifications/notification_service.dart';
 import 'package:faith_mobile/core/router/routes.dart';
-import 'package:faith_mobile/core/storage/local_data_purge.dart';
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
 import 'package:faith_mobile/features/auth/domain/auth_state.dart';
@@ -10,12 +9,15 @@ import 'package:faith_mobile/features/auth/presentation/controllers/auth_control
 import 'package:faith_mobile/features/feelings/presentation/controllers/journal_controller.dart';
 import 'package:faith_mobile/features/settings/data/account_repository.dart';
 import 'package:faith_mobile/features/settings/presentation/screens/delete_account_screen.dart';
+import 'package:faith_mobile/shared/habit/local_event_queue.dart';
 import 'package:faith_mobile/shared/widgets/poppy_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/fake_event_queue.dart';
 
 class _FakeAccountRepository extends AccountRepository {
   _FakeAccountRepository({this.error}) : super(Dio());
@@ -44,21 +46,6 @@ class _FakeAuthController extends AuthController {
   }
 }
 
-/// Stands in for the real purge, and — importantly — reproduces its effect
-/// on disk. A fake that only counted calls would let the "drops it from
-/// memory too" test pass for the wrong reason: the controller would reload
-/// and find the entry still sitting in SharedPreferences.
-class _FakePurge implements LocalDataPurge {
-  int runs = 0;
-
-  @override
-  Future<void> run() async {
-    runs++;
-    final prefs = await SharedPreferences.getInstance();
-    await Future.wait(LocalDataPurge.userDataKeys.map(prefs.remove));
-  }
-}
-
 class _FakeSink implements PrayerNotificationSink {
   int cancels = 0;
 
@@ -69,18 +56,35 @@ class _FakeSink implements PrayerNotificationSink {
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+/// A journal entry and a bookmark, standing in for everything this device
+/// holds that is the user's own.
+Future<void> seedLocalData(ProviderContainer container) async {
+  await container
+      .read(journalControllerProvider.notifier)
+      .add(mood: 'grateful', note: 'must not survive');
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('quran.bookmarks.v1', '["2:255"]');
+}
 
+void main() {
   late _FakeAccountRepository repo;
   late _FakeAuthController auth;
-  late _FakePurge purge;
   late _FakeSink sink;
+  late FakeEventQueue queue;
 
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    queue = FakeEventQueue();
+  });
+
+  // The real `LocalDataPurge`, over an in-memory queue. It used to be
+  // faked here, and a fake that reproduced only half of what the real one
+  // does is precisely how the same leak survived on the sign-out path: what
+  // this flow has to get right is the state it leaves on disk and in
+  // memory, so that is what the test drives.
   Future<void> pump(WidgetTester tester, {Object? error}) async {
     repo = _FakeAccountRepository(error: error);
     auth = _FakeAuthController();
-    purge = _FakePurge();
     sink = _FakeSink();
 
     await tester.pumpWidget(
@@ -88,7 +92,7 @@ void main() {
         overrides: [
           accountRepositoryProvider.overrideWithValue(repo),
           authControllerProvider.overrideWith(() => auth),
-          localDataPurgeProvider.overrideWithValue(purge),
+          localEventQueueProvider.overrideWith((ref) async => queue),
           prayerNotificationSinkProvider.overrideWithValue(sink),
         ],
         child: MaterialApp.router(
@@ -115,6 +119,12 @@ void main() {
 
   PoppyButton button(WidgetTester tester) =>
       tester.widget<PoppyButton>(find.byType(PoppyButton));
+
+  ProviderContainer containerOf(WidgetTester tester) =>
+      ProviderScope.containerOf(tester.element(find.byType(PoppyButton)));
+
+  Future<String?> onDisk(String key) async =>
+      (await SharedPreferences.getInstance()).getString(key);
 
   Future<void> type(WidgetTester tester, String text) async {
     await tester.enterText(find.byType(TextField), text);
@@ -165,7 +175,6 @@ void main() {
 
       expect(repo.calls, 0);
       expect(auth.signOuts, 0);
-      expect(purge.runs, 0);
     });
 
     testWidgets('spells out what is destroyed', (tester) async {
@@ -194,6 +203,7 @@ void main() {
       tester,
     ) async {
       await pump(tester);
+      await seedLocalData(containerOf(tester));
       await type(tester, DeleteAccountScreen.confirmWord);
       await tester.tap(find.byType(PoppyButton));
       await tester.pump();
@@ -201,8 +211,12 @@ void main() {
 
       expect(repo.calls, 1);
       expect(sink.cancels, 1, reason: 'alarms for a dead account must go');
-      expect(purge.runs, 1, reason: 'device-only data must go too');
       expect(auth.signOuts, 1);
+      expect(
+        await onDisk('quran.bookmarks.v1'),
+        isNull,
+        reason: 'device-only data must go too',
+      );
     });
 
     testWidgets('drops the deleted journal from memory, not just from disk', (
@@ -214,12 +228,8 @@ void main() {
       // next, and re-persisted in full by their first save. The entries only
       // vanished on a cold start.
       await pump(tester);
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(DeleteAccountScreen)),
-      );
-      await container
-          .read(journalControllerProvider.notifier)
-          .add(mood: 'grateful', note: 'must not survive');
+      final container = containerOf(tester);
+      await seedLocalData(container);
       expect(
         container.read(journalControllerProvider).valueOrNull,
         hasLength(1),
@@ -268,12 +278,17 @@ void main() {
 
     testWidgets('wipes nothing locally', (tester) async {
       await pump(tester, error: failure);
+      await seedLocalData(containerOf(tester));
       await type(tester, DeleteAccountScreen.confirmWord);
       await tester.tap(find.byType(PoppyButton));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(purge.runs, 0);
+      expect(await onDisk('quran.bookmarks.v1'), '["2:255"]');
+      expect(
+        await containerOf(tester).read(journalControllerProvider.future),
+        hasLength(1),
+      );
       expect(sink.cancels, 0);
     });
 
@@ -303,6 +318,7 @@ void main() {
         tester,
         error: const ApiException(message: 'Session expired', statusCode: 401),
       );
+      await seedLocalData(containerOf(tester));
       await type(tester, DeleteAccountScreen.confirmWord);
       await tester.tap(find.byType(PoppyButton));
       await tester.pump();
@@ -314,7 +330,7 @@ void main() {
       );
       expect(find.textContaining('Sign out and sign in again'), findsOneWidget);
       // Still no local destruction on an unconfirmed outcome.
-      expect(purge.runs, 0);
+      expect(await onDisk('quran.bookmarks.v1'), '["2:255"]');
       expect(auth.signOuts, 0);
     });
 

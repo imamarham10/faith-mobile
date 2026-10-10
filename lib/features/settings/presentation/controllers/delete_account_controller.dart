@@ -2,17 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/notifications/notification_service.dart';
+import '../../../../core/session/end_session.dart';
 import '../../../../core/storage/local_data_purge.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../duas/presentation/controllers/dua_favorites_controller.dart';
-import '../../../feelings/presentation/controllers/journal_controller.dart';
-import '../../../hindu_scriptures/presentation/controllers/hindu_scriptures_home_controller.dart';
-import '../../../hindu_scriptures/presentation/controllers/scripture_bookmarks_controller.dart';
-import '../../../hindu_stories/presentation/controllers/story_favorites_controller.dart';
-import '../../../hindu_stotras/presentation/controllers/stotra_favorites_controller.dart';
-import '../../../hindu_temples/presentation/controllers/temple_favorites_controller.dart';
-import '../../../quran/presentation/controllers/bookmarks_controller.dart';
-import '../../../quran/presentation/controllers/quran_home_controller.dart';
 import '../../data/account_repository.dart';
 
 part 'delete_account_controller.g.dart';
@@ -28,11 +20,11 @@ part 'delete_account_controller.g.dart';
 /// error, and lets the user try again — a half-deleted account that still
 /// looks signed in is worse than a clean error.
 ///
-/// Once the server confirms, the rest is cleanup that cannot be abandoned
-/// halfway: cancel alarms scheduled against an account that no longer
-/// exists, erase the device-only data (journal, bookmarks, activity queue),
-/// then drop the tokens. `signOut` goes last because it flips the router's
-/// redirect to `/login`, tearing this screen down.
+/// Once the server confirms, the rest is [endSession] — the same cleanup,
+/// in the same order, that signing out runs. It is deliberately not a
+/// second copy of that list: deletion grew the thorough version of it while
+/// sign-out kept a two-line one, and the gap between them was a
+/// cross-account data leak. Whatever either path needs, both now get.
 @riverpod
 class DeleteAccountController extends _$DeleteAccountController {
   @override
@@ -52,53 +44,24 @@ class DeleteAccountController extends _$DeleteAccountController {
       return false;
     }
 
-    // Through the provider, not `NotificationService.instance`: the alarms
-    // are scheduled against an account that no longer exists, and this is
-    // also the one step in the sequence that talks to a platform channel.
-    await ref.read(prayerNotificationSinkProvider).cancelAll();
-    await ref.read(localDataPurgeProvider).run();
-    _dropCachedUserData();
-    await ref.read(authControllerProvider.notifier).signOut();
-    // Deliberately no `state = AsyncValue.data(...)` here. `signOut` flips
-    // the auth state the router listens to, which re-runs the boot redirect
-    // and tears this screen down — removing this autoDispose provider's only
-    // listener. Writing to the notifier after that can land on a disposed
-    // one. Leaving it `loading` is also the correct UI for the frame or two
-    // that remain: the button stays disabled while the screen is on its way
-    // out, where resetting it would re-arm a destructive button that still
-    // has DELETE typed into the field beside it.
+    // Read through the providers, not `NotificationService.instance`: the
+    // alarms are scheduled against an account that no longer exists, and
+    // this is the one step in the sequence that talks to a platform
+    // channel.
+    await endSession(
+      notifications: ref.read(prayerNotificationSinkProvider),
+      purge: ref.read(localDataPurgeProvider),
+      auth: ref.read(authControllerProvider.notifier),
+    );
+    // Deliberately no `state = AsyncValue.data(...)` here. The sign-out
+    // inside `endSession` flips the auth state the router listens to, which
+    // re-runs the boot redirect and tears this screen down — removing this
+    // autoDispose provider's only listener. Writing to the notifier after
+    // that can land on a disposed one. Leaving it `loading` is also the
+    // correct UI for the frame or two that remain: the button stays
+    // disabled while the screen is on its way out, where resetting it would
+    // re-arm a destructive button that still has DELETE typed into the
+    // field beside it.
     return true;
-  }
-
-  /// Drops the in-memory copies of everything [LocalDataPurge] just erased
-  /// from disk.
-  ///
-  /// Every one of these is a `keepAlive` notifier that loads once in
-  /// `build()` and then holds its list for the life of the process, so
-  /// clearing the SharedPreferences key underneath them changes nothing
-  /// anybody can see. Caught on-device: after deleting an account the
-  /// previous user's journal was still listed, and it survived signing in as
-  /// somebody else — the entries only disappeared on a cold start.
-  ///
-  /// That is worse than a stale read. These controllers persist by writing
-  /// their whole in-memory list back, so one save by the next user would
-  /// have re-written the deleted entries to disk and undone the deletion.
-  ///
-  /// Invalidating re-runs each `build()` against the now-empty store. The
-  /// list mirrors [LocalDataPurge.userDataKeys] — a key cleared there needs
-  /// its reader dropped here.
-  void _dropCachedUserData() {
-    // Reflection
-    ref.invalidate(journalControllerProvider);
-    // Islam
-    ref.invalidate(duaFavoritesControllerProvider);
-    ref.invalidate(bookmarksControllerProvider);
-    ref.invalidate(lastReadControllerProvider);
-    // Hindu
-    ref.invalidate(stotraFavoritesControllerProvider);
-    ref.invalidate(storyFavoritesControllerProvider);
-    ref.invalidate(templeFavoritesControllerProvider);
-    ref.invalidate(scriptureBookmarksControllerProvider);
-    ref.invalidate(scriptureLastReadControllerProvider);
   }
 }

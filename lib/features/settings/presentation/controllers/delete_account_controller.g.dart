@@ -7,7 +7,7 @@ part of 'delete_account_controller.dart';
 // **************************************************************************
 
 String _$deleteAccountControllerHash() =>
-    r'01093cf03b920e1b1f34c1cf78c308b336363b60';
+    r'eaacd7a773b7e704c6fc8fd190e0c19e24dcca3f';
 
 /// Drives the irreversible account deletion.
 ///
@@ -20,11 +20,11 @@ String _$deleteAccountControllerHash() =>
 /// error, and lets the user try again — a half-deleted account that still
 /// looks signed in is worse than a clean error.
 ///
-/// Once the server confirms, the rest is cleanup that cannot be abandoned
-/// halfway: cancel alarms scheduled against an account that no longer
-/// exists, erase the device-only data (journal, bookmarks, activity queue),
-/// then drop the tokens. `signOut` goes last because it flips the router's
-/// redirect to `/login`, tearing this screen down.
+/// Once the server confirms, the rest is [endSession] — the same cleanup,
+/// in the same order, that signing out runs. It is deliberately not a
+/// second copy of that list: deletion grew the thorough version of it while
+/// sign-out kept a two-line one, and the gap between them was a
+/// cross-account data leak. Whatever either path needs, both now get.
 ///
 /// Copied from [DeleteAccountController].
 @ProviderFor(DeleteAccountController)

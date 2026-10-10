@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/notifications/permission_gate.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/session/end_session.dart';
+import '../../../../core/storage/local_data_purge.dart';
 import '../../../../core/preferences/arabic_script.dart';
 import '../../../../core/preferences/notification_preferences.dart';
 import '../../../../core/preferences/selected_faith.dart';
@@ -258,9 +260,18 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog.adaptive(
         title: const Text('Sign out?'),
+        // Says which half comes back and which does not. Bookmarks,
+        // favourites, prayer logs and dhikr counters all live on the
+        // account and are re-fetched on the next sign-in. The reflection
+        // journal and mood history never reach the server — there is no
+        // journal endpoint — so clearing them off this device, which is
+        // what sign-out now does, is permanent. A user is owed that
+        // sentence before they tap, not after.
         content: const Text(
-          'You\'ll need to sign in again to access your bookmarks, '
-          'prayer logs, and dhikr counters.',
+          'Your bookmarks, prayer logs and dhikr counters stay on your '
+          'account and come back when you sign in.\n\nReflections and mood '
+          'history are saved only on this device, and signing out removes '
+          'them from it.',
         ),
         actions: [
           TextButton(
@@ -276,10 +287,18 @@ class SettingsScreen extends ConsumerWidget {
     );
     if (ok != true) return;
     await HapticFeedback.mediumImpact();
-    // Cancel any scheduled prayer-time alarms — they reference user-specific
-    // state and shouldn't fire after the user signs out.
-    await NotificationService.instance.cancelAll();
-    await ref.read(authControllerProvider.notifier).signOut();
+    // Everything this has to do — cancelling the alarms scheduled against
+    // this user, erasing the journal, bookmarks and unflushed activity the
+    // device holds, dropping the in-memory copies of all of it, and only
+    // then clearing the tokens — is `endSession`, which account deletion
+    // runs too. This used to cancel the alarms and sign out and nothing
+    // else, which left the next person to sign in on this handset looking
+    // at the previous user's journal.
+    await endSession(
+      notifications: ref.read(prayerNotificationSinkProvider),
+      purge: ref.read(localDataPurgeProvider),
+      auth: ref.read(authControllerProvider.notifier),
+    );
     // Router redirect picks up the auth-state change and routes to /login.
   }
 

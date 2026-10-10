@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers.dart';
@@ -74,11 +76,37 @@ class AuthController extends _$AuthController {
     }
   }
 
+  /// Ends the session on this device, whatever else fails.
+  ///
+  /// Revoking the refresh token server-side is best-effort, and so is
+  /// reading it. `AuthRepository.logout` already swallows transport
+  /// failures, but the secure-storage read in front of it is a platform
+  /// channel — a locked keystore, a plugin not yet attached — and anything
+  /// raised outside `DioException` comes straight back here. Awaited bare,
+  /// as it used to be, any of those aborted before `clear()` and left the
+  /// user signed in.
+  ///
+  /// That was survivable while sign-out did nothing else. It is not now
+  /// that `endSession` erases this device's user data first: the same throw
+  /// would leave a wiped app still logged in as the person whose journal it
+  /// had just deleted. So the revocation is attempted, its failure is
+  /// logged, and the local tokens go either way — the refresh token is at
+  /// worst left valid until it expires, while the session on this handset
+  /// is over regardless.
   Future<void> signOut() async {
     final storage = ref.read(secureStorageProvider);
-    final refresh = await storage.readRefreshToken();
-    if (refresh != null && refresh.isNotEmpty) {
-      await ref.read(authRepositoryProvider).logout(refresh);
+    try {
+      final refresh = await storage.readRefreshToken();
+      if (refresh != null && refresh.isNotEmpty) {
+        await ref.read(authRepositoryProvider).logout(refresh);
+      }
+    } on Object catch (e, st) {
+      developer.log(
+        'Server logout failed; ending the local session anyway',
+        name: 'auth.signOut',
+        error: e,
+        stackTrace: st,
+      );
     }
     await storage.clear();
     state = const AsyncValue.data(AuthUnauthenticated());

@@ -6,7 +6,7 @@ part of 'local_data_purge.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$localDataPurgeHash() => r'1d75724dd50260ce851c7d3a243547add23b7307';
+String _$localDataPurgeHash() => r'a27410b186935a96aad10fbf7b44ad3481e96fc8';
 
 /// See also [localDataPurge].
 @ProviderFor(localDataPurge)

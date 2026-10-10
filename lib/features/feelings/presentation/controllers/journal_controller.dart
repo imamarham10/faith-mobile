@@ -55,6 +55,17 @@ class JournalController extends _$JournalController {
   }
 
   /// Adds a new entry. Returns the entry that was saved.
+  ///
+  /// The list it inserts into comes from [future], not from `state`, and
+  /// that is load-bearing rather than tidy. A save rewrites the *whole*
+  /// list to disk, and an invalidated async provider keeps serving its
+  /// previous value until the new `build()` resolves — so reading `state`
+  /// here means a save in that window writes back the list this controller
+  /// was invalidated to forget. That window is exactly the end of a
+  /// session: `LocalDataPurge` empties the store and drops this controller,
+  /// and the next user's first entry would have re-persisted the previous
+  /// user's journal under their account. Awaiting resolves against the
+  /// emptied store instead.
   Future<JournalEntry> add({
     required String mood,
     required String note,
@@ -67,8 +78,7 @@ class JournalController extends _$JournalController {
       createdAt: DateTime.now(),
       remedies: remedies,
     );
-    final current =
-        state.valueOrNull?.toList(growable: true) ?? <JournalEntry>[];
+    final current = (await future).toList(growable: true);
     current.insert(0, entry);
     await _persist(current);
     state = AsyncValue.data(current);
