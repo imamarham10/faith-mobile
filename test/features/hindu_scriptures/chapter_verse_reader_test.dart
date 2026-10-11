@@ -74,6 +74,7 @@ void main() {
     int? to,
     int verses = 10,
     String textSlug = slug,
+    Duration textDetailDelay = Duration.zero,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
@@ -87,9 +88,12 @@ void main() {
             textSlug,
             2,
           ).overrideWith((ref) async => chapter(verses: verses)),
-          scriptureTextDetailProvider(
-            textSlug,
-          ).overrideWith((ref) async => textDetail),
+          scriptureTextDetailProvider(textSlug).overrideWith((ref) async {
+            if (textDetailDelay > Duration.zero) {
+              await Future<void>.delayed(textDetailDelay);
+            }
+            return textDetail;
+          }),
         ],
         child: MaterialApp(
           theme: AppTheme.light(FaithId.hindu),
@@ -333,6 +337,69 @@ void main() {
       expect(find.text('Bookmark'), findsOneWidget);
       expect(find.text('Share'), findsOneWidget);
       expect(find.text('More'), findsOneWidget);
+    });
+  });
+
+  group('opened by deep link, before the book\'s name has landed', () {
+    // Reaching the pager from the chapter picker leaves
+    // `scriptureTextDetailProvider` already warm; a deep link or a
+    // notification does not. The screen then paints once without the book
+    // name and rebuilds when it arrives, and that second build must not
+    // disturb where the reader is.
+    // Longer than the settle `pump` does, so the first assertions run
+    // while the book's name is genuinely still in flight.
+    const delay = Duration(seconds: 1);
+
+    testWidgets('paints the verse it was asked for, naming the chapter', (
+      tester,
+    ) async {
+      await pump(tester, from: 7, textDetailDelay: delay);
+
+      expect(find.text('संस्कृत-7'), findsOneWidget);
+      final target = tester
+          .widget<ShlokaActionBar>(find.byType(ShlokaActionBar))
+          .target;
+      expect(
+        target.textName,
+        'Sankhya Yoga',
+        reason: 'the chapter title stands in until the book name lands',
+      );
+
+      // Let the in-flight name land, so the test does not end on a timer.
+      await tester.pump(delay);
+      await tester.pump();
+    });
+
+    testWidgets('keeps the cursor where it was when the name lands', (
+      tester,
+    ) async {
+      await pump(tester, from: 7, textDetailDelay: delay);
+      await tester.pump(delay);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.text('संस्कृत-7'),
+        findsOneWidget,
+        reason: 'a second provider resolving must not re-seat the cursor',
+      );
+      expect(
+        tester
+            .widget<ShlokaActionBar>(find.byType(ShlokaActionBar))
+            .target
+            .textName,
+        'Bhagavad Gita',
+      );
+    });
+
+    testWidgets('keeps a cursor the reader has since moved', (tester) async {
+      await pump(tester, from: 7, textDetailDelay: delay);
+      await tapNav(tester, 'Next');
+      expect(find.text('संस्कृत-8'), findsOneWidget);
+
+      await tester.pump(delay);
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('संस्कृत-8'), findsOneWidget);
     });
   });
 

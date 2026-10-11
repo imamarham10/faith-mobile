@@ -105,11 +105,34 @@ void main() {
   });
 
   group('isGitaSlug', () {
-    test('recognises the seeded slug and its plausible variants', () {
-      expect(isGitaSlug('bhagavad-gita'), isTrue);
+    /// Every slug `GET /hindu/scriptures/texts` returns in production,
+    /// checked 2026-10-11. The substring test is safe only as long as no
+    /// non-Gita slug contains "gita" — and if one ever does, the symptom is
+    /// silent: a Ramayana verse would emit a `gita:` sourceRef that Phase 2
+    /// would count as Gita progress. So the seed is pinned here rather than
+    /// trusted.
+    const seededSlugs = <String, bool>{
+      'bhagavad-gita': true,
+      'ramayana-aranya-kanda': false,
+      'ramayana-ayodhya-kanda': false,
+      'ramayana-bala-kanda': false,
+      'ramayana-kishkindha-kanda': false,
+      'ramayana-sundara-kanda': false,
+      'ramayana-uttara-kanda': false,
+      'ramayana-yuddha-kanda': false,
+    };
+
+    test('matches exactly one of the seeded texts', () {
+      seededSlugs.forEach((slug, isGita) {
+        expect(isGitaSlug(slug), isGita, reason: slug);
+      });
+      expect(seededSlugs.values.where((v) => v).length, 1);
+    });
+
+    test('is case-insensitive and tolerant of slug variants', () {
       expect(isGitaSlug('gita'), isTrue);
       expect(isGitaSlug('Bhagavad-Gita'), isTrue);
-      expect(isGitaSlug('ramayana'), isFalse);
+      expect(isGitaSlug('srimad-bhagavad-gita'), isTrue);
       expect(isGitaSlug('vishnu-sahasranama'), isFalse);
     });
   });
