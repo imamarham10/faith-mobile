@@ -39,7 +39,20 @@ class HadithsRepository {
 
   final Dio _dio;
 
-  /// `GET /books` — all hadith collections (free + premium). Sorted server-side.
+  /// `GET /books` — hadith collections, **free editions only**.
+  ///
+  /// The endpoint serves every collection, premium included, because the web
+  /// client paywalls them and needs the full list to do it. This app has no
+  /// billing, so it may not surface paid content at all: a store listing that
+  /// shows a collection it cannot open is a locked door with no handle, and
+  /// selling the key would need Play Billing. Filtering here rather than in a
+  /// controller or a screen means no consumer — the books grid, the search
+  /// screen's corpus count, [HadithBookScreen]'s lookup, or anything added
+  /// later — can see a premium row at all.
+  ///
+  /// The filter wants to move server-side (`?freeOnly=true`) once that ships;
+  /// doing it here keeps the release off a deploy. `isPremium` stays on
+  /// [HadithBook] because the wire still sends it and this is what reads it.
   Future<List<HadithBook>> getBooks() async {
     try {
       final res = await _dio.get<dynamic>('$_base/books');
@@ -52,6 +65,7 @@ class HadithsRepository {
       return data
           .whereType<Map<String, dynamic>>()
           .map(HadithBook.fromJson)
+          .where((b) => !b.isPremium)
           .toList(growable: false);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -126,11 +140,25 @@ class HadithsRepository {
         totalPages: (data['totalPages'] as num?)?.toInt() ?? 1,
       );
     } on DioException catch (e) {
-      throw ApiException.fromDio(e);
+      final failure = ApiException.fromDio(e);
+      // A premium `bookId` answers 403 with the server's own sales copy
+      // ("This collection requires a premium subscription"), and
+      // [ApiException.fromDio] passes a server `message` through verbatim.
+      // [getBooks] means nothing in the app can reach that id any more, but
+      // a stale deep link still can, and that sentence must never render.
+      if (failure.statusCode == 403) throw _collectionUnavailable;
+      throw failure;
     }
   }
 
   /// `GET /:id` — single hadith with the full book joined.
+  ///
+  /// The endpoint has no entitlement check of its own, so a shared or stale
+  /// link to a hadith in a paid collection would render it in full. The
+  /// detail response carries the whole book, `isPremium` included, which is
+  /// what makes the check possible here: such a hadith is reported as
+  /// missing, the same answer a deleted id gets, because as far as this
+  /// build is concerned it does not exist.
   Future<Hadith> getHadith(String id) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>('$_base/$id');
@@ -138,12 +166,30 @@ class HadithsRepository {
       if (data == null) {
         throw const ApiException(message: 'Empty hadith response.');
       }
-      return Hadith.fromJson(data);
+      final hadith = Hadith.fromJson(data);
+      if (hadith.book?.isPremium ?? false) throw _hadithNotFound;
+      return hadith;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 }
+
+/// What a reader sees instead of a paid collection they linked into.
+///
+/// Deliberately free of any hint that there is something to unlock — this
+/// build does not sell content, so an "upgrade" prompt would be both a lie
+/// and, with no Play Billing wired up, a store-policy problem.
+const ApiException _collectionUnavailable = ApiException(
+  message: 'This collection isn\'t available.',
+  statusCode: 403,
+);
+
+/// A hadith this build does not carry. Same wording as a genuine 404.
+const ApiException _hadithNotFound = ApiException(
+  message: 'We couldn\'t find that hadith.',
+  statusCode: 404,
+);
 
 @Riverpod(keepAlive: true)
 HadithsRepository hadithsRepository(Ref ref) =>

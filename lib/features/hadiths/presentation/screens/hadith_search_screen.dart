@@ -174,9 +174,10 @@ class _EmptyTip extends ConsumerWidget {
 
     final tip = booksAsync.maybeWhen(
       data: (books) {
-        final total = books
-            .where((b) => !b.isPremium)
-            .fold<int>(0, (sum, b) => sum + b.totalHadiths);
+        // Already only the free collections — the repository drops the rest
+        // before anything here sees them — so this is the whole corpus the
+        // app can search, and the number the reader is promised matches it.
+        final total = books.fold<int>(0, (sum, b) => sum + b.totalHadiths);
         if (total <= 0) return 'Search the hadith corpus.';
         return 'Search ${_format(total)} hadiths.';
       },

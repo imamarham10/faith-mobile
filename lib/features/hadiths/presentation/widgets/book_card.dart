@@ -3,15 +3,16 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/poppy_card.dart';
+import '../../data/hadiths_repository.dart';
 import '../../data/dtos/hadith_book.dart';
 
 /// A square-ish card on the hadiths home grid.
 ///
 /// Minimalist: small sage book glyph, name in `titleLarge`, author + count
-/// in `bodySmall`. Premium books get a subtle gold "Premium" pill — they're
-/// still browsable but listings will be empty for non-premium users.
+/// in `bodySmall`. There is no paid-tier badge: this build only ever
+/// receives free collections (see [HadithsRepository.getBooks]), so a badge
+/// would have nothing to mark.
 class BookCard extends StatelessWidget {
   const BookCard({super.key, required this.book, required this.onTap});
 
@@ -22,11 +23,6 @@ class BookCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final accentText = theme
-        .extension<FaithThemeExtension>()!
-        .palette
-        .accentText;
-
     return PoppyCard(
       radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -53,25 +49,6 @@ class BookCard extends StatelessWidget {
                   color: cs.primary,
                 ),
               ),
-              const Spacer(),
-              if (book.isPremium)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cs.secondaryContainer,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    'PREMIUM',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: accentText,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
             ],
           ),
           const Spacer(),

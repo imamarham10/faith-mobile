@@ -40,7 +40,16 @@ class QuranRepository {
     }
   }
 
-  /// `GET /surah/:id` — surah with all its verses + translations.
+  /// `GET /surah/:id` — surah with its verses and **free** translations.
+  ///
+  /// The route is public and attaches every edition it has for the language,
+  /// paid ones included; the sibling `/juz/:n` guards against exactly that
+  /// and documents why. Stripping them here is the single parse point for
+  /// [SurahDetail] in the app, so no reader, action sheet or Today card can
+  /// end up rendering an edition this build has no right to show. A verse
+  /// left with no translation falls back to Arabic alone — which is already
+  /// what the juz reader does when the server answers `translation: null`,
+  /// so the two readers degrade the same way.
   Future<SurahDetail> getSurah(int id) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>('$_base/surah/$id');
@@ -48,11 +57,23 @@ class QuranRepository {
       if (data == null) {
         throw const ApiException(message: 'Empty surah response. Try again.');
       }
-      return SurahDetail.fromJson(data);
+      return _freeTranslationsOnly(SurahDetail.fromJson(data));
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
+
+  static SurahDetail _freeTranslationsOnly(SurahDetail surah) => surah.copyWith(
+    verses: surah.verses
+        .map(
+          (v) => v.copyWith(
+            translations: v.translations
+                .where((t) => !t.isPremium)
+                .toList(growable: false),
+          ),
+        )
+        .toList(growable: false),
+  );
 
   /// `GET /search?q=...` — search verses for a keyword.
   Future<List<Map<String, dynamic>>> search(String query) async {

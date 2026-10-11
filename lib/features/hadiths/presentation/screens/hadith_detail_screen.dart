@@ -19,8 +19,9 @@ import '../widgets/hadith_list_tile.dart';
 /// `/hadiths/:id` — the centerpiece. Header (book + number + grade), Arabic,
 /// hairline divider, narrator, translation, reference, and a bottom share bar.
 ///
-/// Favorites are intentionally absent in v1 — the API is premium-gated and
-/// the upgrade flow isn't built yet.
+/// Favorites are intentionally absent in v1: the endpoint behind them is
+/// role-gated server-side and this build carries no entitlement, so the
+/// button would only ever fail.
 class HadithDetailScreen extends ConsumerWidget {
   const HadithDetailScreen({super.key, required this.hadithId});
 

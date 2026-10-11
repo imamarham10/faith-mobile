@@ -67,18 +67,21 @@ class _HadithBookScreenState extends ConsumerState<HadithBookScreen> {
     });
   }
 
+  /// Walks the books list — which [HadithsRepository.getBooks] has already
+  /// reduced to the free collections — for the id this route was opened
+  /// with. A null answer means the id is not one this build carries.
+  HadithBook? _bookIn(List<HadithBook> books) {
+    for (final b in books) {
+      if (b.id == widget.bookId) return b;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final feedAsync = ref.watch(hadithsByBookControllerProvider(widget.bookId));
     final booksAsync = ref.watch(hadithBooksProvider);
-
     final HadithBook? book = booksAsync.maybeWhen(
-      data: (list) {
-        for (final b in list) {
-          if (b.id == widget.bookId) return b;
-        }
-        return null;
-      },
+      data: _bookIn,
       orElse: () => null,
     );
 
@@ -91,67 +94,83 @@ class _HadithBookScreenState extends ConsumerState<HadithBookScreen> {
           onPressed: () => context.pop(),
         ),
       ),
+      // The books list is resolved *before* the feed, and the feed provider
+      // is never watched for a book that is not in it. Nothing in the app
+      // links here with an id the list lacks; a deep link or a stale
+      // bookmark still can, and this is what stops that becoming a request
+      // the server answers 403 to.
       body: SafeArea(
         top: false,
-        child: feedAsync.when(
+        child: booksAsync.when(
           loading: () => const _BookShimmer(),
           error: (e, __) => _ErrorPanel(
             message: e is Exception
                 ? _humanize(e)
                 : 'Something went off track.',
-            onRetry: () =>
-                ref.invalidate(hadithsByBookControllerProvider(widget.bookId)),
+            onRetry: () => ref.invalidate(hadithBooksProvider),
           ),
-          data: (feed) {
-            if (feed.items.isEmpty) {
-              return _EmptyPanel(isPremium: book?.isPremium ?? false);
-            }
-            return CustomScrollView(
-              controller: _scrollCtrl,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                if (book != null)
-                  SliverToBoxAdapter(child: _BookHeader(book: book)),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenEdge,
-                  ),
-                  sliver: SliverList.separated(
-                    itemCount: feed.items.length,
-                    separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
-                    itemBuilder: (_, i) {
-                      final hadith = feed.items[i];
-                      return HadithListTile(
-                        hadith: hadith,
-                        onTap: () => context.push('/hadiths/${hadith.id}'),
-                      );
-                    },
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xl,
-                    ),
-                    child: Center(
-                      child: feed.isLoadingMore
-                          ? const CircularProgressIndicator.adaptive()
-                          : feed.hasMore
-                          ? const SizedBox.shrink()
-                          : Text(
-                              'End of book.',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            );
+          data: (books) {
+            final resolved = _bookIn(books);
+            if (resolved == null) return const _UnavailablePanel();
+            return _feed(context, resolved);
           },
         ),
       ),
+    );
+  }
+
+  Widget _feed(BuildContext context, HadithBook book) {
+    final theme = Theme.of(context);
+    final feedAsync = ref.watch(hadithsByBookControllerProvider(widget.bookId));
+    return feedAsync.when(
+      loading: () => const _BookShimmer(),
+      error: (e, __) => _ErrorPanel(
+        message: e is Exception ? _humanize(e) : 'Something went off track.',
+        onRetry: () =>
+            ref.invalidate(hadithsByBookControllerProvider(widget.bookId)),
+      ),
+      data: (feed) {
+        if (feed.items.isEmpty) {
+          return const _EmptyPanel();
+        }
+        return CustomScrollView(
+          controller: _scrollCtrl,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(child: _BookHeader(book: book)),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenEdge,
+              ),
+              sliver: SliverList.separated(
+                itemCount: feed.items.length,
+                separatorBuilder: (_, __) => const Gap(AppSpacing.sm),
+                itemBuilder: (_, i) {
+                  final hadith = feed.items[i];
+                  return HadithListTile(
+                    hadith: hadith,
+                    onTap: () => context.push('/hadiths/${hadith.id}'),
+                  );
+                },
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                child: Center(
+                  child: feed.isLoadingMore
+                      ? const CircularProgressIndicator.adaptive()
+                      : feed.hasMore
+                      ? const SizedBox.shrink()
+                      : Text('End of book.', style: theme.textTheme.bodySmall),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -224,20 +243,43 @@ class _BookShimmer extends StatelessWidget {
 }
 
 class _EmptyPanel extends StatelessWidget {
-  const _EmptyPanel({required this.isPremium});
+  const _EmptyPanel();
 
-  final bool isPremium;
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: IllustratedEmptyState(
+        title: 'Nothing here yet',
+        message: 'No hadiths in this book yet.',
+        slot: ArtSlot.emptyCollection,
+        mascot: MascotState.sleep,
+      ),
+    );
+  }
+}
+
+/// Shown when the route's `bookId` is not a collection this build carries.
+///
+/// Reachable only from outside the app — a deep link, or a link shared from
+/// the web, where the full library is listed. It reads as a dead link
+/// because that is what it is here: there is no door, so there is no lock to
+/// describe and nothing to offer to unlock.
+class _UnavailablePanel extends StatelessWidget {
+  const _UnavailablePanel();
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: IllustratedEmptyState(
-        title: isPremium ? 'Part of premium' : 'Nothing here yet',
-        message: isPremium
-            ? 'This collection is part of premium.'
-            : 'No hadiths in this book yet.',
+        title: 'This collection isn\'t available',
+        message: 'Browse the collections on the Hadiths home.',
         slot: ArtSlot.emptyCollection,
         mascot: MascotState.sleep,
+        action: PoppyButton(
+          label: 'Browse hadiths',
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/hadiths'),
+        ),
       ),
     );
   }

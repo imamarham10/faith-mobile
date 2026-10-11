@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Translation {
 
- String get language; String get authorName; String get text;
+ String get language; String get authorName; String get text; bool get isPremium;
 /// Create a copy of Translation
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $TranslationCopyWith<Translation> get copyWith => _$TranslationCopyWithImpl<Tran
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Translation&&(identical(other.language, language) || other.language == language)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Translation&&(identical(other.language, language) || other.language == language)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.text, text) || other.text == text)&&(identical(other.isPremium, isPremium) || other.isPremium == isPremium));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,language,authorName,text);
+int get hashCode => Object.hash(runtimeType,language,authorName,text,isPremium);
 
 @override
 String toString() {
-  return 'Translation(language: $language, authorName: $authorName, text: $text)';
+  return 'Translation(language: $language, authorName: $authorName, text: $text, isPremium: $isPremium)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $TranslationCopyWith<$Res>  {
   factory $TranslationCopyWith(Translation value, $Res Function(Translation) _then) = _$TranslationCopyWithImpl;
 @useResult
 $Res call({
- String language, String authorName, String text
+ String language, String authorName, String text, bool isPremium
 });
 
 
@@ -65,12 +65,13 @@ class _$TranslationCopyWithImpl<$Res>
 
 /// Create a copy of Translation
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? language = null,Object? authorName = null,Object? text = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? language = null,Object? authorName = null,Object? text = null,Object? isPremium = null,}) {
   return _then(_self.copyWith(
 language: null == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as String,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
-as String,
+as String,isPremium: null == isPremium ? _self.isPremium : isPremium // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -155,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String language,  String authorName,  String text)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String language,  String authorName,  String text,  bool isPremium)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Translation() when $default != null:
-return $default(_that.language,_that.authorName,_that.text);case _:
+return $default(_that.language,_that.authorName,_that.text,_that.isPremium);case _:
   return orElse();
 
 }
@@ -176,10 +177,10 @@ return $default(_that.language,_that.authorName,_that.text);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String language,  String authorName,  String text)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String language,  String authorName,  String text,  bool isPremium)  $default,) {final _that = this;
 switch (_that) {
 case _Translation():
-return $default(_that.language,_that.authorName,_that.text);case _:
+return $default(_that.language,_that.authorName,_that.text,_that.isPremium);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +197,10 @@ return $default(_that.language,_that.authorName,_that.text);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String language,  String authorName,  String text)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String language,  String authorName,  String text,  bool isPremium)?  $default,) {final _that = this;
 switch (_that) {
 case _Translation() when $default != null:
-return $default(_that.language,_that.authorName,_that.text);case _:
+return $default(_that.language,_that.authorName,_that.text,_that.isPremium);case _:
   return null;
 
 }
@@ -211,12 +212,13 @@ return $default(_that.language,_that.authorName,_that.text);case _:
 @JsonSerializable()
 
 class _Translation implements Translation {
-  const _Translation({required this.language, required this.authorName, required this.text});
+  const _Translation({required this.language, required this.authorName, required this.text, this.isPremium = false});
   factory _Translation.fromJson(Map<String, dynamic> json) => _$TranslationFromJson(json);
 
 @override final  String language;
 @override final  String authorName;
 @override final  String text;
+@override@JsonKey() final  bool isPremium;
 
 /// Create a copy of Translation
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +233,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Translation&&(identical(other.language, language) || other.language == language)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Translation&&(identical(other.language, language) || other.language == language)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.text, text) || other.text == text)&&(identical(other.isPremium, isPremium) || other.isPremium == isPremium));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,language,authorName,text);
+int get hashCode => Object.hash(runtimeType,language,authorName,text,isPremium);
 
 @override
 String toString() {
-  return 'Translation(language: $language, authorName: $authorName, text: $text)';
+  return 'Translation(language: $language, authorName: $authorName, text: $text, isPremium: $isPremium)';
 }
 
 
@@ -251,7 +253,7 @@ abstract mixin class _$TranslationCopyWith<$Res> implements $TranslationCopyWith
   factory _$TranslationCopyWith(_Translation value, $Res Function(_Translation) _then) = __$TranslationCopyWithImpl;
 @override @useResult
 $Res call({
- String language, String authorName, String text
+ String language, String authorName, String text, bool isPremium
 });
 
 
@@ -268,12 +270,13 @@ class __$TranslationCopyWithImpl<$Res>
 
 /// Create a copy of Translation
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? language = null,Object? authorName = null,Object? text = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? language = null,Object? authorName = null,Object? text = null,Object? isPremium = null,}) {
   return _then(_Translation(
 language: null == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as String,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
-as String,
+as String,isPremium: null == isPremium ? _self.isPremium : isPremium // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

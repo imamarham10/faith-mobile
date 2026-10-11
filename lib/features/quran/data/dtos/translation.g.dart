@@ -10,6 +10,7 @@ _Translation _$TranslationFromJson(Map<String, dynamic> json) => _Translation(
   language: json['language'] as String,
   authorName: json['authorName'] as String,
   text: json['text'] as String,
+  isPremium: json['isPremium'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$TranslationToJson(_Translation instance) =>
@@ -17,4 +18,5 @@ Map<String, dynamic> _$TranslationToJson(_Translation instance) =>
       'language': instance.language,
       'authorName': instance.authorName,
       'text': instance.text,
+      'isPremium': instance.isPremium,
     };
