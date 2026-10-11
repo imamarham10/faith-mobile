@@ -148,6 +148,11 @@ void main() {
       await pump(tester, from: 3, to: 3);
 
       expect(find.text('arabic-3'), findsOneWidget);
+      expect(
+        find.text('Al-Baqarah  ·  3  ·  Last verse'),
+        findsOneWidget,
+        reason: '"3–3" reads as a typo; a span of one is just the verse',
+      );
       expect(opacityOf(tester, 'Back'), lessThan(1));
       expect(opacityOf(tester, 'Next'), lessThan(1));
     });

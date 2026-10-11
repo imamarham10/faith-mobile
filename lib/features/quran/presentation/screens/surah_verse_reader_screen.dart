@@ -267,9 +267,12 @@ class _SurahVerseReaderScreenState
     required int length,
   }) {
     final left = length - cursor - 1;
-    final head = widget.to == null
-        ? surahName
-        : '$surahName  ·  ${widget.from ?? 1}–${widget.to}';
+    final from = widget.from ?? 1;
+    // "285–286" for a span, but plainly "255" for a span of one — a range
+    // whose ends are the same number reads as a typo, and the single-verse
+    // collection items (Ayat al-Kursi) all arrive that way.
+    final span = from == widget.to ? '$from' : '$from–${widget.to}';
+    final head = widget.to == null ? surahName : '$surahName  ·  $span';
     if (left == 0) return '$head  ·  Last verse';
     return '$head  ·  $left ${left == 1 ? 'verse' : 'verses'} left';
   }
