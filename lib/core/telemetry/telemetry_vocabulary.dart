@@ -357,25 +357,33 @@ AnalyticsScreen? screenForLocation(String location) {
   };
 }
 
+/// Whether [path] is [prefix] itself or something nested under it.
+///
+/// `startsWith` alone is wrong here: it matches `/reflection-settings`
+/// against `/reflect`, so a route added later would be reported under a
+/// screen name that has nothing to do with it. Only a `/` boundary counts.
+bool _under(String path, String prefix) =>
+    path == prefix || path.startsWith('$prefix/');
+
 AnalyticsScreen? _sectionFor(String path) {
-  if (path.startsWith('/today')) {
-    if (path.startsWith('/today/prayers')) return AnalyticsScreen.prayers;
-    if (path.startsWith('/today/calendar')) return AnalyticsScreen.calendar;
-    if (path.startsWith('/today/panchang')) return AnalyticsScreen.panchang;
-    if (path.startsWith('/today/puja-times')) return AnalyticsScreen.pujaTimes;
+  if (_under(path, '/today')) {
+    if (_under(path, '/today/prayers')) return AnalyticsScreen.prayers;
+    if (_under(path, '/today/calendar')) return AnalyticsScreen.calendar;
+    if (_under(path, '/today/panchang')) return AnalyticsScreen.panchang;
+    if (_under(path, '/today/puja-times')) return AnalyticsScreen.pujaTimes;
     return AnalyticsScreen.today;
   }
-  if (path.startsWith('/quran')) {
-    if (path.startsWith('/quran/surah')) return AnalyticsScreen.scriptureReader;
-    if (path.startsWith('/quran/juz')) return AnalyticsScreen.juzReader;
-    if (path.startsWith('/quran/collection')) return AnalyticsScreen.collection;
-    if (path.startsWith('/quran/bookmarks')) return AnalyticsScreen.bookmarks;
-    if (path.startsWith('/quran/hindu-scripture')) {
+  if (_under(path, '/quran')) {
+    if (_under(path, '/quran/surah')) return AnalyticsScreen.scriptureReader;
+    if (_under(path, '/quran/juz')) return AnalyticsScreen.juzReader;
+    if (_under(path, '/quran/collection')) return AnalyticsScreen.collection;
+    if (_under(path, '/quran/bookmarks')) return AnalyticsScreen.bookmarks;
+    if (_under(path, '/quran/hindu-scripture')) {
       return AnalyticsScreen.scriptureChapters;
     }
     return AnalyticsScreen.scriptureHome;
   }
-  if (path.startsWith('/hadiths')) {
+  if (_under(path, '/hadiths')) {
     // `/hadiths`, `/hadiths/search`, `/hadiths/book/:id` and the Hindu
     // stories tree all land on one of two names. Finer granularity would
     // start to describe reading behaviour, which the activity stream
@@ -384,24 +392,24 @@ AnalyticsScreen? _sectionFor(String path) {
         ? AnalyticsScreen.hadithsHome
         : AnalyticsScreen.hadithDetail;
   }
-  if (path.startsWith('/practice')) {
-    if (path.startsWith('/practice/dhikr')) return AnalyticsScreen.dhikr;
-    if (path.startsWith('/practice/duas')) return AnalyticsScreen.duas;
-    if (path.startsWith('/practice/names')) return AnalyticsScreen.names;
-    if (path.startsWith('/practice/qibla')) return AnalyticsScreen.qibla;
-    if (path.startsWith('/practice/japa')) return AnalyticsScreen.japa;
-    if (path.startsWith('/practice/stotras')) return AnalyticsScreen.stotras;
-    if (path.startsWith('/practice/temples')) return AnalyticsScreen.temples;
+  if (_under(path, '/practice')) {
+    if (_under(path, '/practice/dhikr')) return AnalyticsScreen.dhikr;
+    if (_under(path, '/practice/duas')) return AnalyticsScreen.duas;
+    if (_under(path, '/practice/names')) return AnalyticsScreen.names;
+    if (_under(path, '/practice/qibla')) return AnalyticsScreen.qibla;
+    if (_under(path, '/practice/japa')) return AnalyticsScreen.japa;
+    if (_under(path, '/practice/stotras')) return AnalyticsScreen.stotras;
+    if (_under(path, '/practice/temples')) return AnalyticsScreen.temples;
     return AnalyticsScreen.practice;
   }
-  if (path.startsWith('/reflect')) {
+  if (_under(path, '/reflect')) {
     // The slug in `/reflect/feelings/:mood` is matched on the prefix and
     // then discarded. Every emotion lands on the same constant.
-    if (path.startsWith('/reflect/feelings')) {
+    if (_under(path, '/reflect/feelings')) {
       return AnalyticsScreen.feelingsResult;
     }
-    if (path.startsWith('/reflect/journal')) return AnalyticsScreen.journal;
-    if (path.startsWith('/reflect/history')) return AnalyticsScreen.moodHistory;
+    if (_under(path, '/reflect/journal')) return AnalyticsScreen.journal;
+    if (_under(path, '/reflect/history')) return AnalyticsScreen.moodHistory;
     return AnalyticsScreen.reflect;
   }
   return null;

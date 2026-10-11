@@ -106,6 +106,13 @@ class Telemetry {
   bool _bootstrapped = false;
   bool _firebaseReady = false;
   bool _collecting = false;
+
+  /// The user's stored choice: `false` opted in, `true` opted out, `null`
+  /// not yet known — either because the preference has not been read yet
+  /// or because reading it failed. The null case is why [_record] keeps
+  /// buffering past [_firebaseReady]: "we could not tell" must not be
+  /// indistinguishable from "they said no".
+  bool? _consent;
   AnalyticsSink _sink = const NoopAnalyticsSink();
   FirebaseAnalyticsSink? _firebaseSink;
   FirebaseCrashlytics? _crashlytics;
@@ -138,6 +145,7 @@ class Telemetry {
   /// underneath it to switch.
   Future<void> setEnabled(bool enabled) async {
     await _writeOptOut(!enabled);
+    _consent = !enabled;
 
     // Flip the native SDKs too, not just our sink. Firebase persists this
     // flag itself, so a user who opts out stays opted out across a restart
@@ -150,12 +158,26 @@ class Telemetry {
     _sink = _collecting && firebaseSink != null
         ? firebaseSink
         : const NoopAnalyticsSink();
+
+    if (_collecting) {
+      // Covers the recovery path: a preference read that failed at boot
+      // left errors buffered, and this is the first moment we know they
+      // may be sent.
+      await _flushBuffered();
+    } else {
+      _buffered.clear();
+    }
   }
 
   /// Whether the user has opted out. `false` when they have never chosen —
   /// collection is on by default, and the switch in Settings is how it is
   /// turned off.
-  Future<bool> isOptedOut() async => _readOptOut();
+  ///
+  /// An unreadable preference reports `true` so the Settings switch shows
+  /// "off" rather than claiming a consent we could not confirm. That is a
+  /// display decision only: it does not become [_consent], and so it does
+  /// not cause buffered crashes to be discarded.
+  Future<bool> isOptedOut() async => await _readOptOut() ?? true;
 
   /// Reports a non-fatal error to Crashlytics.
   ///
@@ -212,16 +234,25 @@ class Telemetry {
     //    worker, anything `compute()` is handed. These bypass both of the
     //    above entirely, which is exactly how a class of crash goes
     //    unreported for a year.
+    //
+    //    The body is wrapped because a throw inside a raw port callback
+    //    has nothing above it to catch it and can take the isolate down.
+    //    A crash reporter that becomes a crash cause on an unexpected
+    //    payload shape is worse than no crash reporter.
     Isolate.current.addErrorListener(
       RawReceivePort((dynamic pair) {
-        final parts = pair as List<dynamic>;
-        unawaited(
-          _record(
-            parts.first ?? 'isolate error',
-            StackTrace.fromString('${parts.length > 1 ? parts[1] : ''}'),
-            fatal: true,
-          ),
-        );
+        try {
+          final parts = pair as List<dynamic>;
+          unawaited(
+            _record(
+              parts.first ?? 'isolate error',
+              StackTrace.fromString('${parts.length > 1 ? parts[1] : ''}'),
+              fatal: true,
+            ),
+          );
+        } on Object catch (e) {
+          _log('malformed isolate error payload: $e');
+        }
       }).sendPort,
     );
   }
@@ -241,19 +272,50 @@ class Telemetry {
     final firebaseSink = FirebaseAnalyticsSink.live();
     _firebaseSink = firebaseSink;
     _crashlytics = FirebaseCrashlytics.instance;
+    await _applyStoredConsent();
+  }
 
-    final optedOut = await _readOptOut();
+  /// Reads the stored preference and switches collection to match.
+  ///
+  /// Retried once. The read is a platform channel and this runs during the
+  /// cold boot, which is the moment it is least likely to answer — and a
+  /// transient failure here used to disable crash reporting for the whole
+  /// session, silently, for a user who had never opted out of anything.
+  Future<void> _applyStoredConsent() async {
+    var optedOut = await _readOptOut();
+    if (optedOut == null) {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      optedOut = await _readOptOut();
+    }
+
+    if (optedOut == null) {
+      // Still unreadable. Collect nothing — an unreadable preference is
+      // not consent — but leave [_consent] null and the buffer intact.
+      // This is our failure, not the user's choice: [_record] keeps
+      // buffering, and a later [setEnabled] replays what it held.
+      _log('could not read the telemetry preference; collection stays off');
+      return;
+    }
+
+    _consent = optedOut;
     await _crashlytics?.setCrashlyticsCollectionEnabled(!optedOut);
-    await firebaseSink.setCollectionEnabled(!optedOut);
+    await _firebaseSink?.setCollectionEnabled(!optedOut);
     if (optedOut) {
+      // A real opt-out. Now the buffer may go: holding a user's crashes
+      // after they said no is the one thing worse than losing them.
       _buffered.clear();
       return;
     }
 
+    final firebaseSink = _firebaseSink;
+    if (firebaseSink == null) return;
     _collecting = true;
     _sink = firebaseSink;
+    await _flushBuffered();
+  }
 
-    // Replay anything that failed during boot.
+  /// Replays anything that arrived before collection was switched on.
+  Future<void> _flushBuffered() async {
     final pending = List<_BufferedError>.from(_buffered);
     _buffered.clear();
     for (final e in pending) {
@@ -269,9 +331,12 @@ class Telemetry {
   }) async {
     final crashlytics = _crashlytics;
     if (crashlytics == null || !_collecting) {
-      // Firebase has not finished starting (or is absent). Hold onto it —
-      // bounded, oldest-first, so a crash loop cannot grow the list.
-      if (!_firebaseReady) {
+      // Not collecting. Hold onto it unless the user has actually opted
+      // out — bounded, oldest-first, so a crash loop cannot grow the list.
+      // Buffering while [_consent] is null is the point: Firebase may
+      // still be starting, or the preference read may have failed, and
+      // neither is a reason to throw a crash away.
+      if (_consent != true) {
         if (_buffered.length >= _maxBufferedErrors) _buffered.removeAt(0);
         _buffered.add(_BufferedError(error, stack, fatal: fatal));
       }
@@ -287,13 +352,14 @@ class Telemetry {
     }
   }
 
-  Future<bool> _readOptOut() async {
+  /// `false` opted in, `true` opted out, `null` the preference could not
+  /// be read. The three cases are deliberately distinct — see [_consent].
+  Future<bool?> _readOptOut() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getBool(optOutPrefsKey) ?? false;
     } on Object {
-      // Unreadable preferences must not be read as consent.
-      return true;
+      return null;
     }
   }
 
