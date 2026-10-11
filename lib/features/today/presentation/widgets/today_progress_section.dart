@@ -9,55 +9,31 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../domain/today_dashboard.dart';
-import '../controllers/below_fold_gate.dart';
 import '../controllers/today_dashboard_controller.dart';
 import 'goal_card.dart';
 import 'goal_sheet.dart';
 import 'practice_checklist.dart';
 import 'stat_tile_row.dart';
-import 'week_strip.dart';
 
-/// The habit loop, made visible: week strip, today's goal, the checklist of
-/// acts that complete it, and the stat tiles.
+/// The habit loop below the strip: today's goal, the checklist of acts that
+/// complete it, and the stat tiles.
 ///
 /// Built **once** for both faiths. Everything faith-specific — five prayers
 /// or three sandhya, dhikr or japa, which route a row deep-links to — comes
 /// through [TodayDashboard] from the controller, and every colour comes from
 /// the active [FaithPalette] via the theme. There is no Islam copy of this
 /// widget and no Hindu one, which is what keeps the two from drifting.
-class TodayProgressSection extends ConsumerStatefulWidget {
+///
+/// The week strip used to open this section, and the below-the-fold gate
+/// used to be released from here. Both moved to [WeekStripSection] when the
+/// strip was lifted to the top of Today — see that widget for why the gate
+/// had to go with it, and why nothing here may release it as well.
+class TodayProgressSection extends ConsumerWidget {
   const TodayProgressSection({super.key});
 
   @override
-  ConsumerState<TodayProgressSection> createState() =>
-      _TodayProgressSectionState();
-}
-
-class _TodayProgressSectionState extends ConsumerState<TodayProgressSection> {
-  /// Releases the cards below this section once the habit loop has drawn.
-  ///
-  /// Scheduled rather than called inline: this runs from `build`, and
-  /// moving provider state during a build is exactly what Riverpod
-  /// forbids. The post-frame callback also makes the signal literally
-  /// true — it fires after the frame carrying the loop has been painted,
-  /// not merely after its data arrived.
-  ///
-  /// Both settled states open it. An error is as final as data: the loop
-  /// is done asking, so there is no longer anything for the cards below to
-  /// yield to, and leaving them deferred because the habit loop failed
-  /// would blank the whole screen instead of one card.
-  void _releaseBelowFold() {
-    if (ref.read(belowFoldGateProvider)) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(belowFoldGateProvider.notifier).open();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(todayDashboardProvider);
-    if (!async.isLoading) _releaseBelowFold();
     return async.when(
       loading: () => const _Skeleton(),
       error: (_, __) => _ErrorCard(
@@ -82,8 +58,6 @@ class _Content extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        WeekStrip(week: dashboard.week),
-        const Gap(AppSpacing.xl),
         PoppyCard(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: GoalCard(
@@ -111,13 +85,11 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Roughly the silhouette of the loaded section — strip, goal card,
-    // checklist, tiles — so nothing jumps when the numbers arrive.
+    // Roughly the silhouette of the loaded section — goal card, checklist,
+    // tiles — so nothing jumps when the numbers arrive.
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PoppySkeleton(height: 44, radius: AppRadius.pill),
-        Gap(AppSpacing.xl),
         PoppySkeleton(height: 120),
         Gap(AppSpacing.md),
         PoppySkeleton(height: 64, radius: AppRadius.lg),

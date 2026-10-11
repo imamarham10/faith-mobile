@@ -29,6 +29,7 @@ import '../widgets/prayer_countdown_card.dart';
 import '../widgets/quick_actions_row.dart';
 import '../widgets/streak_chip.dart';
 import '../widgets/today_progress_section.dart';
+import '../widgets/week_strip_section.dart';
 
 /// The first impression — sets the brand tone and the architectural pattern
 /// Phase 1 feature agents will mirror.
@@ -39,27 +40,38 @@ import '../widgets/today_progress_section.dart';
 /// Hindu equivalents built in Part C — panchang in place of the Hijri
 /// calendar, sandhya countdown in place of prayer countdown.
 ///
-/// ## The order of the first three blocks
+/// ## The order of the blocks above the fold
 ///
-/// Greeting → continue-reading → featured collection → habit loop, in both
-/// faiths, through the same widgets.
+/// Greeting → week strip → continue-reading → featured collection → the
+/// rest of the habit loop, in both faiths, through the same widgets.
 ///
-/// Reading comes first because it is the act the app exists to support:
+/// The strip belongs with the greeting rather than with the goal card. It
+/// is the one block here that answers "how is my practice going" at a
+/// glance and without being read — seven rings, no numbers to parse — so
+/// it is the cheapest possible thing to put in the first screenful, and it
+/// finishes the header the streak chip starts. It is also the only block
+/// whose *shape* is known before any network read lands, which is why it
+/// can sit above the fold without flashing or reflowing: see
+/// [WeekStrip.unknown].
+///
+/// Reading comes next because it is the act the app exists to support:
 /// every other block on this screen *reports on* a practice, and this one
 /// is the practice. For a returning reader the highest-value thing on the
 /// dashboard is one tap back to the verse they stopped on.
 ///
-/// The habit loop — [TodayProgressSection] — stays whole and moves down
-/// behind it. That section is week strip, goal card, checklist and stat
-/// tiles as a single unit, built once for both faiths, and it owns the
-/// release of the below-the-fold gate. Interleaving continue-reading
-/// between its strip and its goal card would mean splitting a deliberate
-/// unit into fragments and giving one of them the gate, which is a real
-/// cost paid for a cosmetic resemblance to a reference screenshot. The
-/// greeting still carries the streak chip, so the "how am I doing" signal
-/// is above the fold regardless.
+/// ## Splitting the habit loop, and what moved with the strip
 ///
-/// Neither of the two new blocks adds a request to the launch path: the
+/// [TodayProgressSection] used to be strip, goal card, checklist and stat
+/// tiles as one unit, and it owned the release of the below-the-fold gate.
+/// Lifting the strip out of it means the gate needed a deliberate new
+/// owner, because the section is no longer guaranteed to be built on the
+/// first frame — it now sits below two other blocks, and whether a sliver
+/// builds it at cold start is a question about the cache extent. The gate
+/// moved with the strip, into [WeekStripSection], which is pinned above
+/// the fold and cannot have that problem; nothing else releases it.
+///
+/// None of the blocks above the loop adds a request to the launch path:
+/// the strip reads the same memoised dashboard the loop does, the
 /// continue-reading card reads only `shared_preferences`, and the featured
 /// collection waits behind the same below-the-fold gate it always did.
 class TodayScreen extends ConsumerWidget {
@@ -112,7 +124,12 @@ class _IslamTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
-                  // Reading leads — see this file's class doc for the
+                  // The week at a glance, finishing the header. It also
+                  // releases the below-the-fold gate — see this file's
+                  // class doc and `week_strip_section.dart`.
+                  const WeekStripSection(),
+                  const Gap(AppSpacing.xl),
+                  // Then reading — see this file's class doc for the
                   // argument, and `continue_reading_card.dart` for why
                   // putting it here costs the habit loop nothing.
                   const ContinueReadingCard(faith: FaithId.islam),
@@ -120,8 +137,8 @@ class _IslamTodayContent extends ConsumerWidget {
                   // See `_FeaturedCollections` for why it is gated and why
                   // it draws nothing until it has something.
                   const _FeaturedCollections(faith: FaithId.islam),
-                  // Then the loop: what you did this week, what today's
-                  // goal is, and what is left of it.
+                  // Then the rest of the loop: what today's goal is, and
+                  // what is left of it.
                   const TodayProgressSection(),
                   const Gap(AppSpacing.xxl),
                   PrayerCountdownCard(
@@ -212,7 +229,9 @@ class _HinduTodayContent extends ConsumerWidget {
               sliver: SliverList.list(
                 children: [
                   // Identical treatment to Islam's, in the same order,
-                  // through the same two widgets.
+                  // through the same widgets.
+                  const WeekStripSection(),
+                  const Gap(AppSpacing.xl),
                   const ContinueReadingCard(faith: FaithId.hindu),
                   const _FeaturedCollections(faith: FaithId.hindu),
                   const TodayProgressSection(),

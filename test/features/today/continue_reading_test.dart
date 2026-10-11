@@ -437,26 +437,31 @@ void main() {
   });
 
   group('the Today hierarchy', () {
-    testWidgets('Islam leads with reading, then the featured collection', (
+    testWidgets('Islam runs strip, reading, collection, goal', (
       tester,
     ) async {
       storeIslamPointer();
       await pumpScreen(tester, FaithId.islam);
 
+      final strip = tester.getTopLeft(find.byType(WeekStrip)).dy;
       final reading = tester.getTopLeft(find.byType(ContinueReadingCard)).dy;
       final collection = tester
           .getTopLeft(find.byType(FeaturedCollectionCard))
           .dy;
-      final strip = tester.getTopLeft(find.byType(WeekStrip)).dy;
       final goal = tester.getTopLeft(find.byType(GoalCard)).dy;
 
-      expect(reading, lessThan(collection));
-      expect(collection, lessThan(strip));
       expect(
         strip,
+        lessThan(reading),
+        reason: 'the week at a glance finishes the header the streak chip '
+            'starts, and is the cheapest block to read on the screen',
+      );
+      expect(reading, lessThan(collection));
+      expect(
+        collection,
         lessThan(goal),
-        reason: 'the habit loop moved down whole — strip, goal, checklist '
-            'and tiles are one unit and were not split apart',
+        reason: 'only the strip was lifted out of the habit loop — goal, '
+            'checklist and tiles stay together below the collection',
       );
     });
 
@@ -464,14 +469,14 @@ void main() {
       storeHinduPointer();
       await pumpScreen(tester, FaithId.hindu);
 
+      final strip = tester.getTopLeft(find.byType(WeekStrip)).dy;
       final reading = tester.getTopLeft(find.byType(ContinueReadingCard)).dy;
       final collection = tester
           .getTopLeft(find.byType(FeaturedCollectionCard))
           .dy;
-      final strip = tester.getTopLeft(find.byType(WeekStrip)).dy;
 
+      expect(strip, lessThan(reading));
       expect(reading, lessThan(collection));
-      expect(collection, lessThan(strip));
       expect(find.text('Bhagavad Gita'), findsOneWidget);
       expect(find.text('Daily Gita'), findsOneWidget);
     });
@@ -485,7 +490,7 @@ void main() {
       expect(find.text('START READING'), findsOneWidget);
       expect(
         tester.getTopLeft(find.byType(ContinueReadingCard)).dy,
-        lessThan(tester.getTopLeft(find.byType(WeekStrip)).dy),
+        lessThan(tester.getTopLeft(find.byType(FeaturedCollectionCard)).dy),
       );
     });
   });

@@ -7,9 +7,7 @@ import 'package:faith_mobile/features/today/presentation/widgets/practice_checkl
 import 'package:faith_mobile/features/today/presentation/widgets/stat_tile_row.dart';
 import 'package:faith_mobile/features/today/presentation/widgets/streak_chip.dart';
 import 'package:faith_mobile/features/today/presentation/widgets/today_progress_section.dart';
-import 'package:faith_mobile/features/today/presentation/widgets/week_strip.dart';
 import 'package:faith_mobile/shared/widgets/mascot_view.dart';
-import 'package:faith_mobile/shared/widgets/milestone_ring.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,7 +60,9 @@ void main() {
   }
 
   group('content', () {
-    testWidgets('Islam renders five checklist rows and seven day rings', (
+    // The week strip is no longer part of this section — it leads the
+    // screen now and is covered by `week_strip_section_test.dart`.
+    testWidgets('Islam renders five checklist rows and the goal', (
       tester,
     ) async {
       await pumpSection(
@@ -71,8 +71,6 @@ void main() {
         dashboard: FakeTodayDashboard.islam(),
       );
 
-      expect(find.byType(WeekStrip), findsOneWidget);
-      expect(find.byType(MilestoneRing), findsNWidgets(7));
       expect(find.text('Fajr'), findsOneWidget);
       expect(find.text('Isha'), findsOneWidget);
       expect(find.text("TODAY'S GOAL"), findsOneWidget);
@@ -89,8 +87,6 @@ void main() {
         dashboard: FakeTodayDashboard.hindu(),
       );
 
-      expect(find.byType(WeekStrip), findsOneWidget);
-      expect(find.byType(MilestoneRing), findsNWidgets(7));
       expect(find.byType(PracticeChecklist), findsOneWidget);
       expect(find.text('Prātaḥ'), findsOneWidget);
       expect(find.text('Sāyaṁ'), findsOneWidget);
@@ -153,15 +149,14 @@ void main() {
       // The old local derivation could only see its query window and so
       // reported `20+`. `/today`'s `streak.current` is exact however few
       // days of history the client fetched, and §6.2 caps that at 92 — so
-      // a 200-day run must render as `200` beside a seven-ring strip, and
-      // the `+` suffix is gone with the derivation that needed it.
+      // a 200-day run must render as `200`, and the `+` suffix is gone
+      // with the derivation that needed it.
       await pumpSection(
         tester,
         faith: FaithId.islam,
         dashboard: FakeTodayDashboard.longServerStreak(),
       );
 
-      expect(find.byType(MilestoneRing), findsNWidgets(7));
       expect(find.textContaining('+'), findsNothing);
     });
 
@@ -293,10 +288,12 @@ void main() {
     testWidgets('lays out without overflowing at the narrowest width', (
       tester,
     ) async {
-      // The week strip and a five-cell checklist in 280 logical pixels is
-      // exactly the thing that breaks here, so this is a regression test
-      // rather than a one-off screenshot. A RenderFlex overflow would fail
-      // the test through the framework's own error reporting.
+      // A five-cell checklist and a three-up stat row in 280 logical
+      // pixels is exactly the thing that breaks here, so this is a
+      // regression test rather than a one-off screenshot. A RenderFlex
+      // overflow would fail the test through the framework's own error
+      // reporting. (The strip's own 280px squeeze moved with it, to
+      // `week_strip_section_test.dart`.)
       await pumpSection(
         tester,
         faith: FaithId.islam,
@@ -305,7 +302,6 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(MilestoneRing), findsNWidgets(7));
       expect(find.text('Maghrib'), findsOneWidget);
     });
 

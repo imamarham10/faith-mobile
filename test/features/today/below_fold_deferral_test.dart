@@ -23,6 +23,8 @@ import 'package:faith_mobile/features/today/presentation/controllers/below_fold_
 import 'package:faith_mobile/features/today/presentation/controllers/daily_verse_controller.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/today_dashboard_controller.dart';
 import 'package:faith_mobile/features/today/presentation/screens/today_screen.dart';
+import 'package:faith_mobile/features/today/presentation/widgets/today_progress_section.dart';
+import 'package:faith_mobile/features/today/presentation/widgets/week_strip_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,9 +55,10 @@ class _Fetches {
   /// The three indexes the continue-reading card could plausibly be
   /// rewritten to consult, and must not.
   ///
-  /// That card is now the *first* thing on Today and is not gated at all:
-  /// it renders from `shared_preferences` alone, which is what earns it
-  /// that position. Resolving a surah name through `GET /surahs`, a book
+  /// That card leads the content on Today — only the week strip, which
+  /// shares the habit loop's own read, is above it — and is not gated at
+  /// all: it renders from `shared_preferences` alone, which is what earns
+  /// it that position. Resolving a surah name through `GET /surahs`, a book
   /// name through `GET /texts`, or a juz label through `GET /juz` would put
   /// a request ahead of the two activity reads the habit loop waits on —
   /// the exact pressure this gate exists to relieve — and would do it in
@@ -259,6 +262,12 @@ void main() {
     ) async {
       // The thing being optimised for must not pay for the optimisation:
       // its read still starts on the first frame, exactly as before.
+      //
+      // Two widgets watch `todayDashboardProvider` now that the week strip
+      // leads the screen — the strip at the top and the goal section
+      // further down. That must stay *one* read: a second `GET
+      // /activity/today` and `GET /activity/history` on the critical path
+      // would double exactly the burst this gate exists to thin out.
       final habitLoop = Completer<TodayDashboard>();
       final fetches = await pump(tester, habitLoop: habitLoop);
 
@@ -266,6 +275,68 @@ void main() {
 
       habitLoop.complete(FakeTodayDashboard.islam());
       await settle(tester);
+    });
+  });
+
+  group('who holds the gate open', () {
+    testWidgets('the strip is built at cold start; the section may not be', (
+      tester,
+    ) async {
+      // This is the reason the release moved. `WeekStripSection` is pinned
+      // above the fold and is built on the first frame under any viewport
+      // the app supports. `TodayProgressSection` now sits below
+      // continue-reading and a full-width featured collection, so whether
+      // it is built at cold start is a question about the sliver's cache
+      // extent — and a gate owned by a widget that can fall out of the
+      // build range is a gate that can only open on its five-second
+      // deadline.
+      //
+      // This asserts the half that must hold. If the section happens to be
+      // in range on this viewport today, that is luck, not a guarantee, and
+      // it is not asserted either way.
+      final habitLoop = Completer<TodayDashboard>();
+      await pump(tester, habitLoop: habitLoop);
+
+      expect(find.byType(WeekStripSection), findsOneWidget);
+
+      habitLoop.complete(FakeTodayDashboard.islam());
+      await settle(tester);
+    });
+
+    testWidgets('the section no longer releases the gate on its own', (
+      tester,
+    ) async {
+      // Exactly one releaser. With the strip's section absent, a settled
+      // dashboard must leave the gate shut until the deadline — if this
+      // ever goes green early, something below has quietly taken the
+      // release back and there are two things able to open it.
+      final container = ProviderContainer(
+        overrides: [
+          todayDashboardProvider.overrideWith(
+            (ref) async => FakeTodayDashboard.islam(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.light(FaithId.islam),
+            home: const Scaffold(
+              body: SingleChildScrollView(child: TodayProgressSection()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(container.read(belowFoldGateProvider), isFalse);
+
+      // Drain the gate's own backstop so the binding is not left with a
+      // pending timer.
+      await tester.pump(kBelowFoldDeadline);
     });
   });
 
