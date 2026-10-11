@@ -80,7 +80,12 @@ class _TelemetryScopeState extends ConsumerState<TelemetryScope> {
     // rather than leaking whatever its path happens to contain.
     if (screen == null || screen == _last) return;
     _last = screen;
-    Telemetry.instance.analytics.screenViewed(screen);
+    // Through the provider rather than the singleton, so a test can
+    // override the sink and assert what a real navigation emits — which
+    // is how `screen_view_privacy_test.dart` proves that walking into
+    // `/reflect/feelings/grieving` sends `feelings_result` and nothing
+    // else.
+    ref.read(analyticsProvider).screenViewed(screen);
   }
 
   @override
