@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/location/location_service.dart';
+import '../../../../core/location/request_location_access.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
@@ -61,9 +61,7 @@ class PujaTimesScreen extends ConsumerWidget {
             if (data == null) {
               return _LocationDeniedView(
                 onEnable: () async {
-                  final granted = await ref
-                      .read(locationServiceProvider)
-                      .ensurePermission();
+                  final granted = await requestLocationAccess(context, ref);
                   if (granted) {
                     await ref
                         .read(pujaTimesControllerProvider.notifier)

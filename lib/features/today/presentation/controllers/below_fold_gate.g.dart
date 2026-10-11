@@ -19,8 +19,11 @@ String _$belowFoldGateHash() => r'bc606fd08d2c0db1e643f17cd9f8a43cd4236b55';
 /// 3.49s and a 0.76s read into 6.21s.
 ///
 /// So the below-the-fold reads wait for the thing the user is actually
-/// waiting for. [open] is called once the habit loop has painted; the
-/// deadline above is the backstop.
+/// waiting for. [open] is called once the habit loop has painted — by
+/// `WeekStripSection` and by nothing else, because it is the topmost and
+/// therefore the only always-built consumer of the dashboard on Today; see
+/// that widget for why the release lives there rather than with the goal
+/// card. The deadline above is the backstop.
 ///
 /// **Session-scoped and one-way.** Once open it stays open, so this costs
 /// nothing on a tab switch back to Today or any later rebuild — it is a

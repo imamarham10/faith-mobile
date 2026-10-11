@@ -85,6 +85,34 @@ android {
     }
 }
 
+// An APK may fall back to the debug key — contributors sideload those, and a
+// debug-signed APK is a working APK. An App Bundle may not: the only reason
+// to build one is to upload it to Play, where a debug-signed bundle is at
+// best rejected and at worst accepted under the wrong signing identity. The
+// fallback above would make that failure *silent* — a green build producing
+// an unusable artefact — so turn it into a build error instead.
+//
+// `key.properties` is gitignored, which means it does not exist in a fresh
+// clone OR in a `git worktree`. That is exactly how a release gets
+// debug-signed by accident.
+gradle.taskGraph.whenReady {
+    val buildingBundle = allTasks.any {
+        it.name.contains("bundleRelease", ignoreCase = true) ||
+            it.name.contains("ReleaseBundle", ignoreCase = true)
+    }
+    if (buildingBundle && !hasReleaseKeystore) {
+        throw GradleException(
+            "Refusing to build a debug-signed App Bundle.\n" +
+                "android/key.properties is missing, so the release signing " +
+                "config fell back to the debug keystore. An AAB only ever " +
+                "goes to Play, where that artefact is useless.\n" +
+                "Create android/key.properties with storeFile, " +
+                "storePassword, keyAlias and keyPassword pointing at the " +
+                "Siraat upload key, then rebuild.",
+        )
+    }
+}
+
 flutter {
     source = "../.."
 }

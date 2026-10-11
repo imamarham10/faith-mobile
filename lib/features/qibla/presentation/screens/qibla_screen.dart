@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/art/artwork.dart';
-import '../../../../core/location/location_service.dart';
+import '../../../../core/location/request_location_access.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
@@ -53,9 +53,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
             if (err is LocationUnavailableException) {
               return _PermissionDenied(
                 onRetry: () async {
-                  final granted = await ref
-                      .read(locationServiceProvider)
-                      .ensurePermission();
+                  final granted = await requestLocationAccess(context, ref);
                   if (!mounted) return;
                   if (granted) {
                     ref.invalidate(qiblaStreamProvider);

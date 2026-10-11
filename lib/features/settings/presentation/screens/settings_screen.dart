@@ -80,12 +80,15 @@ class SettingsScreen extends ConsumerWidget {
 
             if (faith == FaithId.islam) ...[
               _SectionHeader(label: 'Prayer notifications'),
+              const _ExactAlarmTile(),
               ListTile(
                 leading: const Icon(Icons.notifications_active_outlined),
                 title: const Text('Send test notification'),
-                subtitle: const Text(
-                  'Asks permission if needed, then fires in ~5s',
-                ),
+                // Deliberately vague about timing: with exact alarms denied
+                // the test is posted immediately rather than scheduled, so a
+                // promised "~5s" would be wrong half the time. The snackbar
+                // says which happened, once it knows.
+                subtitle: const Text('Asks permission if needed, then sends'),
                 onTap: () => _sendTest(context, ref),
               ),
               ListTile(
@@ -362,10 +365,25 @@ class SettingsScreen extends ConsumerWidget {
       return;
     }
     try {
-      await NotificationService.instance.sendTest();
+      final outcome = await NotificationService.instance.sendTest();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Test notification scheduled (~5s)')),
+        SnackBar(
+          content: Text(
+            switch (outcome) {
+              TestNotificationOutcome.scheduled =>
+                'Test notification scheduled (~5s)',
+              // Saying "~5s" here would be a lie: without exact-alarm
+              // permission the test is posted now, and the real reminders
+              // it is standing in for arrive inside Android's batching
+              // window rather than on the minute.
+              TestNotificationOutcome.shownImmediately =>
+                'Test notification sent. Exact alarms are off, so real '
+                    'reminders may arrive a few minutes late.',
+            },
+          ),
+          duration: const Duration(seconds: 5),
+        ),
       );
     } on Object catch (e) {
       if (!context.mounted) return;
@@ -376,6 +394,75 @@ class SettingsScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+/// Shown only when Android is refusing exact alarms.
+///
+/// The app dropped `USE_EXACT_ALARM` (Play restricts it to alarm-clock and
+/// calendar apps), so on Android 14+ a fresh install has
+/// `SCHEDULE_EXACT_ALARM` denied by default. Reminders still arrive —
+/// `ExactAlarmPolicy` falls back to inexact delivery — but inside Android's
+/// batching window rather than on the minute, which for Fajr is worth
+/// telling the user about and worth offering a one-tap fix.
+///
+/// Renders nothing in the healthy case: a permanent "everything is fine"
+/// row in Settings is noise, and renders nothing while loading so the list
+/// does not jump.
+class _ExactAlarmTile extends ConsumerStatefulWidget {
+  const _ExactAlarmTile();
+
+  @override
+  ConsumerState<_ExactAlarmTile> createState() => _ExactAlarmTileState();
+}
+
+class _ExactAlarmTileState extends ConsumerState<_ExactAlarmTile>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// `openExactAlarmSettings` returns the moment the intent launches, not
+  /// when the user comes back — so re-reading there would re-read "denied"
+  /// while they are still standing in system settings, and nothing would
+  /// ever read again. Resume is the only moment that knows the answer: the
+  /// user has toggled (or not) and returned.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(exactAlarmsAllowedProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Defaults to allowed so the warning never flashes while the first read
+    // is in flight.
+    final allowed = ref.watch(exactAlarmsAllowedProvider).valueOrNull ?? true;
+    if (allowed) return const SizedBox.shrink();
+
+    final cs = Theme.of(context).colorScheme;
+    return ListTile(
+      leading: Icon(Icons.alarm_outlined, color: cs.tertiary),
+      title: const Text('Reminders may arrive a few minutes late'),
+      subtitle: const Text(
+        'Android is batching this app’s alarms to save battery. Allow exact '
+        'alarms to be reminded on the minute.',
+      ),
+      trailing: const Icon(Icons.open_in_new, size: 18),
+      onTap: () async {
+        HapticFeedback.lightImpact();
+        await NotificationService.instance.openExactAlarmSettings();
+      },
+    );
   }
 }
 

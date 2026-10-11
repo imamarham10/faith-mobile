@@ -35,7 +35,10 @@ class _FakeLocationService extends LocationService {
   final LatLng? _position;
 
   @override
-  Future<bool> ensurePermission() async => _position != null;
+  Future<bool> hasPermission() async => _position != null;
+
+  @override
+  Future<bool> requestPermission() async => _position != null;
 
   @override
   Future<LatLng?> currentPosition() async => _position;

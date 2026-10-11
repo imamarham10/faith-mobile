@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/art/artwork.dart';
-import '../../../../core/location/location_service.dart';
+import '../../../../core/location/request_location_access.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/sanskrit_text.dart';
@@ -94,9 +94,7 @@ class PanchangScreen extends ConsumerWidget {
               if (grid == null) {
                 return _LocationDeniedPanel(
                   onEnable: () async {
-                    final granted = await ref
-                        .read(locationServiceProvider)
-                        .ensurePermission();
+                    final granted = await requestLocationAccess(context, ref);
                     if (granted) {
                       ref.invalidate(
                         panchangMonthGridProvider(anchor.year, anchor.month),
@@ -148,9 +146,7 @@ class _TodaySummaryCard extends ConsumerWidget {
           return _LocationDeniedPanel(
             compact: true,
             onEnable: () async {
-              final granted = await ref
-                  .read(locationServiceProvider)
-                  .ensurePermission();
+              final granted = await requestLocationAccess(context, ref);
               if (granted) {
                 await ref
                     .read(panchangTodayControllerProvider.notifier)

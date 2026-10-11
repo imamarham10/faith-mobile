@@ -11,9 +11,21 @@ import '../preferences/notification_preferences.dart';
 import '../time/timezone_names.dart';
 import '../../features/prayers/data/dtos/prayer_times.dart';
 import '../../features/prayers/presentation/controllers/prayer_times_controller.dart';
+import 'exact_alarm_policy.dart';
 import 'notification_schedule.dart';
 
 part 'notification_service.g.dart';
+
+/// How the Settings "Send test notification" tile actually delivered.
+enum TestNotificationOutcome {
+  /// Exact alarms are permitted — the test will arrive in about 5 seconds.
+  scheduled,
+
+  /// Exact alarms are denied, so the test was posted immediately rather than
+  /// handed to Android's inexact alarm batcher, which would have delayed it
+  /// past the point of being a useful diagnostic.
+  shownImmediately,
+}
 
 /// The slice of [NotificationService] that [NotificationOrchestrator]
 /// drives. Narrow on purpose: it exists so the orchestrator's scheduling
@@ -101,6 +113,66 @@ class NotificationService implements PrayerNotificationSink {
     _initialized = true;
   }
 
+  /// Whether the OS will accept exact alarms from this app right now.
+  ///
+  /// Android 12+ gates `SCHEDULE_EXACT_ALARM` behind a user toggle in system
+  /// settings, and Android 14+ leaves it **off** on a fresh install. Reading
+  /// it costs a platform-channel round trip, so callers resolve it once per
+  /// scheduling pass rather than once per notification.
+  ///
+  /// Non-Android platforms have no such concept and answer `true`; so does a
+  /// failed check, deliberately — an optimistic start costs at most one
+  /// rejected alarm before [ExactAlarmPolicy.downgrade] takes over, whereas a
+  /// pessimistic one would permanently demote a user who actually granted it.
+  Future<bool> canScheduleExactAlarms() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final can = await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.canScheduleExactNotifications();
+      return can ?? true;
+    } on Object catch (e, st) {
+      developer.log(
+        'exact-alarm capability check failed — assuming permitted',
+        name: 'notifications',
+        error: e,
+        stackTrace: st,
+      );
+      return true;
+    }
+  }
+
+  /// Sends the user to Android's "Alarms & reminders" settings page so they
+  /// can grant `SCHEDULE_EXACT_ALARM`. Returns whether the intent launched.
+  ///
+  /// This is a settings *intent*, not a runtime permission dialog: it can be
+  /// shown as often as the user asks for it and there is no permanent-denial
+  /// state to burn — unlike the `POST_NOTIFICATIONS` prompt that
+  /// `PermissionGate` exists to ration. Call it only from an explicit user
+  /// tap all the same; yanking someone into system settings unasked is its
+  /// own kind of hostile.
+  Future<bool> openExactAlarmSettings() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final ok = await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.requestExactAlarmsPermission();
+      return ok ?? false;
+    } on Object catch (e, st) {
+      developer.log(
+        'could not open exact-alarm settings',
+        name: 'notifications',
+        error: e,
+        stackTrace: st,
+      );
+      return false;
+    }
+  }
+
   /// Asks the OS for notification permission. Safe to call repeatedly.
   Future<bool> requestPermissions() async {
     if (Platform.isIOS) {
@@ -159,29 +231,53 @@ class NotificationService implements PrayerNotificationSink {
 
     final plan = buildNotificationPlan(days: days, prefs: prefs, now: now);
 
+    // Resolved once for the whole pass. Asking per notification would be
+    // sixty platform-channel round trips on the app's hottest path.
+    final policy = ExactAlarmPolicy.fromCapability(
+      canScheduleExact: await canScheduleExactAlarms(),
+    );
+    final startedExact = policy.isExact;
+
     await _plugin.cancelAll();
     var accepted = 0;
     for (final entry in plan) {
       final name = kPrayerDisplayNames[entry.prayerKey] ?? entry.prayerKey;
-      final ok = await _scheduleOne(
+      final title = entry.isLead
+          ? '$name in ${prefs.leadMinutes} min'
+          : '$name — time for prayer';
+      final body = entry.isLead
+          ? '$name prayer at ${_clock(entry.when.add(Duration(minutes: prefs.leadMinutes)))} — get ready.'
+          : 'It is now time to pray $name.';
+
+      var ok = await _scheduleOne(
         id: entry.id,
         when: entry.when,
-        title: entry.isLead
-            ? '$name in ${prefs.leadMinutes} min'
-            : '$name — time for prayer',
-        body: entry.isLead
-            ? '$name prayer at ${_clock(entry.when.add(Duration(minutes: prefs.leadMinutes)))} — get ready.'
-            : 'It is now time to pray $name.',
+        title: title,
+        body: body,
+        mode: policy.mode,
       );
+      // An exact alarm the OS refuses is retried inexact — and every later
+      // entry in this pass goes straight to inexact, so the refusal costs
+      // one wasted call rather than sixty.
+      if (!ok && policy.downgrade()) {
+        ok = await _scheduleOne(
+          id: entry.id,
+          when: entry.when,
+          title: title,
+          body: body,
+          mode: policy.mode,
+        );
+      }
       if (ok) accepted++;
     }
 
-    // Counts what the OS took, not what we planned: on Android an ungranted
-    // exact-alarm permission rejects every call, and reporting the plan size
-    // would make a total failure read as a success.
+    // Counts what the OS took, not what we planned: a total failure must not
+    // be able to read as a success in the logs.
     developer.log(
       'scheduled $accepted/${plan.length} notifications '
-      'across ${days.length} days',
+      'across ${days.length} days '
+      '(${policy.isExact ? 'exact' : 'inexact'}'
+      '${startedExact && !policy.isExact ? ', downgraded mid-pass' : ''})',
       name: 'notifications',
     );
   }
@@ -220,38 +316,47 @@ class NotificationService implements PrayerNotificationSink {
   @override
   Future<void> cancelAll() => _plugin.cancelAll();
 
-  /// Fires a one-off notification ~5 seconds from now. Used by the Settings
-  /// "Send test notification" tile to verify the OS permission grant +
-  /// channel + scheduling pipeline end-to-end.
+  /// Fires a one-off test notification. Used by the Settings "Send test
+  /// notification" tile to verify the OS permission grant + channel +
+  /// delivery pipeline end-to-end.
   ///
   /// Rethrows on failure so the caller can surface the real error to the
   /// user — silent failure here makes the feature look broken when it's
-  /// usually a permission/exact-alarm issue.
-  Future<void> sendTest() async {
+  /// usually a permission issue.
+  Future<TestNotificationOutcome> sendTest() async {
+    // Without exact-alarm permission a +5s alarm is the one case where
+    // degrading gracefully is *not* graceful: Android batches inexact alarms
+    // and would deliver this minutes later or not at all, making the
+    // diagnostic tile look broken exactly when the user is diagnosing. Post
+    // it immediately instead — the tile's job is to prove the channel and
+    // the permission work, and an immediate post proves both.
+    if (!await canScheduleExactAlarms()) {
+      await _plugin.show(
+        _testNotificationId,
+        'Siraat — test reminder',
+        'Notifications are wired correctly.',
+        _details,
+      );
+      return TestNotificationOutcome.shownImmediately;
+    }
+
     final when = DateTime.now().add(const Duration(seconds: 5));
     await _plugin.zonedSchedule(
-      999,
-      'Faith — test reminder',
+      _testNotificationId,
+      'Siraat — test reminder',
       'Notifications are wired correctly.',
       tz.TZDateTime.from(when, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDesc,
-          importance: Importance.high,
-          priority: Priority.high,
-          category: AndroidNotificationCategory.reminder,
-          sound: _androidSound,
-          playSound: true,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      _details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
+    return TestNotificationOutcome.scheduled;
   }
+
+  /// Outside the prayer-notification ID space allocated by
+  /// `buildNotificationPlan`, so a test never evicts a real reminder.
+  static const int _testNotificationId = 999;
 
   /// Returns whether the OS accepted the schedule. Failures are logged, not
   /// thrown — one rejected alarm must not abort the rest of the window — but
@@ -262,6 +367,7 @@ class NotificationService implements PrayerNotificationSink {
     required DateTime when,
     required String title,
     required String body,
+    required AndroidScheduleMode mode,
   }) async {
     try {
       await _plugin.zonedSchedule(
@@ -269,27 +375,15 @@ class NotificationService implements PrayerNotificationSink {
         title,
         body,
         tz.TZDateTime.from(when, tz.local),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channelId,
-            _channelName,
-            channelDescription: _channelDesc,
-            importance: Importance.high,
-            priority: Priority.high,
-            category: AndroidNotificationCategory.reminder,
-            sound: _androidSound,
-            playSound: true,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        _details,
+        androidScheduleMode: mode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
       return true;
     } on Object catch (e, st) {
       developer.log(
-        'scheduleOne failed for id=$id at=$when',
+        'scheduleOne failed for id=$id at=$when mode=${mode.name}',
         name: 'notifications',
         error: e,
         stackTrace: st,
@@ -297,6 +391,20 @@ class NotificationService implements PrayerNotificationSink {
       return false;
     }
   }
+
+  static const NotificationDetails _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDesc,
+      importance: Importance.high,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.reminder,
+      sound: _androidSound,
+      playSound: true,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
 
   static String _clock(DateTime t) {
     final h = t.hour.toString().padLeft(2, '0');
@@ -320,3 +428,12 @@ class NotificationService implements PrayerNotificationSink {
 @Riverpod(keepAlive: true)
 PrayerNotificationSink prayerNotificationSink(Ref ref) =>
     NotificationService.instance;
+
+/// Whether the OS currently lets the app set exact alarms.
+///
+/// Auto-disposing and deliberately uncached across screens: the user can
+/// flip this in system settings at any moment, so the Settings screen reads
+/// it fresh and invalidates it after sending them there.
+@riverpod
+Future<bool> exactAlarmsAllowed(Ref ref) =>
+    NotificationService.instance.canScheduleExactAlarms();

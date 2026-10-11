@@ -1,16 +1,41 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    <!-- Prayer/puja times and the Qibla compass are location-anchored, but
+         only at city granularity: a few hundred metres moves a prayer time
+         by seconds and the Qibla bearing by thousandths of a degree. COARSE
+         is therefore sufficient, and `LocationService` already asks
+         `geolocator` for `LocationAccuracy.medium`. FINE is deliberately
+         NOT declared — it buys the app nothing and costs a Play review
+         question plus the scarier of the two system permission dialogs.
+
+         `geolocator_android` declares FINE in its own manifest, so the merge
+         would reinstate it; the remove node is what actually keeps it out of
+         the merged manifest. Verify with
+         `./gradlew :app:processReleaseManifest`. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:node="remove"/>
+
+    <!-- Quran/scripture recitation: audio_service holds a wake lock and runs
+         a mediaPlayback foreground service so playback survives the screen
+         going off. -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
-    <!-- Local prayer-time notifications -->
+    <!-- Local prayer-time notifications.
+
+         SCHEDULE_EXACT_ALARM only. USE_EXACT_ALARM is restricted by Google
+         Play to apps whose *core function* is an alarm clock or a calendar;
+         a prayer-reminder app does not qualify and declaring it is a policy
+         rejection. SCHEDULE_EXACT_ALARM is user-grantable, needs no
+         eligibility review, and is denied by default on Android 14+ — see
+         `ExactAlarmPolicy` for how reminders degrade to inexact delivery
+         rather than failing when the user has not granted it. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application

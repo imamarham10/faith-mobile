@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/location/location_service.dart';
+import '../../../../core/location/request_location_access.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/poppy_card.dart';
@@ -44,9 +44,7 @@ class PujaCountdownCard extends ConsumerWidget {
             body: 'For accurate puja times',
             onTap: () async {
               HapticFeedback.lightImpact();
-              final ok = await ref
-                  .read(locationServiceProvider)
-                  .ensurePermission();
+              final ok = await requestLocationAccess(context, ref);
               if (ok) {
                 await ref.read(pujaTimesControllerProvider.notifier).refresh();
               }
