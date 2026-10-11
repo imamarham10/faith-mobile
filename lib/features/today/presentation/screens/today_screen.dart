@@ -16,6 +16,8 @@ import '../../../../shared/widgets/section_label.dart';
 import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../../../hindu_panchang/presentation/controllers/panchang_today_controller.dart';
 import '../../../hindu_puja_times/presentation/widgets/puja_countdown_card.dart';
+import '../../../quran/presentation/widgets/often_read_row.dart';
+import '../../../quran/presentation/widgets/recitation_collection_card.dart';
 import '../widgets/below_fold.dart';
 import '../widgets/daily_hadith_card.dart';
 import '../widgets/daily_katha_card.dart';
@@ -93,6 +95,11 @@ class _IslamTodayContent extends ConsumerWidget {
                   PrayerCountdownCard(
                     onTap: () => context.push('/today/prayers'),
                   ),
+                  // Directly under the countdown, which is this screen's
+                  // "what is happening now" region — and only while it is
+                  // actually night. Costs nothing when hidden and nothing
+                  // when shown: the collection is a constant.
+                  const NightlyRecitationSlot(),
                   const Gap(32),
                   const SectionLabel('Verse for today'),
                   const Gap(16),
@@ -110,6 +117,20 @@ class _IslamTodayContent extends ConsumerWidget {
                     placeholder: PoppySkeleton(height: 200),
                     child: DailyHadithCard(),
                   ),
+                  const Gap(32),
+                  // Reading begets reading: this follows the two readings
+                  // of the day rather than being filed with the Quick row
+                  // at the foot, because the moment someone has just read a
+                  // verse is the moment "open a surah" is the obvious next
+                  // thing. It is also the cheapest block on this screen —
+                  // a constant, so it paints with the first frame and adds
+                  // no request to a cold start.
+                  const SectionLabel('Often read'),
+                  const Gap(12),
+                  // Zero inset: this list already carries the screen edge,
+                  // and the row's own default would start the chips two
+                  // margins in.
+                  const OftenReadRow(showLabel: false, horizontalPadding: 0),
                   const Gap(24),
                   const MoodPrompt(),
                   const Gap(32),

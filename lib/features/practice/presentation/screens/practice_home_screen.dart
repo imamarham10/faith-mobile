@@ -15,6 +15,7 @@ import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/page_masthead.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_icon.dart';
+import '../../../quran/presentation/widgets/often_read_row.dart';
 
 /// Practice tab home.
 ///
@@ -75,7 +76,8 @@ class _IslamPracticeContent extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => const _PracticeScaffold(tiles: _tiles);
+  Widget build(BuildContext context) =>
+      const _PracticeScaffold(tiles: _tiles, oftenRead: true);
 }
 
 /// A calm hub linking to Japa, Stotras, and Temples. Mirrors
@@ -115,9 +117,15 @@ class _HinduPracticeContent extends StatelessWidget {
 /// masthead, grid delegate and scroll physics live here once rather than
 /// being kept in sync by hand in two places.
 class _PracticeScaffold extends StatelessWidget {
-  const _PracticeScaffold({required this.tiles});
+  const _PracticeScaffold({required this.tiles, this.oftenRead = false});
 
   final List<_PracticeTileData> tiles;
+
+  /// Whether to offer the Qur'an shortcut row under the grid. Islam only —
+  /// the row is seven surahs, and the Hindu branch of this tab has no
+  /// equivalent built. Faith-gated here rather than inside the row so the
+  /// Hindu grid cannot pick it up by sharing this scaffold.
+  final bool oftenRead;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +172,16 @@ class _PracticeScaffold extends StatelessWidget {
                 ),
               ),
             ),
+            // Between the grid and the tailpiece, in the space the grid
+            // leaves — not after the colophon, which is the deliberate end
+            // of the page and must stay the last thing on it. Edge-to-edge
+            // because the strip scrolls: a chip clipped by the screen edge
+            // is what says there are more of them.
+            if (oftenRead)
+              const SliverPadding(
+                padding: EdgeInsets.fromLTRB(0, 0, 0, AppSpacing.xxl),
+                sliver: SliverToBoxAdapter(child: OftenReadRow()),
+              ),
             const SliverPadding(
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.screenEdge,

@@ -9,7 +9,9 @@ import '../shell/faith_tab_router.dart';
 import 'presentation/screens/bookmarks_screen.dart';
 import 'presentation/screens/juz_reader_screen.dart';
 import 'presentation/screens/quran_home_screen.dart';
+import 'presentation/screens/recitation_collection_screen.dart';
 import 'presentation/screens/surah_reader_screen.dart';
+import 'presentation/screens/surah_verse_reader_screen.dart';
 
 /// Routes for the Quran/Scripture tab (shared branch — see
 /// [FaithTabRouter]).
@@ -20,6 +22,12 @@ import 'presentation/screens/surah_reader_screen.dart';
 ///   [FaithTabRouter].
 /// * `/quran/surah/:id` — continuous reader with audio mini-player.
 ///   Optional query: `?ayah=<n>` jumps to and highlights a specific verse.
+/// * `/quran/surah/:id/verses` — the same surah one verse at a time.
+///   Optional query: `?from=<n>` opens on a verse; `?from=<a>&to=<b>`
+///   fences the reader to a span, which is how a curated passage like
+///   2:285-286 is read. Which of the two surah readers a tap opens is the
+///   user's remembered [ReadingMode].
+/// * `/quran/collection/:id` — a curated recitation set, e.g. `nightly`.
 /// * `/quran/juz/:number` — the juz reader: one verse at a time, back and
 ///   forward across surah boundaries. Islam only; the Hindu branch of this
 ///   tab never links to it.
@@ -43,6 +51,30 @@ final quranRoutes = <RouteBase>[
           final ayah = int.tryParse(state.uri.queryParameters['ayah'] ?? '');
           return SurahReaderScreen(surahId: id, initialAyah: ayah);
         },
+        routes: [
+          GoRoute(
+            path: 'verses',
+            builder: (_, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 1;
+              final q = state.uri.queryParameters;
+              // Unparseable bounds are dropped rather than defaulted: a
+              // bad `to` must not fence the reader to a span nobody asked
+              // for, and the screen already clamps whatever survives to
+              // the verses the surah actually has.
+              return SurahVerseReaderScreen(
+                surahId: id,
+                from: int.tryParse(q['from'] ?? ''),
+                to: int.tryParse(q['to'] ?? ''),
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: 'collection/:id',
+        builder: (_, state) => RecitationCollectionScreen(
+          collectionId: state.pathParameters['id'] ?? '',
+        ),
       ),
       GoRoute(
         path: 'juz/:number',

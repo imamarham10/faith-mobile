@@ -13,12 +13,19 @@ class ReaderTopBar extends StatelessWidget {
     required this.subtitle,
     required this.onBack,
     required this.onSettings,
+    this.onSwitchMode,
   });
 
   final String title;
   final String subtitle;
   final VoidCallback onBack;
   final VoidCallback onSettings;
+
+  /// Switches this surah to the other reading mode and remembers the
+  /// choice. Null on readers that have no second mode — the Hindu chapter
+  /// reader, which shares this bar — and the button is then absent rather
+  /// than disabled, because a control that is never enabled is clutter.
+  final VoidCallback? onSwitchMode;
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +80,15 @@ class ReaderTopBar extends StatelessWidget {
                 ],
               ),
             ),
+            if (onSwitchMode != null)
+              IconButton(
+                icon: const Icon(Icons.auto_stories_outlined, size: 22),
+                tooltip: 'Read verse by verse',
+                onPressed: onSwitchMode,
+              ),
             IconButton(
               icon: const Icon(Icons.tune_rounded, size: 22),
+              tooltip: 'Reading settings',
               onPressed: onSettings,
             ),
           ],

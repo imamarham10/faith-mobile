@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
 import '../../../../shared/widgets/page_masthead.dart';
@@ -18,10 +17,12 @@ import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../data/dtos/surah.dart';
-import '../../domain/often_read.dart';
+import '../../domain/recitation_collection.dart';
 import '../controllers/juz_controller.dart';
 import '../controllers/quran_home_controller.dart';
 import '../widgets/juz_list_tile.dart';
+import '../widgets/often_read_row.dart';
+import '../widgets/recitation_collection_card.dart';
 import '../widgets/surah_list_tile.dart';
 
 /// `/quran` — surah index with search + last-read resume + bookmarks shortcut.
@@ -82,7 +83,31 @@ class _QuranHomeScreenState extends ConsumerState<QuranHomeScreen> {
             ),
             // Hidden while searching: the shortcuts answer "what do I read
             // today", and someone who is typing has already answered it.
-            if (!searching) const SliverToBoxAdapter(child: _OftenReadRow()),
+            if (!searching) ...[
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.base),
+                  child: OftenReadRow(),
+                ),
+              ),
+              // The nightly set's permanent home. It is promoted onto
+              // Today only in the evening; here it is always findable,
+              // which is what lets the dashboard promotion be time-bound
+              // without the feature ever disappearing.
+              const SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.screenEdge,
+                  0,
+                  AppSpacing.screenEdge,
+                  AppSpacing.base,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: RecitationCollectionCard(
+                    collection: kNightlyRecitation,
+                  ),
+                ),
+              ),
+            ],
             const SliverToBoxAdapter(child: _ContinueReadingCard()),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
@@ -365,95 +390,6 @@ class _ErrorState extends StatelessWidget {
             ),
             const Gap(AppSpacing.base),
             PoppyButton(label: 'Retry', onPressed: onRetry),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Shortcut chips for the surahs people open on a schedule — see
-/// [kOftenReadSurahs] for which, and why those.
-///
-/// Scrolls horizontally rather than wrapping, so it occupies one row no
-/// matter how many entries it holds and never pushes the index below the
-/// fold. Names come from a constant, so the row is painted on the tab's
-/// first frame instead of waiting on `GET /surahs`.
-class _OftenReadRow extends StatelessWidget {
-  const _OftenReadRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.base),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screenEdge,
-              0,
-              AppSpacing.screenEdge,
-              AppSpacing.sm,
-            ),
-            child: SectionLabel('Often read'),
-          ),
-          SizedBox(
-            height: 64,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdge,
-              ),
-              itemCount: kOftenReadSurahs.length,
-              separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-              itemBuilder: (context, index) =>
-                  _OftenReadChip(surah: kOftenReadSurahs[index]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OftenReadChip extends StatelessWidget {
-  const _OftenReadChip({required this.surah});
-
-  final OftenReadSurah surah;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette = theme.extension<FaithThemeExtension>()!.palette;
-
-    return Semantics(
-      button: true,
-      label: '${surah.name}, read ${surah.occasion.toLowerCase()}',
-      excludeSemantics: true,
-      child: PoppyCard(
-        radius: AppRadius.pill,
-        // 14 + text + occasion + 10 clears the 44pt minimum tap target by
-        // the height of the row itself.
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          context.push('/quran/surah/${surah.id}');
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(surah.name, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 2),
-            Text(
-              surah.occasion,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: palette.inkMuted,
-              ),
-            ),
           ],
         ),
       ),

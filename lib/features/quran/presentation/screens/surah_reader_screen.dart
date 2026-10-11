@@ -14,10 +14,13 @@ import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/verse.dart';
+import '../../domain/ayah_action_target.dart';
 import '../../domain/quran_verse_ref.dart';
+import '../../domain/reading_mode.dart';
 import '../controllers/audio_controller.dart';
 import '../controllers/bookmarks_controller.dart';
 import '../controllers/quran_home_controller.dart';
+import '../controllers/reading_mode_controller.dart';
 import '../controllers/surah_controller.dart';
 import '../widgets/audio_mini_player.dart';
 import '../widgets/ayah_action_sheet.dart';
@@ -102,10 +105,7 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
   /// stops the same verse counting once in each reader.
   void _recordAyah(int ayah) {
     if (!_recordedAyahs.add(ayah)) return;
-    final sourceRef = quranVerseRef(
-      surahId: widget.surahId,
-      verseNumber: ayah,
-    );
+    final sourceRef = quranVerseRef(surahId: widget.surahId, verseNumber: ayah);
     unawaited(
       ref
           .read(activityRecorderProvider)
@@ -162,6 +162,27 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
     });
   }
 
+  /// Reopens this surah in the verse-at-a-time reader, at the verse the
+  /// reader is currently on, and makes that the remembered default.
+  ///
+  /// `pushReplacement`, not `push`: the two readers are two views of one
+  /// surah, and stacking them would make Back walk through every switch
+  /// the user made instead of leaving the surah.
+  void _switchToVerseMode() {
+    HapticFeedback.selectionClick();
+    final ayah = _visibleAyah;
+    ref
+        .read(readingModeControllerProvider.notifier)
+        .set(ReadingMode.verseByVerse);
+    context.pushReplacement(
+      surahReadingRoute(
+        widget.surahId,
+        mode: ReadingMode.verseByVerse,
+        ayah: ayah > 1 ? ayah : null,
+      ),
+    );
+  }
+
   void _showSettings() {
     HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
@@ -201,6 +222,7 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
             showTranslation: prefs.showTranslation,
             visibleAyah: _visibleAyah,
             onSettings: _showSettings,
+            onSwitchMode: _switchToVerseMode,
           );
         },
         loading: () => const _ReaderLoading(),
@@ -235,6 +257,7 @@ class _ReaderBody extends ConsumerWidget {
     required this.showTranslation,
     required this.visibleAyah,
     required this.onSettings,
+    required this.onSwitchMode,
   });
 
   final SurahDetail surah;
@@ -244,6 +267,7 @@ class _ReaderBody extends ConsumerWidget {
   final bool showTranslation;
   final int visibleAyah;
   final VoidCallback onSettings;
+  final VoidCallback onSwitchMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -265,6 +289,7 @@ class _ReaderBody extends ConsumerWidget {
             if (context.canPop()) context.pop();
           },
           onSettings: onSettings,
+          onSwitchMode: onSwitchMode,
         ),
         SliverToBoxAdapter(
           child: SafeArea(
@@ -299,6 +324,15 @@ class _ReaderBody extends ConsumerWidget {
                 (b) =>
                     b.surahId == surah.id && b.verseNumber == verse.verseNumber,
               );
+              void showActions() => AyahActionSheet.show(
+                context,
+                target: AyahActionTarget.fromVerse(
+                  verse,
+                  surahId: surah.id,
+                  surahName: surah.nameEnglish,
+                  totalVerses: surah.verses.length,
+                ),
+              );
               return KeyedSubtree(
                 key: ayahKeys[verse.verseNumber],
                 child: AyahView(
@@ -307,20 +341,8 @@ class _ReaderBody extends ConsumerWidget {
                   showTranslation: showTranslation,
                   isPlaying: isPlaying,
                   isBookmarked: isBookmarked,
-                  onTap: () => AyahActionSheet.show(
-                    context,
-                    verse: verse,
-                    surahId: surah.id,
-                    surahName: surah.nameEnglish,
-                    totalVerses: surah.verses.length,
-                  ),
-                  onLongPress: () => AyahActionSheet.show(
-                    context,
-                    verse: verse,
-                    surahId: surah.id,
-                    surahName: surah.nameEnglish,
-                    totalVerses: surah.verses.length,
-                  ),
+                  onTap: showActions,
+                  onLongPress: showActions,
                 ),
               );
             },

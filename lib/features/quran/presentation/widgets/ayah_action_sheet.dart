@@ -1,39 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_card.dart';
-import '../../../share/domain/shareable_content.dart';
-import '../../data/dtos/verse.dart';
-import '../controllers/audio_controller.dart';
-import '../controllers/bookmarks_controller.dart';
+import '../../domain/ayah_action_target.dart';
+import 'ayah_actions.dart';
 
-/// Bottom-sheet displayed when the user taps an ayah action handle.
-/// Actions: Play, Bookmark toggle, Share, Tafsir (placeholder).
+/// The full per-verse menu: Play · Bookmark · Share · Tafsir.
+///
+/// Reached by tap or long-press in the scrolling reader, and by **More** in
+/// the verse-at-a-time readers' [AyahActionBar]. One sheet for all three,
+/// which is why it takes an [AyahActionTarget] rather than a `Verse` — the
+/// juz payload's verse is a different DTO and could never have been passed
+/// to the old signature. The actions themselves live in [AyahActions] so
+/// the sheet and the bar cannot drift apart.
 class AyahActionSheet extends ConsumerWidget {
-  const AyahActionSheet({
-    super.key,
-    required this.verse,
-    required this.surahId,
-    required this.surahName,
-    required this.totalVerses,
-  });
+  const AyahActionSheet({super.key, required this.target});
 
-  final Verse verse;
-  final int surahId;
-  final String surahName;
-  final int totalVerses;
+  final AyahActionTarget target;
 
   static Future<void> show(
     BuildContext context, {
-    required Verse verse,
-    required int surahId,
-    required String surahName,
-    required int totalVerses,
+    required AyahActionTarget target,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -43,12 +34,7 @@ class AyahActionSheet extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (_) => AyahActionSheet(
-        verse: verse,
-        surahId: surahId,
-        surahName: surahName,
-        totalVerses: totalVerses,
-      ),
+      builder: (_) => AyahActionSheet(target: target),
     );
   }
 
@@ -56,13 +42,7 @@ class AyahActionSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isBookmarked = ref.watch(
-      bookmarksControllerProvider.select(
-        (s) => (s.valueOrNull ?? const []).any(
-          (b) => b.surahId == surahId && b.verseNumber == verse.verseNumber,
-        ),
-      ),
-    );
+    final isBookmarked = AyahActions.isBookmarked(ref, target);
 
     return SafeArea(
       top: false,
@@ -88,10 +68,7 @@ class AyahActionSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.base),
-            Text(
-              '$surahName · ${verse.surahId}:${verse.verseNumber}',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(target.label, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.lg),
             _ActionRow(
               icon: Icons.play_arrow_rounded,
@@ -99,14 +76,7 @@ class AyahActionSheet extends ConsumerWidget {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                ref
-                    .read(audioControllerProvider.notifier)
-                    .playAyah(
-                      surahId: surahId,
-                      verseNumber: verse.verseNumber,
-                      surahName: surahName,
-                      totalVerses: totalVerses,
-                    );
+                AyahActions.play(ref, target);
               },
             ),
             const Gap(AppSpacing.sm),
@@ -117,17 +87,7 @@ class AyahActionSheet extends ConsumerWidget {
               label: isBookmarked ? 'Remove bookmark' : 'Bookmark',
               onTap: () async {
                 HapticFeedback.selectionClick();
-                await ref
-                    .read(bookmarksControllerProvider.notifier)
-                    .toggle(
-                      surahId: surahId,
-                      verseNumber: verse.verseNumber,
-                      surahName: surahName,
-                      textArabic: verse.textArabic,
-                      translation: verse.translations.isNotEmpty
-                          ? verse.translations.first.text
-                          : null,
-                    );
+                await AyahActions.toggleBookmark(ref, target);
                 if (context.mounted) Navigator.of(context).pop();
               },
             ),
@@ -138,20 +98,7 @@ class AyahActionSheet extends ConsumerWidget {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                final translation = verse.translations.isNotEmpty
-                    ? verse.translations.first.text
-                    : null;
-                context.push(
-                  '/share',
-                  extra: ShareableContent(
-                    eyebrow: 'Quran',
-                    title: '$surahName · ${verse.surahId}:${verse.verseNumber}',
-                    arabic: verse.textArabic,
-                    translation: translation,
-                    attribution:
-                        '— $surahName ${verse.surahId}:${verse.verseNumber}',
-                  ),
-                );
+                AyahActions.share(context, target);
               },
             ),
             const Gap(AppSpacing.sm),
