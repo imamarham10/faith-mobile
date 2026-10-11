@@ -37,8 +37,12 @@ class AudioController extends _$AudioController {
   @override
   AudioState build() {
     ref.onDispose(() async {
+      // Only the subscription. The handler belongs to
+      // `RecitationAudioService`, whose lifetime is the process:
+      // `AudioService.init()` runs once and the instance is cached forever,
+      // so disposing it here would leave every later `ensureStarted()`
+      // handing back a dead player with no way to re-init.
       await _stateSub?.cancel();
-      await _handler?.dispose();
     });
     return const AudioState();
   }
