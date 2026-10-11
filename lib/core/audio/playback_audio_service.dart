@@ -95,17 +95,21 @@ class AudioPlaybackService {
         // player does not hold a foreground service indefinitely.
         androidStopForegroundOnPause: true,
         androidNotificationClickStartsActivity: true,
-        // Must be false, and this is the only lever for it. `audio_service`'s
-        // `onDestroy` does:
+        // False so that `audio_service`'s `onDestroy` reaches for
+        // STOP_FOREGROUND_REMOVE rather than STOP_FOREGROUND_DETACH:
         //
         //   ServiceCompat.stopForeground(this, config.androidResumeOnClick
         //       ? STOP_FOREGROUND_DETACH : STOP_FOREGROUND_REMOVE);
         //
-        // with its explicit `notificationManager.cancel(...)` commented out
-        // upstream. Left at its default of true, stopping playback *detaches*
-        // the notification and leaves it on the device for a track that is no
-        // longer playing. False gives STOP_FOREGROUND_REMOVE, so the
-        // notification goes when the service does.
+        // Keep it false, but do not expect it to clear the notification on a
+        // stop. Measured on device: `onDestroy` does not run then at all. A
+        // stop reaches `AudioService.stop()`, which cancels the notification
+        // and calls `stopSelf()` — and `stopSelf()` cannot destroy a service
+        // that still has a binding, which `AudioServicePlugin` holds for the
+        // life of the Flutter engine. So the service survives with its
+        // `notificationCreated` flag set, and the card is back within ~40ms
+        // as a fresh `NotificationRecord`. [MediaNotificationCleanup] is what
+        // actually removes it; this flag only governs the process-death case.
         //
         // The cost is only that tapping the notification no longer resumes;
         // tapping still opens the app, via

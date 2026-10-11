@@ -5,6 +5,8 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'media_notification_cleanup.dart';
+
 /// The notification's buttons, and which of them the collapsed media
 /// notification shows.
 ///
@@ -100,9 +102,14 @@ class PlaybackCallbacks {
 /// `JustAudioPlatform.instance` process-wide and then rejects any second
 /// `AudioPlayer` in the app.
 class PlaybackAudioHandler extends BaseAudioHandler with SeekHandler {
-  PlaybackAudioHandler(this._player);
+  PlaybackAudioHandler(this._player, {MediaNotificationCleanup? cleanup})
+    : _cleanup = cleanup ?? MediaNotificationCleanup.plugin();
 
   final AudioPlayer _player;
+
+  /// Clears the media notification `audio_service` strands behind a stopped
+  /// session. See [MediaNotificationCleanup] for why the platform leaves one.
+  final MediaNotificationCleanup _cleanup;
 
   /// Whose track is loaded. Null before the first load and after a stop.
   PlaybackOwner? _owner;
@@ -129,6 +136,17 @@ class PlaybackAudioHandler extends BaseAudioHandler with SeekHandler {
   /// notification behind for a track nobody is listening to. The idle state
   /// pushed by [_release] is final; nothing after it may clobber it.
   bool _releasing = false;
+
+  /// Counts playback sessions, so a teardown's notification sweep can tell
+  /// whether it is still cleaning up after *its own* stop.
+  ///
+  /// The sweep deliberately outlives [_release], and a new session can begin
+  /// inside that window: switching faith stops one vertical and immediately
+  /// loads the other, and replaying from the mini player does the same. The
+  /// notification that session posts is on the same channel as the one being
+  /// swept, so without this the sweep would cancel a card for audio that is
+  /// actually playing.
+  int _session = 0;
 
   /// Set across the audio-source swap inside [loadQueue].
   ///
@@ -275,6 +293,9 @@ class PlaybackAudioHandler extends BaseAudioHandler with SeekHandler {
   }) async {
     assert(items.isNotEmpty, 'loadQueue needs at least one item');
     _releasing = false;
+    // Any sweep still running belongs to a session that is over; this load
+    // is about to post a notification it must not touch.
+    _session++;
     final index = initialIndex.clamp(0, items.length - 1);
 
     final previousOwner = _owner;
@@ -370,6 +391,7 @@ class PlaybackAudioHandler extends BaseAudioHandler with SeekHandler {
 
   Future<void> _release() async {
     _releasing = true;
+    final session = ++_session;
     _pausedByInterruption = false;
     _loadedKey = null;
     await _player.stop();
@@ -381,9 +403,9 @@ class PlaybackAudioHandler extends BaseAudioHandler with SeekHandler {
     // one thing — the idle state below. [loadQueue] replaces the queue
     // anyway, and a stale queue behind an inactive session is invisible.
     //
-    // `idle` is what tells audio_service to leave the foreground and pull the
-    // notification: it stops the service on the *transition* into idle, so
-    // this must be the last thing this handler emits for the track.
+    // `idle` is what tells audio_service to leave the foreground and tear the
+    // service down, so this must be the last thing this handler emits for the
+    // track.
     playbackState.add(
       playbackState.value.copyWith(
         processingState: AudioProcessingState.idle,
@@ -391,6 +413,17 @@ class PlaybackAudioHandler extends BaseAudioHandler with SeekHandler {
         updatePosition: Duration.zero,
       ),
     );
+    // ...but it does *not* pull the notification. `audio_service` cancels it
+    // and calls `stopSelf()`, which cannot destroy a service the Flutter
+    // plugin still has bound, so the `onDestroy` that would really remove it
+    // never runs and the platform re-posts the card moments later. Sweeping
+    // it is the only lever left; see [MediaNotificationCleanup].
+    //
+    // Deliberately not awaited. The sweep has to outlive the re-post it is
+    // racing, and blocking [stop] on it would hold the Stop button — and the
+    // `onStopped` callback behind the mini player — for its whole duration.
+    // It stands down if playback starts again underneath it.
+    unawaited(_cleanup.sweep(isStale: () => _session != session));
   }
 
   Future<void> dispose() async {
