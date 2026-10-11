@@ -35,6 +35,16 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
 
   final List<StreamSubscription<Object?>> _subs = [];
 
+  /// Set while [_release] is tearing playback down.
+  ///
+  /// `audio_service` removes the media notification only when the *last*
+  /// `playbackState` it saw is `idle`. Stopping the player emits more
+  /// playback events, and letting [_broadcast] run on them overwrites that
+  /// idle with the player's lingering `completed`, leaving an ongoing
+  /// notification behind for a surah nobody is listening to. The idle state
+  /// pushed by [_release] is final; nothing after it may clobber it.
+  bool _releasing = false;
+
   /// Fires when the listener ends playback deliberately — the stop button in
   /// the app or in the notification. The Riverpod controller clears its state
   /// here so the mini player does not linger over a dead track.
@@ -102,7 +112,9 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
     // foregrounded on a finished queue.
     _subs.add(
       _player.processingStateStream.listen((s) {
-        if (s == ProcessingState.completed) unawaited(_finish());
+        if (s == ProcessingState.completed && !_releasing) {
+          unawaited(_finish());
+        }
       }),
     );
   }
@@ -153,6 +165,7 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
     required int totalVerses,
     required double speed,
   }) async {
+    _releasing = false;
     final index = (verseNumber - 1).clamp(0, totalVerses - 1);
     if (_loadedSurah == surahId && queue.value.length == totalVerses) {
       // Same surah already queued — a seek keeps the foreground service and
@@ -225,6 +238,7 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   Future<void> _release() async {
+    _releasing = true;
     _pausedByInterruption = false;
     _loadedSurah = null;
     await _player.stop();
@@ -250,6 +264,7 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void _broadcast(PlaybackEvent event) {
+    if (_releasing) return;
     final playing = _player.playing;
     playbackState.add(
       playbackState.value.copyWith(
