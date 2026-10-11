@@ -10,7 +10,7 @@ import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/often_read.dart';
 import '../../domain/reading_mode.dart';
-import '../controllers/reading_mode_controller.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 
 /// Shortcut chips for the surahs people open on a schedule — see
 /// [kOftenReadSurahs] for which, and why those.

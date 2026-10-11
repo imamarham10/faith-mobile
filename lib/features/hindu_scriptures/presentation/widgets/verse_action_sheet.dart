@@ -1,42 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_card.dart';
-import '../../../share/domain/shareable_content.dart';
-import '../../data/dtos/scripture_verse.dart';
-import '../controllers/scripture_audio_controller.dart';
-import '../controllers/scripture_bookmarks_controller.dart';
+import '../../domain/shloka_action_target.dart';
+import 'shloka_actions.dart';
 
-/// Bottom-sheet displayed when the user taps a verse. Mirrors Quran's
-/// `AyahActionSheet` structurally: play narration, bookmark, share.
+/// The full per-verse menu: chapter narration · Bookmark · Share.
+///
+/// Reached by tap or long-press in the scrolling reader, and by **More** in
+/// the pager's [ShlokaActionBar]. One sheet for both, which is why it takes
+/// a [ShlokaActionTarget] rather than a verse and four loose strings — the
+/// old signature could not be handed a verse whose chapter the caller only
+/// knew by number. The actions themselves live in [ShlokaActions] so the
+/// sheet and the bar cannot drift apart.
+///
+/// Structurally the Qur'an's `AyahActionSheet`, with one honest difference:
+/// its first row plays *the verse*, and this one plays *the chapter*, which
+/// is all the data supports and all this row claims.
 class VerseActionSheet extends ConsumerWidget {
-  const VerseActionSheet({
-    super.key,
-    required this.verse,
-    required this.textSlug,
-    required this.textName,
-    required this.chapterNumber,
-    required this.chapterTitle,
-  });
+  const VerseActionSheet({super.key, required this.target});
 
-  final ScriptureVerse verse;
-  final String textSlug;
-  final String textName;
-  final int chapterNumber;
-  final String chapterTitle;
+  final ShlokaActionTarget target;
 
   static Future<void> show(
     BuildContext context, {
-    required ScriptureVerse verse,
-    required String textSlug,
-    required String textName,
-    required int chapterNumber,
-    required String chapterTitle,
+    required ShlokaActionTarget target,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -46,24 +38,15 @@ class VerseActionSheet extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (_) => VerseActionSheet(
-        verse: verse,
-        textSlug: textSlug,
-        textName: textName,
-        chapterNumber: chapterNumber,
-        chapterTitle: chapterTitle,
-      ),
+      builder: (_) => VerseActionSheet(target: target),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isBookmarked = ref.watch(
-      scriptureBookmarksControllerProvider.select(
-        (s) => (s.valueOrNull ?? const []).any((b) => b.verseId == verse.id),
-      ),
-    );
+    final cs = theme.colorScheme;
+    final isBookmarked = ShlokaActions.isBookmarked(ref, target);
 
     return SafeArea(
       top: false,
@@ -83,30 +66,26 @@ class VerseActionSheet extends ConsumerWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outline,
+                  color: cs.outline,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
             ),
             const Gap(AppSpacing.base),
-            Text(
-              '$textName · $chapterNumber:${verse.verseNumber}',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(target.label, style: theme.textTheme.titleMedium),
             const Gap(AppSpacing.lg),
             _ActionRow(
-              icon: Icons.play_arrow_rounded,
-              label: 'Play narration',
+              icon: Icons.headphones_rounded,
+              label: 'Play chapter narration',
+              // Said out loud, because the row sits under a single verse and
+              // would otherwise read as an offer to play that verse. There
+              // is no per-verse narration in the data to play.
+              subtitle:
+                  'The whole of ${target.chapterTitle}, from the beginning',
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                ref
-                    .read(scriptureAudioControllerProvider.notifier)
-                    .playChapter(
-                      textSlug: textSlug,
-                      chapterNumber: chapterNumber,
-                      chapterTitle: chapterTitle,
-                    );
+                ShlokaActions.playChapter(ref, target);
               },
             ),
             const Gap(AppSpacing.sm),
@@ -117,19 +96,7 @@ class VerseActionSheet extends ConsumerWidget {
               label: isBookmarked ? 'Remove bookmark' : 'Bookmark',
               onTap: () async {
                 HapticFeedback.selectionClick();
-                await ref
-                    .read(scriptureBookmarksControllerProvider.notifier)
-                    .toggle(
-                      verseId: verse.id,
-                      textSlug: textSlug,
-                      textName: textName,
-                      chapterNumber: chapterNumber,
-                      sanskritText: verse.sanskritText,
-                      verseNumber: verse.verseNumber,
-                      translation: verse.translations.isNotEmpty
-                          ? verse.translations.first.text
-                          : null,
-                    );
+                await ShlokaActions.toggleBookmark(ref, target);
                 if (context.mounted) Navigator.of(context).pop();
               },
             ),
@@ -140,20 +107,7 @@ class VerseActionSheet extends ConsumerWidget {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                final translation = verse.translations.isNotEmpty
-                    ? verse.translations.first.text
-                    : null;
-                context.push(
-                  '/share',
-                  extra: ShareableContent(
-                    eyebrow: textName,
-                    title: '$textName · $chapterNumber:${verse.verseNumber}',
-                    sanskrit: verse.sanskritText,
-                    translation: translation,
-                    attribution:
-                        '— $textName $chapterNumber:${verse.verseNumber}',
-                  ),
-                );
+                ShlokaActions.share(context, target);
               },
             ),
           ],
@@ -167,12 +121,14 @@ class _ActionRow extends StatelessWidget {
   const _ActionRow({
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.subtitle,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final String? subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +141,22 @@ class _ActionRow extends StatelessWidget {
         children: [
           Icon(icon, color: cs.onSurface, size: 24),
           const Gap.h(AppSpacing.base),
-          Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: theme.textTheme.bodyLarge),
+                if (subtitle != null)
+                  Text(
+                    subtitle!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );

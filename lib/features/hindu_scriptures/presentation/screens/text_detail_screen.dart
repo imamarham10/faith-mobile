@@ -13,7 +13,9 @@ import '../../../../shared/widgets/mascot_view.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 import '../../data/dtos/scripture_chapter.dart';
+import '../../domain/chapter_reading_route.dart';
 import '../controllers/chapter_controller.dart';
 
 /// `/quran/hindu-scripture/:slug` — chapter picker for one text. No Quran
@@ -52,14 +54,14 @@ class TextDetailScreen extends ConsumerWidget {
   }
 }
 
-class _ChapterList extends StatelessWidget {
+class _ChapterList extends ConsumerWidget {
   const _ChapterList({required this.slug, required this.chapters});
 
   final String slug;
   final List<ChapterSummary> chapters;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (chapters.isEmpty) {
       return const Center(
         child: IllustratedEmptyState(
@@ -88,8 +90,14 @@ class _ChapterList extends StatelessWidget {
           chapter: chapter,
           onTap: () {
             HapticFeedback.lightImpact();
+            // Through the route helper, not a literal, so the mode the
+            // reader last switched to governs every chapter opened here.
             context.push(
-              '/quran/hindu-scripture/$slug/${chapter.chapterNumber}',
+              chapterReadingRoute(
+                slug,
+                chapter.chapterNumber,
+                mode: activeReadingMode(ref),
+              ),
             );
           },
         );

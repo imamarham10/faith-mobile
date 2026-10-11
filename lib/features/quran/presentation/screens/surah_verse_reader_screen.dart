@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
+import '../../../../shared/reader/verse_page.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../data/dtos/verse.dart';
@@ -13,10 +16,9 @@ import '../../domain/ayah_action_target.dart';
 import '../../domain/quran_verse_ref.dart';
 import '../../domain/reading_mode.dart';
 import '../controllers/quran_home_controller.dart';
-import '../controllers/reading_mode_controller.dart';
 import '../controllers/surah_controller.dart';
 import '../widgets/ayah_actions.dart';
-import '../widgets/verse_page.dart';
+import '../widgets/quran_verse_surface.dart';
 
 /// `/quran/surah/:id/verses` — one verse of a surah at a time.
 ///
@@ -182,10 +184,9 @@ class _SurahVerseReaderScreenState
                 onForward: () => _move(1, window.length),
               ),
               body: VerseReadRecorder(
-                sourceRef: quranVerseRef(
-                  surahId: widget.surahId,
-                  verseNumber: verse.verseNumber,
-                ),
+                activityType: ActivityType.quranVerse,
+                dedupeKey: _verseRef(verse.verseNumber),
+                sourceRef: _verseRef(verse.verseNumber),
                 logName: 'quran.surahVerses',
                 child: SingleChildScrollView(
                   controller: _scrollCtrl,
@@ -217,7 +218,7 @@ class _SurahVerseReaderScreenState
                         duration: const Duration(milliseconds: 180),
                         switchInCurve: Curves.easeOutCubic,
                         switchOutCurve: Curves.easeOutCubic,
-                        child: VerseSurface(
+                        child: QuranVerseSurface(
                           key: ValueKey(verse.verseNumber),
                           positionLine:
                               '${widget.surahId}. ${surah.nameEnglish}  ·  '
@@ -239,6 +240,12 @@ class _SurahVerseReaderScreenState
       ),
     );
   }
+
+  /// The one name this screen gives a verse, for both the activity event's
+  /// provenance and its once-a-day key. Via `quranVerseRef` so it cannot
+  /// disagree with the juz reader or the scrolling reader about 2:255.
+  String _verseRef(int verseNumber) =>
+      quranVerseRef(surahId: widget.surahId, verseNumber: verseNumber);
 
   /// The verses this reader may show: the whole surah, or the fenced span.
   List<Verse> _window(List<Verse> verses) {

@@ -6,11 +6,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_theme_extension.dart';
 import '../../../../core/theme/sanskrit_text.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../hindu_scriptures/data/dtos/scripture_verse.dart';
+import '../../../hindu_scriptures/domain/chapter_reading_route.dart';
 import '../../../hindu_scriptures/presentation/controllers/daily_shloka_controller.dart';
 
 /// "Shloka for today" card on the Hindu Today screen. Mirrors
@@ -40,13 +42,13 @@ class DailyShlokaCard extends ConsumerWidget {
   }
 }
 
-class _Content extends StatelessWidget {
+class _Content extends ConsumerWidget {
   const _Content({required this.verse});
 
   final ScriptureVerse verse;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final accentText = theme
@@ -68,8 +70,12 @@ class _Content extends StatelessWidget {
           : () {
               HapticFeedback.lightImpact();
               context.push(
-                '/quran/hindu-scripture/${verse.text!.slug}/'
-                '${verse.chapter!.chapterNumber}?verse=${verse.verseNumber}',
+                chapterReadingRoute(
+                  verse.text!.slug,
+                  verse.chapter!.chapterNumber,
+                  mode: activeReadingMode(ref),
+                  verse: verse.verseNumber,
+                ),
               );
             },
       padding: const EdgeInsets.all(24),

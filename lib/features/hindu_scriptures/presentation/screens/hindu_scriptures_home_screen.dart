@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
 import '../../../../shared/widgets/page_masthead.dart';
@@ -16,6 +17,7 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../domain/chapter_reading_route.dart';
 import '../controllers/hindu_scriptures_home_controller.dart';
 import '../widgets/text_card.dart';
 
@@ -191,8 +193,12 @@ class _ContinueReadingCard extends ConsumerWidget {
         onTap: () {
           HapticFeedback.lightImpact();
           context.push(
-            '/quran/hindu-scripture/${lastRead.textSlug}/${lastRead.chapterNumber}'
-            '?verse=${lastRead.verseNumber}',
+            chapterReadingRoute(
+              lastRead.textSlug,
+              lastRead.chapterNumber,
+              mode: activeReadingMode(ref),
+              verse: lastRead.verseNumber,
+            ),
           );
         },
         child: Row(

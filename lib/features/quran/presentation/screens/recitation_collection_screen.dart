@@ -10,7 +10,7 @@ import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../domain/recitation_collection.dart';
-import '../controllers/reading_mode_controller.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 
 /// `/quran/collection/:id` — a curated set, listed in the order it is read.
 ///

@@ -21,10 +21,11 @@ class ReaderTopBar extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onSettings;
 
-  /// Switches this surah to the other reading mode and remembers the
-  /// choice. Null on readers that have no second mode — the Hindu chapter
-  /// reader, which shares this bar — and the button is then absent rather
-  /// than disabled, because a control that is never enabled is clutter.
+  /// Switches this passage to the other reading mode and remembers the
+  /// choice. Both verticals' scrolling readers now pass one. Null is still
+  /// allowed, for a reader with no second mode, and the button is then
+  /// absent rather than disabled — a control that is never enabled is
+  /// clutter.
   final VoidCallback? onSwitchMode;
 
   @override

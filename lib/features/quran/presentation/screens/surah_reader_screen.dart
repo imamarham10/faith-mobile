@@ -20,7 +20,7 @@ import '../../domain/reading_mode.dart';
 import '../controllers/audio_controller.dart';
 import '../controllers/bookmarks_controller.dart';
 import '../controllers/quran_home_controller.dart';
-import '../controllers/reading_mode_controller.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 import '../controllers/surah_controller.dart';
 import '../widgets/audio_mini_player.dart';
 import '../widgets/ayah_action_sheet.dart';

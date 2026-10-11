@@ -68,7 +68,7 @@ class VerseView extends StatelessWidget {
               verse.sanskritText,
               style: sanskritTextStyle(
                 fontSize: sanskritFontSize,
-                height: 1.9,
+                height: sanskritLineHeight,
                 color: cs.onSurface,
               ),
             ),

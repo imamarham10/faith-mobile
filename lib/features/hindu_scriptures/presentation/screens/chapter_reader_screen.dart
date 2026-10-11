@@ -13,6 +13,9 @@ import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../data/dtos/scripture_chapter.dart';
+import '../../domain/chapter_reading_route.dart';
+import '../../domain/shloka_action_target.dart';
+import '../../domain/shloka_ref.dart';
 import '../controllers/chapter_controller.dart';
 import '../controllers/scripture_audio_controller.dart';
 import '../controllers/scripture_bookmarks_controller.dart';
@@ -21,6 +24,7 @@ import '../widgets/audio_mini_player.dart';
 import '../widgets/verse_action_sheet.dart';
 import '../widgets/verse_view.dart';
 import '../../../quran/presentation/widgets/reader_top_bar.dart';
+import '../../../../shared/reader/reading_mode_controller.dart';
 
 /// `/quran/hindu-scripture/:slug/:chapter` — continuous reader for one chapter,
 /// mirroring `surah_reader_screen.dart` structurally: scroll-tracked
@@ -93,26 +97,33 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
   /// Records one `gita_shloka` the first time [verse] settles at the top.
   ///
   /// The Islam reader's twin — same debounce, same once-per-session set,
-  /// same deliberate under-count on a fling. Parity in the *definition* of
+  /// same deliberate under-count on a fling, and since the pager landed,
+  /// the same **deterministic dedupe key**. Parity in the *definition* of
   /// what counts is what makes the two faiths' streaks comparable, and no
   /// test catches a parity break in a definition.
   ///
-  /// **`sourceRef` is omitted for any text other than the Gita**, and that
-  /// is a gap in the frozen contract rather than a choice. §1.6 fixes the
-  /// shape as `gita:<chapter>:<verse>` with no room for *which* text, so a
-  /// Ramayana verse has no expressible reference. §1.6 permits omitting the
-  /// field when there is genuinely no reference; inventing a fourth segment
-  /// would be a silent contract change, and Phase 2 derives challenge
-  /// progress from these strings by matching that exact shape.
+  /// Both strings come from `shloka_ref.dart` and are never assembled here,
+  /// for the reason that file gives: this screen and the pager must name
+  /// 2:47 identically or a verse read in both on one day counts twice.
+  /// Note they are two different strings — the dedupe key always exists,
+  /// the §1.6 `sourceRef` only for the Gita.
   void _recordVerse(int verse) {
     if (!_recordedVerses.add(verse)) return;
-    final isGita = widget.textSlug.toLowerCase().contains('gita');
     unawaited(
       ref
           .read(activityRecorderProvider)
           .record(
             ActivityType.gitaShloka,
-            sourceRef: isGita ? 'gita:${widget.chapterNumber}:$verse' : null,
+            sourceRef: shlokaSourceRef(
+              textSlug: widget.textSlug,
+              chapterNumber: widget.chapterNumber,
+              verseNumber: verse,
+            ),
+            dedupeKey: shlokaDedupeKey(
+              textSlug: widget.textSlug,
+              chapterNumber: widget.chapterNumber,
+              verseNumber: verse,
+            ),
           ),
     );
   }
@@ -161,6 +172,24 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
     });
   }
 
+  /// Reopens this chapter in the pager at the verse on screen, and makes
+  /// that the remembered default — for both verticals, since the preference
+  /// is about how you read and not what you are reading.
+  void _switchToVerseMode() {
+    HapticFeedback.selectionClick();
+    ref
+        .read(readingModeControllerProvider.notifier)
+        .set(ReadingMode.verseByVerse);
+    context.pushReplacement(
+      chapterReadingRoute(
+        widget.textSlug,
+        widget.chapterNumber,
+        mode: ReadingMode.verseByVerse,
+        verse: _visibleVerse,
+      ),
+    );
+  }
+
   void _showSettings() {
     HapticFeedback.lightImpact();
     showModalBottomSheet<void>(
@@ -201,6 +230,7 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
             showTranslation: prefs.showTranslation,
             visibleVerse: _visibleVerse,
             onSettings: _showSettings,
+            onSwitchMode: _switchToVerseMode,
           );
         },
         loading: () => const _ReaderLoading(),
@@ -211,14 +241,14 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(
+      bottomNavigationBar: const Padding(
+        padding: EdgeInsets.fromLTRB(
           AppSpacing.screenEdge,
           0,
           AppSpacing.screenEdge,
           AppSpacing.base,
         ),
-        child: const AudioMiniPlayer(),
+        child: AudioMiniPlayer(),
       ),
     );
   }
@@ -234,6 +264,7 @@ class _ReaderBody extends ConsumerWidget {
     required this.showTranslation,
     required this.visibleVerse,
     required this.onSettings,
+    required this.onSwitchMode,
   });
 
   final String textSlug;
@@ -244,6 +275,7 @@ class _ReaderBody extends ConsumerWidget {
   final bool showTranslation;
   final int visibleVerse;
   final VoidCallback onSettings;
+  final VoidCallback onSwitchMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -252,6 +284,13 @@ class _ReaderBody extends ConsumerWidget {
         ref.watch(scriptureBookmarksControllerProvider).valueOrNull ?? const [];
     final chapterTitle =
         chapter.nameEnglish ?? 'Chapter ${chapter.chapterNumber}';
+    // The book's name, for the sheet's label and the share attribution —
+    // the chapter payload does not carry it. Resolved the same way, and
+    // with the same fallback, as the pager does.
+    final textName =
+        ref.watch(scriptureTextDetailProvider(textSlug)).valueOrNull
+            ?.nameEnglish ??
+        chapterTitle;
     final isChapterPlaying =
         audio.currentTextSlug == textSlug &&
         audio.currentChapterNumber == chapter.chapterNumber;
@@ -270,6 +309,7 @@ class _ReaderBody extends ConsumerWidget {
             if (context.canPop()) context.pop();
           },
           onSettings: onSettings,
+          onSwitchMode: onSwitchMode,
         ),
         SliverToBoxAdapter(
           child: SafeArea(
@@ -322,19 +362,23 @@ class _ReaderBody extends ConsumerWidget {
                   isBookmarked: isBookmarked,
                   onTap: () => VerseActionSheet.show(
                     context,
-                    verse: verse,
-                    textSlug: textSlug,
-                    textName: chapterTitle,
-                    chapterNumber: chapter.chapterNumber,
-                    chapterTitle: chapterTitle,
+                    target: ShlokaActionTarget.fromVerse(
+                      verse,
+                      textSlug: textSlug,
+                      textName: textName,
+                      chapterNumber: chapter.chapterNumber,
+                      chapterTitle: chapterTitle,
+                    ),
                   ),
                   onLongPress: () => VerseActionSheet.show(
                     context,
-                    verse: verse,
-                    textSlug: textSlug,
-                    textName: chapterTitle,
-                    chapterNumber: chapter.chapterNumber,
-                    chapterTitle: chapterTitle,
+                    target: ShlokaActionTarget.fromVerse(
+                      verse,
+                      textSlug: textSlug,
+                      textName: textName,
+                      chapterNumber: chapter.chapterNumber,
+                      chapterTitle: chapterTitle,
+                    ),
                   ),
                 ),
               );

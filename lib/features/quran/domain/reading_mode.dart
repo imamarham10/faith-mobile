@@ -1,30 +1,16 @@
-/// How the reader lays a surah out, and the routes that follow from it.
+/// Where the Qur'an's two readers live, given a [ReadingMode].
+///
+/// The mode itself is faith-neutral and lives in `shared/reader` with the
+/// controller that remembers it — a reader who wants one verse to a page
+/// wants that for a śloka too. What is Qur'an-shaped is only the *routes*:
+/// `/quran/surah/:id` and `/quran/surah/:id/verses`, and the `ayah`/`from`
+/// query parameters they take. Re-exported so a caller that needs both the
+/// enum and a route still needs one import.
 library;
 
-/// The two ways this app reads the Qur'an.
-///
-/// Not a display preference like font size: the two modes are different
-/// screens with different navigation, so the choice has to resolve to a
-/// *route* before anything is opened. That is what [surahReadingRoute]
-/// below is for, and why the enum lives in `domain` next to it rather than
-/// beside the controller that persists it.
-enum ReadingMode {
-  /// `/quran/surah/:id` — the whole surah in one scroll.
-  continuous,
+import '../../../shared/reader/reading_mode.dart';
 
-  /// `/quran/surah/:id/verses` — one verse at a time, Back and Next.
-  verseByVerse;
-
-  String get label => switch (this) {
-    ReadingMode.continuous => 'Scrolling',
-    ReadingMode.verseByVerse => 'Verse by verse',
-  };
-
-  ReadingMode get other => switch (this) {
-    ReadingMode.continuous => ReadingMode.verseByVerse,
-    ReadingMode.verseByVerse => ReadingMode.continuous,
-  };
-}
+export '../../../shared/reader/reading_mode.dart';
 
 /// Where a tap on "read this surah" should land.
 ///

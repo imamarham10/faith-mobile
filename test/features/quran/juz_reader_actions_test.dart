@@ -7,7 +7,7 @@ import 'package:faith_mobile/features/quran/presentation/controllers/quran_home_
 import 'package:faith_mobile/features/quran/presentation/screens/juz_reader_screen.dart';
 import 'package:faith_mobile/features/quran/presentation/widgets/ayah_action_sheet.dart';
 import 'package:faith_mobile/features/quran/presentation/widgets/ayah_actions.dart';
-import 'package:faith_mobile/features/quran/presentation/widgets/verse_page.dart';
+import 'package:faith_mobile/features/quran/presentation/widgets/quran_verse_surface.dart';
 import 'package:faith_mobile/shared/widgets/poppy_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -254,7 +254,7 @@ void main() {
 
       expect(
         find.descendant(
-          of: find.byType(VerseSurface),
+          of: find.byType(QuranVerseSurface),
           matching: find.byType(AyahActionBar),
         ),
         findsNothing,

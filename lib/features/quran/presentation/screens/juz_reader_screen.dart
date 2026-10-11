@@ -13,12 +13,14 @@ import '../../domain/quran_verse_ref.dart';
 import '../controllers/juz_reader_controller.dart';
 import '../controllers/quran_home_controller.dart';
 import '../widgets/ayah_actions.dart';
-import '../widgets/verse_page.dart';
+import '../../../../shared/habit/activity_event.dart';
+import '../../../../shared/reader/verse_page.dart';
+import '../widgets/quran_verse_surface.dart';
 
 /// `/quran/juz/:number` — one verse at a time, back and forward.
 ///
 /// Everything this screen is made of — the verse surface, the progress
-/// rule, the Back/Next pair, the dwell recorder — lives in `verse_page.dart`
+/// rule, the Back/Next pair, the dwell recorder — lives in `shared/reader/verse_page.dart`
 /// and is shared with `/quran/surah/:id/verses`. See that file for why the
 /// verse sits on a page rather than in a card, and `AyahActionBar` for why
 /// the per-verse actions are visible here where the continuous reader hides
@@ -196,6 +198,8 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
         : quranVerseRef(surahId: verse.surahId, verseNumber: verse.verseNumber);
 
     return VerseReadRecorder(
+      activityType: ActivityType.quranVerse,
+      dedupeKey: sourceRef,
       sourceRef: sourceRef,
       logName: 'quran.juz',
       child: SingleChildScrollView(
@@ -242,7 +246,7 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
                       ),
                       child: VerseSkeleton(),
                     )
-                  : VerseSurface(
+                  : QuranVerseSurface(
                       key: ValueKey(state.cursor),
                       positionLine: _positionLine(
                         verse,

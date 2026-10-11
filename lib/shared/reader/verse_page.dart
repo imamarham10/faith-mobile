@@ -5,29 +5,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/preferences/arabic_script_text.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/arabic_text.dart';
-import '../../../../core/theme/faith_theme_extension.dart';
-import '../../../../shared/habit/activity_event.dart';
-import '../../../../shared/habit/activity_recorder.dart';
-import '../../../../shared/widgets/gap.dart';
-import '../../../../shared/widgets/poppy_button.dart';
-import '../../../../shared/widgets/poppy_skeleton.dart';
-import '../controllers/surah_controller.dart';
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/faith_theme_extension.dart';
+import '../habit/activity_event.dart';
+import '../habit/activity_recorder.dart';
+import '../widgets/gap.dart';
+import '../widgets/poppy_button.dart';
+import '../widgets/poppy_skeleton.dart';
 
 // The parts a verse-at-a-time reader is built from.
 //
-// Two screens read this way — `/quran/juz/:number` across a juz, and
-// `/quran/surah/:id/verses` within one surah — and they differ only in
-// where the verses come from. The juz reader pages a server endpoint by an
-// index that spans surahs; the surah reader already holds every verse from
-// one `GET /surah/:id`. That difference is real and lives in two separate
-// controllers; *everything the reader looks like* lives here, so the two
-// can never drift into two slightly different ways of showing one ayah.
+// Three screens read this way — `/quran/juz/:number` across a juz,
+// `/quran/surah/:id/verses` within one surah, and
+// `/quran/hindu-scripture/:slug/:chapter/verses` within one chapter of a
+// Hindu text — and they differ only in where the verses come from. The juz
+// reader pages a server endpoint by an index that spans surahs; the other
+// two already hold every verse from a single call. That difference is real
+// and lives in three separate controllers; *everything a verse reader looks
+// like* lives here, so they can never drift into three slightly different
+// ways of showing one verse.
+//
+// This file is faith-neutral and must stay so. It knows about verses,
+// pages, leading and progress — never about surahs, chapters, scripts or
+// which preferences controller the caller reads its font size from. Every
+// one of those is resolved by a thin per-vertical adapter
+// (`QuranVerseSurface`, `ShlokaVerseSurface`) that hands the results in.
 
-/// The verse surface — position line, Arabic, translation — on a page.
+/// The verse surface — position line, scripture, transliteration,
+/// translation — on a page.
 ///
 /// ## Why this is a page and not a card
 ///
@@ -48,49 +54,86 @@ import '../controllers/surah_controller.dart';
 ///
 /// What you can press sits *on* the page: the action bar and the Back/Next
 /// buttons are siblings of this widget, never children of it.
-class VerseSurface extends ConsumerWidget {
+///
+/// ## Why it takes a resolved style and not a preference
+///
+/// It used to be a [ConsumerWidget] that read the Qur'an reader's own
+/// preferences provider and resolved the Arabic script itself. Both of
+/// those are per-vertical — the Hindu reader has a different preferences
+/// controller and no script choice at all — so a shared widget that reached
+/// for either would have been shared in name only. The caller resolves
+/// them; this draws what it is given. [displayFontSize] is the one piece of
+/// that arithmetic kept here, because it is the piece the two readers must
+/// agree on.
+class VerseSurface extends StatelessWidget {
   const VerseSurface({
     super.key,
     required this.positionLine,
-    required this.textArabic,
-    this.textUthmani,
-    this.textIndopak,
+    required this.scripture,
+    required this.scriptureStyle,
+    this.scriptureDirection = TextDirection.ltr,
+    this.transliteration,
     this.translation,
+    this.showTranslation = true,
   });
 
-  /// How much larger the Arabic is here than in the continuous reader.
+  /// How much larger the scripture is here than in the continuous reader.
   ///
   /// Applied to the reader's own font-size preference rather than replacing
   /// it, so the settings slider still means what it says — this reader is a
   /// constant multiple louder, not a second opinion.
   ///
-  /// It earns the multiple by showing one verse: the surah reader has to
-  /// fit a whole surah into a scroll, where display-size Arabic would mean
-  /// three lines a screen, while here the verse *is* the screen and should
-  /// fill it the way an open mushaf does.
-  static const double _displayScale = 1.45;
+  /// It earns the multiple by showing one verse: a continuous reader has to
+  /// fit a whole surah or chapter into a scroll, where display-size script
+  /// would mean three lines a screen, while here the verse *is* the screen
+  /// and should fill it the way an open mushaf or pothi does.
+  static const double displayScale = 1.45;
 
-  /// Ceiling on the scaled size. The preference tops out at 40, which would
-  /// otherwise scale to 58 — and that is before [MediaQuery.textScaler],
-  /// which multiplies again for anyone reading at large system text.
-  static const double _maxArabicSize = 48;
+  /// Ceiling on the scaled size. The Qur'an preference tops out at 40, which
+  /// would otherwise scale to 58 — and that is before
+  /// [MediaQuery.textScaler], which multiplies again for anyone reading at
+  /// large system text.
+  static const double maxDisplayFontSize = 48;
 
-  /// "2. Al-Baqarah  ·  253/286" — built by the caller, because the two
-  /// readers know different amounts about where they are.
+  /// The scaled size for a reader whose continuous-mode preference is
+  /// [base]. Never smaller than [base]: a ceiling that bit below the
+  /// preference would make the pager *quieter* than the scroll it magnifies.
+  static double displayFontSize(double base) =>
+      (base * displayScale).clamp(base, maxDisplayFontSize);
+
+  /// "2. Al-Baqarah  ·  253/286" — built by the caller, because the readers
+  /// know different amounts about where they are.
   final String positionLine;
 
-  final String textArabic;
-  final String? textUthmani;
-  final String? textIndopak;
+  /// The verse in its own script, already resolved. For the Qur'an that
+  /// means the orthography the reader prefers; for a Hindu text, the
+  /// Devanagari the payload carries.
+  final String scripture;
+
+  /// The face and leading [scripture] is set in — from `arabicTextStyle` or
+  /// `sanskritTextStyle`, never built here. Scripts whose marks sit above
+  /// the line need `leadingDistribution: even`, and both of those helpers
+  /// apply it; a style assembled locally would not.
+  final TextStyle scriptureStyle;
+
+  /// RTL for Arabic, LTR for Devanagari. A parameter rather than a branch on
+  /// faith, so a third script is a new call site and not a new `if`.
+  final TextDirection scriptureDirection;
+
+  /// Romanisation under the scripture, where the payload carries one. The
+  /// Qur'an payload does not; Hindu verses usually do.
+  final String? transliteration;
+
   final String? translation;
 
+  /// The reader's "show translation" preference, resolved by the caller for
+  /// the same reason [scriptureStyle] is.
+  final bool showTranslation;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final palette = theme.extension<FaithThemeExtension>()!.palette;
-    final prefs = ref.watch(readerPreferencesControllerProvider);
-    final script = activeArabicScript(ref);
 
     final hairline = BorderSide(
       color: palette.outline.withValues(alpha: 0.12),
@@ -128,36 +171,31 @@ class VerseSurface extends ConsumerWidget {
             ),
             const Gap(AppSpacing.xl),
             Directionality(
-              textDirection: TextDirection.rtl,
+              textDirection: scriptureDirection,
               child: Text(
-                arabicTextForScript(
-                  script,
-                  textArabic: textArabic,
-                  textIndopak: textIndopak,
-                  textUthmani: textUthmani,
-                ),
-                // Centred, not right-aligned: a single ayah held alone on
-                // a page is a plate, and a mushaf sets those centred. The
-                // continuous reader stays right-aligned, where a ragged
-                // right edge between consecutive verses would read as a
-                // mistake.
+                scripture,
+                // Centred, not edge-aligned: a single verse held alone on a
+                // page is a plate, and both a mushaf and a printed pothi set
+                // those centred. The continuous readers stay edge-aligned,
+                // where a ragged edge between consecutive verses would read
+                // as a mistake.
                 textAlign: TextAlign.center,
-                style: arabicTextStyle(
-                  script,
-                  fontSize: (prefs.arabicFontSize * _displayScale).clamp(
-                    prefs.arabicFontSize,
-                    _maxArabicSize,
-                  ),
-                  // Leading comes from the script — Indo-Pak's stacked
-                  // sukuns and Uthmani's superscript alef need different
-                  // amounts of air, and at this size the difference is no
-                  // longer academic.
-                  color: cs.onSurface,
-                ),
+                style: scriptureStyle,
               ),
             ),
-            if (prefs.showTranslation &&
-                (translation?.isNotEmpty ?? false)) ...[
+            if (transliteration?.isNotEmpty ?? false) ...[
+              const Gap(AppSpacing.lg),
+              Text(
+                transliteration!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: palette.inkMuted,
+                  height: 1.5,
+                ),
+              ),
+            ],
+            if (showTranslation && (translation?.isNotEmpty ?? false)) ...[
               const Gap(AppSpacing.xl),
               Divider(
                 color: palette.outline.withValues(alpha: 0.12),
@@ -226,8 +264,8 @@ class VerseProgress extends StatelessWidget {
 }
 
 /// Shown only if a verse is not resident when the cursor lands on it — the
-/// juz controller prefetches a full page ahead and the surah reader holds
-/// every verse, so in normal reading this never appears.
+/// juz controller prefetches a full page ahead and the surah and chapter
+/// readers hold every verse, so in normal reading this never appears.
 class VerseSkeleton extends StatelessWidget {
   const VerseSkeleton({super.key});
 
@@ -407,28 +445,50 @@ class _VerseNavButtonState extends State<_VerseNavButton> {
   }
 }
 
-/// Records one `quran_verse` once the reader has *stayed* on [sourceRef].
+/// Records one activity once the reader has *stayed* on a verse.
 ///
 /// Renders [child] verbatim; it is a side-effect carrier, not a layout.
 ///
 /// ## Why a dwell and why this number
 ///
-/// The continuous reader hangs its recording off a 350ms scroll debounce,
+/// The continuous readers hang their recording off a 350ms scroll debounce,
 /// so a verse counts once the reader has come to rest on it and a fling
 /// past under-counts. The pager equivalent of coming to rest is the cursor
 /// staying put — so holding Next through forty verses records the one you
 /// stop on, not forty. Deliberately the same number rather than a tuned
-/// one: the readers must not disagree about what reading is.
+/// one: the readers must not disagree about what reading is, and neither
+/// must the two verticals.
 class VerseReadRecorder extends ConsumerStatefulWidget {
   const VerseReadRecorder({
     super.key,
-    required this.sourceRef,
+    required this.activityType,
+    required this.dedupeKey,
     required this.child,
-    this.logName = 'quran.verseReader',
+    this.sourceRef,
+    this.logName = 'reader.verse',
   });
 
-  /// `quran:<surah>:<ayah>` for the verse on screen, or null while a page
-  /// is in flight and no verse is rendered.
+  /// `quran_verse`, `gita_shloka` — what the user did. The event's faith
+  /// comes with it, so there is nothing else here to keep in step.
+  final ActivityType activityType;
+
+  /// Names this verse, for both "which verse is on screen" and
+  /// "this act, at most once a day". Null while a page is in flight and no
+  /// verse is rendered.
+  ///
+  /// It must come from the vertical's own ref helper — `quranVerseRef`,
+  /// `shlokaDedupeKey` — and never be assembled at the call site, so that a
+  /// verse read in the pager and the same verse read in the scroll collapse
+  /// to one event.
+  final String? dedupeKey;
+
+  /// The event's provenance, contract §1.6 — `quran:2:255`, `gita:2:47`.
+  ///
+  /// Separate from [dedupeKey] because the contract has no shape for some
+  /// verses this reader can legitimately show: §1.6 fixes a śloka reference
+  /// as `gita:<chapter>:<verse>` with no room for *which* text, so a verse
+  /// of any other Hindu text has no expressible reference and omits the
+  /// field. It must still dedupe, hence two parameters rather than one.
   final String? sourceRef;
 
   /// Names this reader in the log line a failed record writes.
@@ -481,18 +541,19 @@ class _VerseReadRecorderState extends ConsumerState<VerseReadRecorder> {
   /// font-size change, a page merging into state) can neither restart nor
   /// duplicate the countdown.
   void _watch() {
-    final sourceRef = widget.sourceRef;
-    if (sourceRef == _dwellingOn) return;
+    final key = widget.dedupeKey;
+    if (key == _dwellingOn) return;
 
     // The verse changed, so whatever was counting down belongs to a verse
     // the user has already left. It does not get to land.
     _timer?.cancel();
-    _dwellingOn = sourceRef;
-    if (sourceRef == null || _recorded.contains(sourceRef)) return;
+    _dwellingOn = key;
+    if (key == null || _recorded.contains(key)) return;
 
+    final sourceRef = widget.sourceRef;
     _timer = Timer(_dwell, () {
-      if (!mounted || !_recorded.add(sourceRef)) return;
-      unawaited(_record(sourceRef));
+      if (!mounted || !_recorded.add(key)) return;
+      unawaited(_record(key, sourceRef));
     });
   }
 
@@ -502,21 +563,21 @@ class _VerseReadRecorderState extends ConsumerState<VerseReadRecorder> {
   /// Nothing that goes wrong in the bookkeeping may reach the reader, so
   /// the `ref.read` (which can throw) and the future (which is documented
   /// not to, but is not this widget's to trust) are both inside the catch.
-  Future<void> _record(String sourceRef) async {
+  Future<void> _record(String dedupeKey, String? sourceRef) async {
     try {
       await ref
           .read(activityRecorderProvider)
           .record(
-            ActivityType.quranVerse,
+            widget.activityType,
             sourceRef: sourceRef,
-            // Identical to the key the surah reader derives for the same
-            // verse. Read 2:142 here and again there on the same day and
-            // it is one event, because it is one verse read.
-            dedupeKey: sourceRef,
+            // Identical to the key the continuous reader derives for the
+            // same verse. Read 2:142 here and again there on the same day
+            // and it is one event, because it is one verse read.
+            dedupeKey: dedupeKey,
           );
     } on Object catch (e, st) {
       developer.log(
-        'failed to record $sourceRef',
+        'failed to record $dedupeKey',
         name: widget.logName,
         error: e,
         stackTrace: st,
