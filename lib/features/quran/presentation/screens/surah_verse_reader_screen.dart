@@ -164,6 +164,17 @@ class _SurahVerseReaderScreenState
             return _Chrome(
               title: surah.nameEnglish,
               onSwitchMode: () => _switchToContinuous(verse.verseNumber),
+              // Pinned above Back/Next rather than scrolled with the verse
+              // — see the juz reader for why. 2:282 would otherwise put the
+              // actions three screens down.
+              actionBar: AyahActionBar(
+                target: AyahActionTarget.fromVerse(
+                  verse,
+                  surahId: widget.surahId,
+                  surahName: surah.nameEnglish,
+                  totalVerses: surah.verses.length,
+                ),
+              ),
               navBar: VerseNavBar(
                 canGoBack: cursor > 0,
                 canGoForward: cursor < window.length - 1,
@@ -216,15 +227,6 @@ class _SurahVerseReaderScreenState
                           translation: verse.translations.isNotEmpty
                               ? verse.translations.first.text
                               : null,
-                        ),
-                      ),
-                      const Gap(AppSpacing.lg),
-                      AyahActionBar(
-                        target: AyahActionTarget.fromVerse(
-                          verse,
-                          surahId: widget.surahId,
-                          surahName: surah.nameEnglish,
-                          totalVerses: surah.verses.length,
                         ),
                       ),
                     ],
@@ -284,12 +286,14 @@ class _Chrome extends StatelessWidget {
   const _Chrome({
     required this.title,
     required this.body,
+    this.actionBar,
     this.navBar,
     this.onSwitchMode,
   });
 
   final String title;
   final Widget body;
+  final Widget? actionBar;
   final Widget? navBar;
   final VoidCallback? onSwitchMode;
 
@@ -335,6 +339,11 @@ class _Chrome extends StatelessWidget {
           ),
         ),
         Expanded(child: body),
+        if (actionBar != null)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: actionBar,
+          ),
         if (navBar != null) navBar!,
       ],
     );

@@ -222,6 +222,31 @@ void main() {
       }
     });
 
+    testWidgets('stays on screen on the longest verse in the Qur\'an', (
+      tester,
+    ) async {
+      // 2:282 is 1,500 words. A row that scrolled with the verse would be
+      // three screens below the fold here — no more discoverable than the
+      // long-press it replaced, which is the whole claim this feature
+      // makes. So the row is pinned above Back/Next and never inside the
+      // reader's scroll view.
+      await pump(tester, FakeJuz.withLongVerses());
+
+      final scrollView = find.byType(SingleChildScrollView);
+      expect(scrollView, findsOneWidget, reason: 'the fixture must overflow');
+      expect(
+        find.ancestor(of: find.byType(AyahActionBar), matching: scrollView),
+        findsNothing,
+        reason: 'pinned, not scrolled with the verse',
+      );
+
+      // And it is genuinely within the viewport, not merely in the tree.
+      final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+      final rect = tester.getRect(find.byType(AyahActionBar));
+      expect(rect.top, greaterThanOrEqualTo(0));
+      expect(rect.bottom, lessThanOrEqualTo(screen.height));
+    });
+
     testWidgets('the action row is a sibling of the verse, never a child', (
       tester,
     ) async {

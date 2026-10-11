@@ -32,6 +32,18 @@ class JuzReaderScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = juzReaderControllerProvider(juzNumber);
     final async = ref.watch(provider);
+    final verse = async.valueOrNull?.currentVerse;
+
+    // The juz payload names the surah but does not say how long it is, and
+    // both "148/286" and the point at which recitation stops advancing need
+    // the 286. It comes from the 114-surah index, which the Qur'an tab has
+    // already loaded by the time anyone reaches this screen. If it somehow
+    // has not, the position degrades to "148" rather than holding the verse
+    // back for it.
+    final surahs = ref.watch(surahListProvider).valueOrNull;
+    final surahVerseCount = verse == null
+        ? null
+        : _verseCountFor(surahs, verse.surahId);
 
     return Scaffold(
       body: SafeArea(
@@ -46,7 +58,8 @@ class JuzReaderScreen extends ConsumerWidget {
             ),
             Expanded(
               child: async.when(
-                data: (state) => _ReaderBody(state: state),
+                data: (state) =>
+                    _ReaderBody(state: state, surahVerseCount: surahVerseCount),
                 loading: () => const _ReaderLoading(),
                 error: (e, _) => _ReaderError(
                   message: e.toString(),
@@ -54,6 +67,22 @@ class JuzReaderScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            // Pinned, not scrolled with the verse. 2:282 is 1,500 words and
+            // the longest ayah in the Qur'an; a row that sat under it would
+            // take three screens of scrolling to reach, which is no more
+            // discoverable than the long-press this replaced. Above the
+            // Back/Next pair the two make one bottom control stack, in the
+            // same place on every verse.
+            if (verse != null)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: AyahActionBar(
+                  target: AyahActionTarget.fromJuzVerse(
+                    verse,
+                    totalVerses: surahVerseCount,
+                  ),
+                ),
+              ),
             if (async.hasValue)
               VerseNavBar(
                 canGoBack: async.requireValue.canGoBack,
@@ -65,6 +94,14 @@ class JuzReaderScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static int? _verseCountFor(List<Surah>? surahs, int surahId) {
+    if (surahs == null) return null;
+    for (final s in surahs) {
+      if (s.id == surahId) return s.verseCount;
+    }
+    return null;
   }
 }
 
@@ -107,9 +144,14 @@ class _JuzTopBar extends StatelessWidget {
 }
 
 class _ReaderBody extends ConsumerStatefulWidget {
-  const _ReaderBody({required this.state});
+  const _ReaderBody({required this.state, required this.surahVerseCount});
 
   final JuzReaderState state;
+
+  /// Length of the surah the verse on screen belongs to, resolved by the
+  /// screen above (which also needs it for the action bar). Null only while
+  /// the 114-surah index has not loaded.
+  final int? surahVerseCount;
 
   @override
   ConsumerState<_ReaderBody> createState() => _ReaderBodyState();
@@ -152,17 +194,6 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
     final sourceRef = verse == null
         ? null
         : quranVerseRef(surahId: verse.surahId, verseNumber: verse.verseNumber);
-
-    // The juz payload names the surah but does not say how long it is, and
-    // both "148/286" and the point at which recitation stops advancing
-    // need the 286. It comes from the 114-surah index, which the Qur'an tab
-    // has already loaded by the time anyone reaches this screen. If it
-    // somehow has not, the position degrades to "148" rather than holding
-    // the verse back for it.
-    final surahs = ref.watch(surahListProvider).valueOrNull;
-    final surahVerseCount = verse == null
-        ? null
-        : _verseCountFor(surahs, verse.surahId);
 
     return VerseReadRecorder(
       sourceRef: sourceRef,
@@ -213,22 +244,16 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
                     )
                   : VerseSurface(
                       key: ValueKey(state.cursor),
-                      positionLine: _positionLine(verse, surahVerseCount),
+                      positionLine: _positionLine(
+                        verse,
+                        widget.surahVerseCount,
+                      ),
                       textArabic: verse.textArabic,
                       textUthmani: verse.textUthmani,
                       textIndopak: verse.textIndopak,
                       translation: verse.translation,
                     ),
             ),
-            if (verse != null) ...[
-              const Gap(AppSpacing.lg),
-              AyahActionBar(
-                target: AyahActionTarget.fromJuzVerse(
-                  verse,
-                  totalVerses: surahVerseCount,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -245,14 +270,6 @@ class _ReaderBodyState extends ConsumerState<_ReaderBody> {
         ? 'Verse ${verse.verseNumber}'
         : '${verse.verseNumber}/$surahVerseCount';
     return '${verse.surahId}. ${verse.surahName}  ·  $position';
-  }
-
-  static int? _verseCountFor(List<Surah>? surahs, int surahId) {
-    if (surahs == null) return null;
-    for (final s in surahs) {
-      if (s.id == surahId) return s.verseCount;
-    }
-    return null;
   }
 }
 
