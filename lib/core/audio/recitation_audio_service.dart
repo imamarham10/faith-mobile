@@ -59,6 +59,22 @@ class RecitationAudioService {
         // player does not hold a foreground service indefinitely.
         androidStopForegroundOnPause: true,
         androidNotificationClickStartsActivity: true,
+        // Must be false, and this is the only lever for it. `audio_service`'s
+        // `onDestroy` does:
+        //
+        //   ServiceCompat.stopForeground(this, config.androidResumeOnClick
+        //       ? STOP_FOREGROUND_DETACH : STOP_FOREGROUND_REMOVE);
+        //
+        // with its explicit `notificationManager.cancel(...)` commented out
+        // upstream. Left at its default of true, stopping playback *detaches*
+        // the notification and leaves it on the device for a recitation that
+        // is no longer playing. False gives STOP_FOREGROUND_REMOVE, so the
+        // notification goes when the service does.
+        //
+        // The cost is only that tapping the notification no longer resumes;
+        // tapping still opens the app, via
+        // `androidNotificationClickStartsActivity` above.
+        androidResumeOnClick: false,
         androidNotificationIcon: 'mipmap/ic_launcher',
       ),
     );
