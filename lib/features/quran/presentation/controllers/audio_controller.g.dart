@@ -6,11 +6,17 @@ part of 'audio_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$audioControllerHash() => r'0a0d841ce108bdbc0ee19b31687a5e2a237691a4';
+String _$audioControllerHash() => r'656cc9280f1f44356812a1bf3603a85f5c92069e';
 
-/// Shared `AudioPlayer` for the Quran feature.
+/// UI-facing state for the Quran recitation player.
 ///
-/// Plays one ayah at a time; auto-advances to the next ayah on completion.
+/// Playback itself lives in [RecitationAudioHandler], inside an
+/// `audio_service` foreground service, so recitation survives the screen
+/// going off. This controller owns only the state the reader renders, and
+/// forwards intent to the handler.
+///
+/// The handler is created on the first [playAyah] — never at build time, so
+/// opening the reader costs nothing and the launch path is untouched.
 ///
 /// Copied from [AudioController].
 @ProviderFor(AudioController)

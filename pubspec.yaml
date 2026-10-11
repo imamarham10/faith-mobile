@@ -45,11 +45,20 @@ dependencies:
   permission_handler: ^11.3.1
 
   # Audio (Quran recitation)
-  # NOTE: just_audio_background was removed — its underlying audio_service
-  # plugin throws PlatformException on init on this Android setup. Plain
-  # just_audio handles foreground playback. Lock-screen / background controls
-  # are a Phase 2 task.
+  #
+  # `audio_service` is used directly rather than via `just_audio_background`.
+  # That wrapper replaces `JustAudioPlatform.instance` globally and then
+  # throws `PlatformException("just_audio_background supports only a single
+  # player instance")` on the second `AudioPlayer()` — and this app has two
+  # (Quran recitation and Hindu chapter narration, both keepAlive providers).
+  # That is the PlatformException an earlier note blamed on "this Android
+  # setup". Used directly, `audio_service` does not touch just_audio's
+  # platform interface, so the narration player is unaffected.
   just_audio: ^0.9.42
+  audio_service: ^0.18.19
+  # Interruption + becoming-noisy events. Transitive via audio_service, but
+  # imported directly by the recitation handler, so declared directly.
+  audio_session: ^0.1.25
 
   # Calendar
   hijri: ^3.0.0
