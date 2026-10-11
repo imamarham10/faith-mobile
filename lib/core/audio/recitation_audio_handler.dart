@@ -225,7 +225,11 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> stop() async {
     await _release();
     onStopped?.call();
-    await super.stop();
+    // Deliberately no `super.stop()`. `BaseAudioHandler.stop` exists only to
+    // push an idle `playbackState`, which [_release] has already done.
+    // Pushing a second one re-enters `AudioService`'s state observer *after*
+    // it has torn the service down, and that re-posts the media notification
+    // for a surah nobody is playing.
   }
 
   /// End of the surah. Releases the service exactly as [stop] does — a
@@ -234,7 +238,6 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> _finish() async {
     await _release();
     onCompleted?.call();
-    await super.stop();
   }
 
   Future<void> _release() async {
@@ -245,7 +248,8 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
     queue.add(const []);
     mediaItem.add(null);
     // `idle` is what tells audio_service to leave the foreground and pull the
-    // notification. Without it the media notification outlives the player.
+    // notification: it stops the service on the *transition* into idle, so
+    // this must be the last state this handler emits for the track.
     playbackState.add(
       playbackState.value.copyWith(
         processingState: AudioProcessingState.idle,
