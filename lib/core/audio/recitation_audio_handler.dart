@@ -35,10 +35,21 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
 
   final List<StreamSubscription<Object?>> _subs = [];
 
-  /// Fires when playback ends for good — the listener pressed stop in the
-  /// notification, or the surah finished. The Riverpod controller clears its
-  /// state here so the mini player does not linger over a dead track.
+  /// Fires when the listener ends playback deliberately — the stop button in
+  /// the app or in the notification. The Riverpod controller clears its state
+  /// here so the mini player does not linger over a dead track.
   void Function()? onStopped;
+
+  /// Fires when the surah plays through to its last ayah. Distinct from
+  /// [onStopped]: the service is released either way, but reaching the end of
+  /// Al-Ahzab is not the same gesture as dismissing the player, and the
+  /// reader keeps its mini player so the listener can replay or move on.
+  void Function()? onCompleted;
+
+  /// Fires when playback fails after the first ayah — a dropped connection
+  /// four verses into a surah is the common case, not the edge case. Only
+  /// the initial load throws out of [load]; everything later surfaces here.
+  void Function(Object error)? onError;
 
   /// Fires with the 1-based ayah number whenever the queue advances, so
   /// in-app state follows auto-advance and lock-screen skips alike.
@@ -75,7 +86,9 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
       }),
     );
 
-    _subs.add(_player.playbackEventStream.listen(_broadcast, onError: _onError));
+    _subs.add(
+      _player.playbackEventStream.listen(_broadcast, onError: _onPlaybackError),
+    );
     _subs.add(
       _player.currentIndexStream.listen((index) {
         if (index == null) return;
@@ -89,7 +102,7 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
     // foregrounded on a finished queue.
     _subs.add(
       _player.processingStateStream.listen((s) {
-        if (s == ProcessingState.completed) unawaited(stop());
+        if (s == ProcessingState.completed) unawaited(_finish());
       }),
     );
   }
@@ -121,7 +134,7 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
     }
   }
 
-  void _onError(Object e, StackTrace st) {
+  void _onPlaybackError(Object e, StackTrace st) {
     developer.log('recitation playback error', error: e, stackTrace: st);
     playbackState.add(
       playbackState.value.copyWith(
@@ -129,6 +142,7 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
         playing: false,
       ),
     );
+    onError?.call(e);
   }
 
   /// Queues [surahId] and starts at [verseNumber].
@@ -196,6 +210,21 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
+    await _release();
+    onStopped?.call();
+    await super.stop();
+  }
+
+  /// End of the surah. Releases the service exactly as [stop] does — a
+  /// finished queue has no business holding a foreground service — but tells
+  /// the reader it finished rather than that it was dismissed.
+  Future<void> _finish() async {
+    await _release();
+    onCompleted?.call();
+    await super.stop();
+  }
+
+  Future<void> _release() async {
     _pausedByInterruption = false;
     _loadedSurah = null;
     await _player.stop();
@@ -210,8 +239,6 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
         updatePosition: Duration.zero,
       ),
     );
-    onStopped?.call();
-    await super.stop();
   }
 
   Future<void> dispose() async {

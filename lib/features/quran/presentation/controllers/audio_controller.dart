@@ -52,25 +52,46 @@ class AudioController extends _$AudioController {
     // A stop from the notification or lock screen has to clear in-app state
     // too, or the mini player lingers over a track that no longer exists.
     handler.onStopped = () => state = const AudioState();
+    // End of surah is not a dismissal: the service is released, but the
+    // reader keeps its mini player so the listener can replay from here.
+    handler.onCompleted = () =>
+        state = state.copyWith(isPlaying: false, isBuffering: false);
+    // A verse that fails to load partway through the surah never passes
+    // through playAyah's try/catch, so the message has to arrive here or the
+    // player sits silent with nothing explaining why.
+    handler.onError = (_) => state = state.copyWith(
+      isPlaying: false,
+      isBuffering: false,
+      errorMessage: 'Could not play this verse. Try again.',
+    );
     // Auto-advance and lock-screen skips both move the queue; the reader
     // follows from here rather than from a completion callback.
     handler.onAyahChanged = (ayah) {
       final name = state.surahName;
       final surah = state.currentSurah;
       if (name == null || surah == null) return;
-      state = state.copyWith(
-        currentAyah: ayah,
-        title: '$name · $surah:$ayah',
-      );
+      state = state.copyWith(currentAyah: ayah, title: '$name · $surah:$ayah');
     };
-    _stateSub = handler.player.playerStateStream.listen((s) {
-      state = state.copyWith(
-        isPlaying: s.playing,
-        isBuffering:
-            s.processingState == ProcessingState.loading ||
-            s.processingState == ProcessingState.buffering,
-      );
-    });
+    _stateSub = handler.player.playerStateStream.listen(
+      (s) {
+        state = state.copyWith(
+          isPlaying: s.playing,
+          isBuffering:
+              s.processingState == ProcessingState.loading ||
+              s.processingState == ProcessingState.buffering,
+        );
+      },
+      // Without this the stream error escapes to the zone and the UI never
+      // learns that playback died.
+      onError: (Object e, StackTrace st) {
+        developer.log('recitation stream error', error: e, stackTrace: st);
+        state = state.copyWith(
+          isPlaying: false,
+          isBuffering: false,
+          errorMessage: 'Could not play this verse. Try again.',
+        );
+      },
+    );
 
     _handler = handler;
     return handler;
@@ -116,7 +137,29 @@ class AudioController extends _$AudioController {
 
   Future<void> pause() async => _handler?.pause();
 
-  Future<void> resume() async => _handler?.play();
+  /// Resumes, or reloads if the surah already played through to its end —
+  /// the handler released the player there, so there is nothing to resume.
+  Future<void> resume() async {
+    final handler = _handler;
+    final surah = state.currentSurah;
+    final ayah = state.currentAyah;
+    final name = state.surahName;
+    final total = state.totalVerses;
+    if (handler == null ||
+        handler.player.processingState == ProcessingState.idle) {
+      if (surah == null || ayah == null || name == null || total == null) {
+        return;
+      }
+      await playAyah(
+        surahId: surah,
+        verseNumber: ayah,
+        surahName: name,
+        totalVerses: total,
+      );
+      return;
+    }
+    await handler.play();
+  }
 
   /// Ends playback: releases the foreground service and removes the media
   /// notification. [RecitationAudioHandler.onStopped] resets this state.
