@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'faith_id.dart';
@@ -76,6 +77,7 @@ class AppTheme {
       hoverColor: palette.primary.withValues(alpha: 0.04),
       extensions: [FaithThemeExtension.of(faith, palette)],
       appBarTheme: AppBarTheme(
+        systemOverlayStyle: systemOverlayStyleFor(brightness),
         backgroundColor: palette.surface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
@@ -264,4 +266,53 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// The one status-bar/navigation-bar style for a given theme brightness.
+///
+/// ## Why this exists in exactly one place
+///
+/// The status bar was visibly flickering — most obviously around the battery
+/// icon — whenever the app moved between screens, and its icons were washed
+/// out to the point of being unreadable on the cream ground.
+///
+/// Both came from the same gap. `main()` set only
+/// `statusBarColor: Colors.transparent` and named **no icon brightness**, and
+/// `AppBarTheme` set no `systemOverlayStyle` at all. So:
+///
+/// * The 51 screens with an `AppBar` got Flutter's fallback, which derives a
+///   style from the app bar's own background and publishes it through an
+///   `AnnotatedRegion`.
+/// * The five built on [PageMasthead] — Today, Qur'an, Hadiths, Practice and
+///   the Hindu scripture/stories homes — have no `AppBar`, so they published
+///   nothing and fell back to the global style with its unspecified icon
+///   colour.
+///
+/// Moving between the two kinds, and during the route transition where both
+/// are briefly in the tree, the platform overlay style changed back and forth.
+/// That is the flicker. A `StatefulShellRoute.indexedStack` keeps all five
+/// branches alive at once, which gives the competing regions every chance to
+/// swap.
+///
+/// Naming the style here, and applying it both to `AppBarTheme` and at the app
+/// root, means every screen publishes the *same* value — so there is nothing
+/// left to flicker between. Do not set a second overlay style anywhere else;
+/// re-introducing a competing one brings the flicker straight back.
+SystemUiOverlayStyle systemOverlayStyleFor(Brightness brightness) {
+  final isLight = brightness == Brightness.light;
+  return SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+    // Android reads these two: the *icons* must contrast with the page
+    // behind them, so a light page needs dark icons.
+    statusBarIconBrightness: isLight ? Brightness.dark : Brightness.light,
+    systemNavigationBarIconBrightness: isLight
+        ? Brightness.dark
+        : Brightness.light,
+    // iOS reads this one, and its meaning is inverted: it names the
+    // brightness of the *background*, not of the icons. Getting these two
+    // the same way round is the usual way this is shipped broken.
+    statusBarBrightness: brightness,
+  );
 }

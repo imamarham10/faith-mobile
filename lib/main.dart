@@ -25,12 +25,6 @@ Future<void> main() async {
     url: kApiBaseUrl,
     isReleaseBuild: kReleaseMode,
   );
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-    ),
-  );
   // Init local notifications early so the orchestrator can schedule on first
   // prayer-times load. Permission is requested lazily from the settings UI.
   await NotificationService.instance.init();
@@ -65,6 +59,16 @@ class FaithApp extends ConsumerWidget {
           darkTheme: AppTheme.dark(faith),
           themeMode: themeMode,
           routerConfig: router,
+          // Publishes the same overlay style the AppBarTheme carries, so the
+          // five PageMasthead screens (which have no AppBar, and so no
+          // AnnotatedRegion of their own) stop falling back to a style with
+          // no icon brightness. Without this the platform value changed as
+          // you moved between AppBar and AppBar-less screens, which is what
+          // was flickering the status bar. See `systemOverlayStyleFor`.
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            value: systemOverlayStyleFor(Theme.of(context).brightness),
+            child: child ?? const SizedBox.shrink(),
+          ),
           supportedLocales: const [Locale('en')],
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
