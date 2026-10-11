@@ -245,11 +245,17 @@ class RecitationAudioHandler extends BaseAudioHandler with SeekHandler {
     _pausedByInterruption = false;
     _loadedSurah = null;
     await _player.stop();
-    queue.add(const []);
-    mediaItem.add(null);
+    // Deliberately no `queue.add([])` / `mediaItem.add(null)` here.
+    // `audio_service` drains `queue`, `mediaItem` and `playbackState` in
+    // three independent `await for` loops, so a queue cleared here can reach
+    // the platform *after* the service has stopped and rebuild the
+    // notification it had just cancelled. Teardown therefore emits exactly
+    // one thing — the idle state below. `load` replaces the queue anyway,
+    // and a stale queue behind an inactive session is invisible.
+    //
     // `idle` is what tells audio_service to leave the foreground and pull the
     // notification: it stops the service on the *transition* into idle, so
-    // this must be the last state this handler emits for the track.
+    // this must be the last thing this handler emits for the track.
     playbackState.add(
       playbackState.value.copyWith(
         processingState: AudioProcessingState.idle,
