@@ -1,9 +1,10 @@
-import 'dart:async';
 import 'dart:developer' as developer;
 
-import 'package:just_audio/just_audio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/audio/narration_media.dart';
+import '../../../../core/audio/playback_audio_handler.dart';
+import '../../../../core/audio/playback_audio_service.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../data/dtos/audio_track.dart';
 import '../../data/hindu_scriptures_repository.dart';
@@ -14,43 +15,66 @@ part 'scripture_audio_controller.g.dart';
 /// Playback speeds, same cycle as the Quran module's mini player.
 const List<double> kScripturePlaybackSpeeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.75];
 
-/// Shared `AudioPlayer` for chapter narration.
+/// UI-facing state for the chapter-narration player.
+///
+/// A chapter narration is minutes of audio, so playback runs where Qur'an
+/// recitation runs: inside [PlaybackAudioHandler], in a real `mediaPlayback`
+/// foreground service. A raw `AudioPlayer` here left the process in the
+/// cached bucket (`oom_score_adj` 900 with narration audibly playing) and
+/// OEM memory cleaners killed it mid-chapter.
+///
+/// `audio_service` allows exactly one `AudioService.init()` per process, so
+/// that handler is shared with the Quran module rather than duplicated —
+/// which is also what makes the two mutually exclusive: starting a chapter
+/// takes the one player from recitation, and [PlaybackCallbacks.onDisplaced]
+/// takes the other vertical's mini player down.
 ///
 /// Unlike Quran's `AudioController` (hardcoded third-party mp3 host with
 /// no reciter choice), this hits the real backend narration endpoint and
 /// lets the user switch between available reciter/language tracks.
 @Riverpod(keepAlive: true)
 class ScriptureAudioController extends _$ScriptureAudioController {
-  AudioPlayer? _player;
-  StreamSubscription<PlayerState>? _stateSub;
+  PlaybackAudioHandler? _handler;
 
   @override
-  ScriptureAudioState build() {
-    ref.onDispose(() async {
-      await _stateSub?.cancel();
-      await _player?.dispose();
-    });
-    _ensurePlayer();
-    return const ScriptureAudioState();
-  }
+  ScriptureAudioState build() => const ScriptureAudioState();
 
-  AudioPlayer _ensurePlayer() {
-    if (_player != null) return _player!;
-    final player = AudioPlayer();
-    _stateSub = player.playerStateStream.listen((s) {
-      state = state.copyWith(
-        isPlaying: s.playing,
-        isBuffering:
-            s.processingState == ProcessingState.loading ||
-            s.processingState == ProcessingState.buffering,
-      );
-      if (s.processingState == ProcessingState.completed) {
-        state = state.copyWith(isPlaying: false, isBuffering: false);
-      }
-    });
-    _player = player;
-    return player;
-  }
+  /// What this controller wants to hear about while it owns the player.
+  ///
+  /// Handed over on every load rather than assigned to the handler once:
+  /// the handler keeps one callback set, belonging to whichever vertical is
+  /// playing, so these are installed at load time and dropped the moment
+  /// recitation takes the player.
+  PlaybackCallbacks get _callbacks => PlaybackCallbacks(
+    onPlayerState: ({required playing, required buffering}) =>
+        state = state.copyWith(isPlaying: playing, isBuffering: buffering),
+    // A stop from the notification or lock screen has to clear in-app state
+    // too, or the mini player lingers over a track that no longer exists.
+    onStopped: () => state = const ScriptureAudioState(),
+    // Reaching the end of the chapter releases the service but is not a
+    // dismissal: the mini player stays so the listener can replay or pick a
+    // different reciter.
+    onCompleted: () =>
+        state = state.copyWith(isPlaying: false, isBuffering: false),
+    // A chapter that drops its connection partway through never passes back
+    // through _play's try/catch, so the message has to arrive here.
+    onError: (Object e) => state = state.copyWith(
+      isPlaying: false,
+      isBuffering: false,
+      errorMessage: 'Could not play this narration. Try again.',
+    ),
+    // Qur'an recitation took the player.
+    onDisplaced: () => state = const ScriptureAudioState(),
+    // No onIndexChanged: narration is per-chapter, a queue of one, so there
+    // is no position in a playlist for the reader to follow.
+  );
+
+  /// The handler is never disposed from here — it belongs to
+  /// [AudioPlaybackService] and its lifetime is the process. It is also only
+  /// created on the first play, so opening the chapter reader neither binds
+  /// a media session nor pays for one on a cold start that never plays.
+  Future<PlaybackAudioHandler> _ensureHandler() async =>
+      _handler ??= await AudioPlaybackService.instance.ensureStarted();
 
   /// Fetches available narrations for a chapter and plays the first
   /// non-premium track (falling back to the first track if all are
@@ -94,12 +118,37 @@ class ScriptureAudioController extends _$ScriptureAudioController {
   }
 
   Future<void> _play(AudioTrack track) async {
-    final player = _ensurePlayer();
-    state = state.copyWith(currentTrack: track, isBuffering: true);
+    final slug = state.currentTextSlug;
+    final chapter = state.currentChapterNumber;
+    if (slug == null || chapter == null) return;
+    state = state.copyWith(
+      currentTrack: track,
+      isBuffering: true,
+      errorMessage: null,
+    );
     try {
-      await player.setUrl(_resolveUrl(track.url));
-      await player.setSpeed(state.speed);
-      await player.play();
+      final url = narrationUrl(track.url, webBaseUrl: kWebBaseUrl);
+      final handler = await _ensureHandler();
+      await handler.loadQueue(
+        owner: PlaybackOwner.scriptureNarration,
+        callbacks: _callbacks,
+        // The track url, not the chapter: switching reciter mid-chapter has
+        // to rebuild the source rather than seek within the old one. That
+        // swap keeps the session and the foreground service standing, so it
+        // costs a buffer, not a notification flicker.
+        contentKey: url,
+        items: [
+          narrationMediaItem(
+            url: url,
+            textSlug: slug,
+            chapterNumber: chapter,
+            chapterTitle: state.chapterTitle ?? 'Chapter $chapter',
+            reciterName: track.name,
+          ),
+        ],
+        initialIndex: 0,
+        speed: state.speed,
+      );
     } on Object catch (e, st) {
       developer.log('audio play failed', error: e, stackTrace: st);
       state = state.copyWith(
@@ -115,35 +164,37 @@ class ScriptureAudioController extends _$ScriptureAudioController {
     await _play(track);
   }
 
-  /// Some tracks (this backend's own narrations) are served as host-relative
-  /// paths (e.g. `/audio/gita/hi/ch01.mp3`) rather than absolute URLs —
-  /// unlike Quran's audio, which is always a hardcoded absolute third-party
-  /// URL. `just_audio.setUrl` requires an absolute URI, so a relative path
-  /// must be resolved to one or playback fails outright.
-  ///
-  /// These particular relative paths are NOT served by the API host —
-  /// confirmed live: `unified-faith-service.vercel.app/audio/...` 404s.
-  /// They're served by the web app's own static assets instead
-  /// (`www.siraat.website/audio/...` 200s), so resolve against
-  /// [kWebBaseUrl], not [kApiBaseUrl].
-  String _resolveUrl(String url) {
-    final uri = Uri.parse(url);
-    if (uri.hasScheme) return url;
-    return Uri.parse(kWebBaseUrl).resolveUri(uri).toString();
+  Future<void> pause() async => _handler?.pause();
+
+  /// Resumes, or reloads: the handler releases the player at the end of a
+  /// chapter, and recitation may have taken it over since.
+  Future<void> resume() async {
+    final handler = _handler;
+    final track = state.currentTrack;
+    if (handler == null ||
+        handler.isIdle ||
+        handler.owner != PlaybackOwner.scriptureNarration) {
+      if (track == null) return;
+      await _play(track);
+      return;
+    }
+    await handler.play();
   }
 
-  Future<void> pause() async => _player?.pause();
-
-  Future<void> resume() async => _player?.play();
-
+  /// Ends playback: releases the foreground service and removes the media
+  /// notification. [PlaybackCallbacks.onStopped] resets this state.
   Future<void> stop() async {
-    await _player?.stop();
-    state = const ScriptureAudioState();
+    final handler = _handler;
+    if (handler == null) {
+      state = const ScriptureAudioState();
+      return;
+    }
+    await handler.stop();
   }
 
   Future<void> setSpeed(double speed) async {
     state = state.copyWith(speed: speed);
-    await _player?.setSpeed(speed);
+    await _handler?.setSpeed(speed);
   }
 
   Future<void> cycleSpeed() async {

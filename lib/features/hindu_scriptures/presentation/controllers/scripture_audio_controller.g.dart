@@ -7,9 +7,21 @@ part of 'scripture_audio_controller.dart';
 // **************************************************************************
 
 String _$scriptureAudioControllerHash() =>
-    r'19b2906e8376711b6b274e86968c54ea319dab9e';
+    r'7c7355626044df2075ce8547c0d85fd347a77555';
 
-/// Shared `AudioPlayer` for chapter narration.
+/// UI-facing state for the chapter-narration player.
+///
+/// A chapter narration is minutes of audio, so playback runs where Qur'an
+/// recitation runs: inside [PlaybackAudioHandler], in a real `mediaPlayback`
+/// foreground service. A raw `AudioPlayer` here left the process in the
+/// cached bucket (`oom_score_adj` 900 with narration audibly playing) and
+/// OEM memory cleaners killed it mid-chapter.
+///
+/// `audio_service` allows exactly one `AudioService.init()` per process, so
+/// that handler is shared with the Quran module rather than duplicated —
+/// which is also what makes the two mutually exclusive: starting a chapter
+/// takes the one player from recitation, and [PlaybackCallbacks.onDisplaced]
+/// takes the other vertical's mini player down.
 ///
 /// Unlike Quran's `AudioController` (hardcoded third-party mp3 host with
 /// no reciter choice), this hits the real backend narration endpoint and

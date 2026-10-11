@@ -1,11 +1,10 @@
-import 'dart:async';
 import 'dart:developer' as developer;
 
-import 'package:just_audio/just_audio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/audio/recitation_audio_handler.dart';
-import '../../../../core/audio/recitation_audio_service.dart';
+import '../../../../core/audio/playback_audio_handler.dart';
+import '../../../../core/audio/playback_audio_service.dart';
+import '../../../../core/audio/recitation_media.dart';
 import '../../domain/audio_state.dart';
 
 // Re-exported from their new home in `core/audio` so existing imports of
@@ -22,84 +21,72 @@ const List<double> kPlaybackSpeeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.75];
 
 /// UI-facing state for the Quran recitation player.
 ///
-/// Playback itself lives in [RecitationAudioHandler], inside an
+/// Playback itself lives in [PlaybackAudioHandler], inside an
 /// `audio_service` foreground service, so recitation survives the screen
 /// going off. This controller owns only the state the reader renders, and
 /// forwards intent to the handler.
+///
+/// That handler is shared with Hindu chapter narration — one process, one
+/// `AudioService.init()`, one player — so starting a surah takes the player
+/// from a Gita chapter and vice versa. The hand-over arrives here as
+/// [PlaybackCallbacks.onDisplaced].
 ///
 /// The handler is created on the first [playAyah] — never at build time, so
 /// opening the reader costs nothing and the launch path is untouched.
 @Riverpod(keepAlive: true)
 class AudioController extends _$AudioController {
-  RecitationAudioHandler? _handler;
-  StreamSubscription<PlayerState>? _stateSub;
+  PlaybackAudioHandler? _handler;
 
   @override
-  AudioState build() {
-    ref.onDispose(() async {
-      // Only the subscription. The handler belongs to
-      // `RecitationAudioService`, whose lifetime is the process:
-      // `AudioService.init()` runs once and the instance is cached forever,
-      // so disposing it here would leave every later `ensureStarted()`
-      // handing back a dead player with no way to re-init.
-      await _stateSub?.cancel();
-    });
-    return const AudioState();
-  }
+  AudioState build() => const AudioState();
 
-  Future<RecitationAudioHandler> _ensureHandler() async {
-    final existing = _handler;
-    if (existing != null) return existing;
-
-    final handler = await RecitationAudioService.instance.ensureStarted();
-
-    // A stop from the notification or lock screen has to clear in-app state
-    // too, or the mini player lingers over a track that no longer exists.
-    handler.onStopped = () => state = const AudioState();
-    // End of surah is not a dismissal: the service is released, but the
-    // reader keeps its mini player so the listener can replay from here.
-    handler.onCompleted = () =>
-        state = state.copyWith(isPlaying: false, isBuffering: false);
-    // A verse that fails to load partway through the surah never passes
-    // through playAyah's try/catch, so the message has to arrive here or the
-    // player sits silent with nothing explaining why.
-    handler.onError = (_) => state = state.copyWith(
-      isPlaying: false,
-      isBuffering: false,
-      errorMessage: 'Could not play this verse. Try again.',
-    );
+  /// What this controller wants to hear about while it owns the player.
+  ///
+  /// Handed over on every load rather than assigned to the handler once:
+  /// the handler keeps one callback set, belonging to whichever vertical is
+  /// playing, so these are installed at load time and dropped the moment
+  /// narration takes the player.
+  PlaybackCallbacks get _callbacks => PlaybackCallbacks(
+    onPlayerState: ({required playing, required buffering}) =>
+        state = state.copyWith(isPlaying: playing, isBuffering: buffering),
     // Auto-advance and lock-screen skips both move the queue; the reader
-    // follows from here rather than from a completion callback.
-    handler.onAyahChanged = (ayah) {
+    // follows from here rather than from a completion callback. The handler
+    // counts queue positions from zero, ayahs run from one.
+    onIndexChanged: (index) {
       final name = state.surahName;
       final surah = state.currentSurah;
       if (name == null || surah == null) return;
+      final ayah = index + 1;
       state = state.copyWith(currentAyah: ayah, title: '$name · $surah:$ayah');
-    };
-    _stateSub = handler.player.playerStateStream.listen(
-      (s) {
-        state = state.copyWith(
-          isPlaying: s.playing,
-          isBuffering:
-              s.processingState == ProcessingState.loading ||
-              s.processingState == ProcessingState.buffering,
-        );
-      },
-      // Without this the stream error escapes to the zone and the UI never
-      // learns that playback died.
-      onError: (Object e, StackTrace st) {
-        developer.log('recitation stream error', error: e, stackTrace: st);
-        state = state.copyWith(
-          isPlaying: false,
-          isBuffering: false,
-          errorMessage: 'Could not play this verse. Try again.',
-        );
-      },
-    );
+    },
+    // A stop from the notification or lock screen has to clear in-app state
+    // too, or the mini player lingers over a track that no longer exists.
+    onStopped: () => state = const AudioState(),
+    // End of surah is not a dismissal: the service is released, but the
+    // reader keeps its mini player so the listener can replay from here.
+    onCompleted: () =>
+        state = state.copyWith(isPlaying: false, isBuffering: false),
+    // A verse that fails to load partway through the surah never passes
+    // through playAyah's try/catch, so the message has to arrive here or the
+    // player sits silent with nothing explaining why.
+    onError: (Object e) => state = state.copyWith(
+      isPlaying: false,
+      isBuffering: false,
+      errorMessage: 'Could not play this verse. Try again.',
+    ),
+    // Hindu narration took the player. Nothing is playing here any more and
+    // nothing will, so the mini player comes down rather than freezing
+    // mid-surah over audio the listener can no longer hear.
+    onDisplaced: () => state = const AudioState(),
+  );
 
-    _handler = handler;
-    return handler;
-  }
+  /// The handler is never disposed from here. It belongs to
+  /// [AudioPlaybackService], whose lifetime is the process:
+  /// `AudioService.init()` runs once and the instance is cached forever, so
+  /// disposing it from a provider would leave every later `ensureStarted()`
+  /// handing back a dead player with no way to re-init.
+  Future<PlaybackAudioHandler> _ensureHandler() async =>
+      _handler ??= await AudioPlaybackService.instance.ensureStarted();
 
   /// Loads + plays the given ayah, queueing the rest of the surah behind it.
   ///
@@ -122,11 +109,16 @@ class AudioController extends _$AudioController {
     );
     try {
       final handler = await _ensureHandler();
-      await handler.load(
-        surahId: surahId,
-        verseNumber: verseNumber,
-        surahName: surahName,
-        totalVerses: totalVerses,
+      await handler.loadQueue(
+        owner: PlaybackOwner.quranRecitation,
+        callbacks: _callbacks,
+        contentKey: surahId,
+        items: recitationQueue(
+          surahId: surahId,
+          surahName: surahName,
+          totalVerses: totalVerses,
+        ),
+        initialIndex: verseNumber - 1,
         speed: state.speed,
       );
     } on Object catch (e, st) {
@@ -141,8 +133,9 @@ class AudioController extends _$AudioController {
 
   Future<void> pause() async => _handler?.pause();
 
-  /// Resumes, or reloads if the surah already played through to its end —
-  /// the handler released the player there, so there is nothing to resume.
+  /// Resumes, or reloads: if the surah played through to its end the handler
+  /// released the player, and if narration has taken the player over since
+  /// there is nothing of ours left on it either.
   Future<void> resume() async {
     final handler = _handler;
     final surah = state.currentSurah;
@@ -150,7 +143,8 @@ class AudioController extends _$AudioController {
     final name = state.surahName;
     final total = state.totalVerses;
     if (handler == null ||
-        handler.player.processingState == ProcessingState.idle) {
+        handler.isIdle ||
+        handler.owner != PlaybackOwner.quranRecitation) {
       if (surah == null || ayah == null || name == null || total == null) {
         return;
       }
@@ -166,7 +160,7 @@ class AudioController extends _$AudioController {
   }
 
   /// Ends playback: releases the foreground service and removes the media
-  /// notification. [RecitationAudioHandler.onStopped] resets this state.
+  /// notification. [PlaybackCallbacks.onStopped] resets this state.
   Future<void> stop() async {
     final handler = _handler;
     if (handler == null) {

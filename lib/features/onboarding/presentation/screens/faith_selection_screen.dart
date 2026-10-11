@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/audio/playback_audio_service.dart';
 import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_motion.dart';
@@ -33,6 +34,13 @@ class _FaithSelectionScreenState extends ConsumerState<FaithSelectionScreen> {
   Future<void> _continue() async {
     final faith = _selected;
     if (faith == null) return;
+    // Scripture audio belongs to the vertical it was started from: its mini
+    // player is the only in-app control it has, and that mini player is
+    // about to stop existing. Leaving the session running would strand a
+    // Gita narration notification over the Islam vertical with nothing in
+    // the app able to answer it. No-op when nothing ever played — this must
+    // not be what binds a media session.
+    await AudioPlaybackService.instance.stopIfRunning();
     await ref.read(selectedFaithProvider.notifier).set(faith);
     if (!mounted) return;
     if (widget.standalone) {

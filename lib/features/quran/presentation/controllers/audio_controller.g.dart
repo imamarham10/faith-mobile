@@ -6,14 +6,19 @@ part of 'audio_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$audioControllerHash() => r'656cc9280f1f44356812a1bf3603a85f5c92069e';
+String _$audioControllerHash() => r'dea655cba5401fb0d8911d2fd76f9f704af67678';
 
 /// UI-facing state for the Quran recitation player.
 ///
-/// Playback itself lives in [RecitationAudioHandler], inside an
+/// Playback itself lives in [PlaybackAudioHandler], inside an
 /// `audio_service` foreground service, so recitation survives the screen
 /// going off. This controller owns only the state the reader renders, and
 /// forwards intent to the handler.
+///
+/// That handler is shared with Hindu chapter narration — one process, one
+/// `AudioService.init()`, one player — so starting a surah takes the player
+/// from a Gita chapter and vice versa. The hand-over arrives here as
+/// [PlaybackCallbacks.onDisplaced].
 ///
 /// The handler is created on the first [playAyah] — never at build time, so
 /// opening the reader costs nothing and the launch path is untouched.
