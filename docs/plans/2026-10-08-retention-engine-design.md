@@ -126,7 +126,13 @@ model DailyRollup {                        // cache. deletable, recomputable
   @@id([userId, faithId, localDay])
 }
 
-model UserGoal     { userId, faithId, goalType, target, updatedAt }
+// CORRECTED 2026-10-08: effective-dated and append-only, NOT one mutable row.
+// A single current row cannot be replayed: recomputing a past day would use
+// *today's* target, so lowering the goal to 1 retroactively manufactures a
+// 90-day streak, and "delete the rollups, replay, get identical state" — the
+// property that justifies event sourcing at all — becomes false.
+// Rollup and replay read the goal in force on the day being computed.
+model UserGoal     { userId, faithId, goalType, target, effectiveFrom, effectiveTo? }
 model StreakState  { userId, faithId, current, longest, lastGoalMetDay, freezesLeft, freezeResetOn }
 model Challenge    { id, slug, faithId?, kind, activityType, target,
                      title, artworkKey, startsAt, endsAt, recurrence }
@@ -147,7 +153,11 @@ Migrations land in the `faith` schema on RDS; run `prisma migrate deploy` agains
 
 ```
 POST /activity/events          batch, idempotent on clientEventId
-GET  /activity/today           rollup + streak + goal in one call
+GET  /activity/today?timezone= rollup + streak + goal in one call
+                               timezone is REQUIRED — without it the server
+                               cannot know which day "today" is, and a Kolkata
+                               user at 02:00 IST gets yesterday's card and a
+                               streak that looks broken
 GET  /activity/history?from&to week strip and month dot-grid
 PUT  /activity/goal
 GET  /challenges               active, enrollment state, participant count
@@ -201,7 +211,11 @@ against wall-clock time and cost a day of debugging. This is the same class of b
 silently kills a 90-day run and surfaces as a 1-star review rather than a stack trace.
 
 So the device stamps `localDay` and `timezone` on every event, and the server stores what the device
-says, validated to within ±1 day of its own derivation. Three things then follow for free: a user who
+says, validated as `|localDay − dateOf(occurredAt, UTC)| ≤ 1` — derived from the event's **own**
+`occurredAt`, never from the server's wall clock at the moment of arrival. That distinction is not a
+detail: events queue offline and flush days later, so validating against arrival time would reject
+every event the offline queue exists to carry. ±1 rather than ±0 is exactly the slack that covers
+UTC−12…UTC+14. Three things then follow for free: a user who
 flies Delhi→London does not lose a day; DST cannot produce a 23-hour day that drops a goal; a phone
 set to the wrong timezone is at least internally consistent.
 
