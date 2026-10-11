@@ -5,6 +5,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'notification_service.dart';
+import '../telemetry/siraat_analytics.dart';
+import '../telemetry/telemetry.dart';
+import '../telemetry/telemetry_vocabulary.dart';
 
 part 'permission_gate.g.dart';
 
@@ -120,7 +123,9 @@ class PermissionGate {
   /// appeared.
   Future<bool> askNow() async {
     try {
+      _analytics.permissionRequested(AnalyticsPermission.notifications);
       final granted = await _ask();
+      _reportOutcome(granted);
       await _store.writeBool(hasAskedKey, true);
       return granted;
     } on Object catch (e, st) {
@@ -134,6 +139,27 @@ class PermissionGate {
     }
   }
 
+  /// Reports how the OS dialog ended.
+  ///
+  /// Only two outcomes are reachable: the ask returns a bool, so
+  /// `permanently_denied` cannot be told apart from `denied` here. That is
+  /// fine — the number worth knowing is what share of users never see a
+  /// prayer reminder, and both values answer it. Nothing about *which*
+  /// prayers, or where, is involved.
+  void _reportOutcome(bool granted) {
+    Telemetry.instance.analytics.permissionResolved(
+      AnalyticsPermission.notifications,
+      granted
+          ? AnalyticsPermissionOutcome.granted
+          : AnalyticsPermissionOutcome.denied,
+    );
+  }
+
+  /// The live façade, read per call rather than captured: the kill switch
+  /// swaps the sink underneath it, and a gate built at startup would
+  /// otherwise keep sending after the user turned collection off.
+  SiraatAnalytics get _analytics => Telemetry.instance.analytics;
+
   /// Whether the one automatic prompt has already been shown.
   Future<bool> get wasAsked async =>
       await _store.readBool(hasAskedKey) ?? false;
@@ -141,7 +167,9 @@ class PermissionGate {
   Future<bool> _askOnce() async {
     try {
       if (await wasAsked) return false;
+      _analytics.permissionRequested(AnalyticsPermission.notifications);
       final granted = await _ask();
+      _reportOutcome(granted);
       await _store.writeBool(hasAskedKey, true);
       developer.log(
         'notification permission asked after first prayer log: '

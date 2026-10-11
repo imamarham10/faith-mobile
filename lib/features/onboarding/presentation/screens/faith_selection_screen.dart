@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/audio/playback_audio_service.dart';
+import '../../../../core/telemetry/telemetry.dart';
 import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_motion.dart';
@@ -47,6 +50,16 @@ class _FaithSelectionScreenState extends ConsumerState<FaithSelectionScreen> {
       context.pop();
       return;
     }
+    // Logged with no parameter, and it must stay that way: *which* faith
+    // was chosen does not go to Google. This answers "did they get past
+    // the picker", which is a funnel question. "How many chose which" is a
+    // query against our own database, where the answer already lives and
+    // where our own deletion path governs it.
+    //
+    // Fired only on the onboarding path — the standalone switch-faith
+    // screen returns above, and a faith switch by an existing user is
+    // not an onboarding step.
+    unawaited(ref.read(analyticsProvider).onboardingFaithChosen());
     await ref.read(onboardingDoneProvider.notifier).markDone();
     if (!mounted) return;
     context.go(Routes.login);

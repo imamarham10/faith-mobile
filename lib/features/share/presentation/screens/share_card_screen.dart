@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -8,6 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../../../../core/telemetry/telemetry.dart';
+import '../../../../core/telemetry/telemetry_vocabulary.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_radius.dart';
@@ -52,8 +56,18 @@ class _ShareCardScreenState extends ConsumerState<ShareCardScreen> {
       await Share.shareXFiles([
         XFile(file.path, mimeType: 'image/png'),
       ], text: _shareText(widget.content));
+      // The sheet closed without an error. Deliberately not a claim that
+      // the user posted it — share_plus cannot tell us that on Android —
+      // and deliberately parameterless: "verse" versus "shloka" would
+      // imply the user's faith, which is the one inference this layer
+      // must never make possible.
+      unawaited(ref.read(analyticsProvider).shareCompleted());
     } on Object catch (e, st) {
       developer.log('share failed', error: e, stackTrace: st);
+      unawaited(ref.read(analyticsProvider).appError(AnalyticsErrorArea.share));
+      unawaited(
+        Telemetry.instance.recordError(e, st, area: AnalyticsErrorArea.share),
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

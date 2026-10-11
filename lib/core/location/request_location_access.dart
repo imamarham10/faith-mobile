@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../theme/app_spacing.dart';
+import '../telemetry/telemetry.dart';
+import '../telemetry/telemetry_vocabulary.dart';
 import 'location_disclosure.dart';
 import 'location_service.dart';
 
@@ -25,21 +29,48 @@ Future<bool> requestLocationAccess(BuildContext context, WidgetRef ref) async {
     disclosureAccepted: await disclosure.wasAccepted,
   );
 
+  final analytics = Telemetry.instance.analytics;
+
   switch (step) {
     case LocationAccessStep.ready:
       return true;
 
     case LocationAccessStep.showDisclosure:
       if (!context.mounted) return false;
+      // A prompt flow is now actually starting, which is the denominator
+      // worth having: how many people we ask, versus how many end up
+      // granting. The coordinate itself is never involved — there is no
+      // analytics parameter in this app capable of carrying one.
+      unawaited(analytics.permissionRequested(AnalyticsPermission.location));
       final accepted = await showLocationDisclosure(context);
-      if (!accepted) return false;
+      if (!accepted) {
+        // Declined at *our* disclosure, before the OS dialog was ever
+        // shown. Worth separating from an OS denial: one is our copy
+        // failing to persuade, the other is the system dialog.
+        unawaited(
+          analytics.permissionResolved(
+            AnalyticsPermission.location,
+            AnalyticsPermissionOutcome.dismissed,
+          ),
+        );
+        return false;
+      }
       await disclosure.accept();
 
     case LocationAccessStep.requestPermission:
-      break;
+      unawaited(analytics.permissionRequested(AnalyticsPermission.location));
   }
 
-  return service.requestPermission();
+  final granted = await service.requestPermission();
+  unawaited(
+    analytics.permissionResolved(
+      AnalyticsPermission.location,
+      granted
+          ? AnalyticsPermissionOutcome.granted
+          : AnalyticsPermissionOutcome.denied,
+    ),
+  );
+  return granted;
 }
 
 /// Presents the prominent disclosure. Resolves to whether the user agreed to

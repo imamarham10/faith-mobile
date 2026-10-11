@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/telemetry/telemetry.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
@@ -57,6 +58,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // AutomaticKeepAliveClientMixin, so per-page State could be disposed once
   // a page scrolls out of the viewport/cache extent.
   bool? _remindersGranted;
+
+  @override
+  void initState() {
+    super.initState();
+    // Slide 0 is the denominator for onboarding drop-off. This whole
+    // stretch of the app happens before there is a signed-in user, so it
+    // is the one funnel our own activity stream structurally cannot
+    // reconstruct — which is the only reason it is measured here at all.
+    Telemetry.instance.analytics.onboardingSlideViewed(0);
+  }
 
   Future<void> _enableReminders() async {
     HapticFeedback.mediumImpact();
@@ -134,7 +145,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pages,
-                onPageChanged: (i) => setState(() => _index = i),
+                onPageChanged: (i) {
+                  Telemetry.instance.analytics.onboardingSlideViewed(i);
+                  setState(() => _index = i);
+                },
                 itemCount: _slides.length,
                 itemBuilder: (_, i) => _Slide(
                   data: _slides[i],

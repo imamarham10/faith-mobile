@@ -10,6 +10,8 @@ import 'core/notifications/notification_service.dart';
 import 'core/preferences/selected_faith.dart';
 import 'core/preferences/theme_mode.dart';
 import 'core/router/app_router.dart';
+import 'core/telemetry/telemetry.dart';
+import 'core/telemetry/telemetry_scope.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/faith_id.dart';
 import 'core/time/device_timezone.dart';
@@ -17,6 +19,20 @@ import 'shared/habit/activity_flush_scheduler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Crash reporting, first and unawaited.
+  //
+  // First, because a crash in the next three lines is the kind worth
+  // catching most and the handlers have to be installed before it
+  // happens. Unawaited, because this must not join the cold-start
+  // budget: `bootstrap()` is synchronous and I/O-free — it assigns three
+  // error handlers and fires Firebase's own init into the background, so
+  // `runApp` is reached at exactly the moment it was before. Errors
+  // raised while that init is still in flight are buffered and replayed.
+  //
+  // It is also a no-op in debug, profile and under `flutter test`: see
+  // `Telemetry.isEligibleBuild`. Nothing reports from a build you are
+  // looking at.
+  Telemetry.instance.bootstrap();
   // Backstop to the const assert in dio_client.dart: that one stops the build
   // when API_BASE_URL was never passed, this one catches a define that was
   // passed but is unusable in a release binary (loopback host, plain http).
@@ -45,36 +61,42 @@ class FaithApp extends ConsumerWidget {
     final themeMode =
         ref.watch(themeModePrefProvider).valueOrNull ?? ThemeMode.system;
     final faith = ref.watch(selectedFaithProvider).valueOrNull ?? FaithId.islam;
-    // Both wrappers are side-effect carriers that render their child
-    // verbatim. ActivityFlushScope is outermost so the queue starts
-    // draining on the very first frame, before any screen has mounted —
-    // rows can survive a kill, so there may be events waiting from a
-    // previous run that no lifecycle event will ever announce.
-    return ActivityFlushScope(
-      child: NotificationOrchestrator(
-        child: MaterialApp.router(
-          title: 'Siraat',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(faith),
-          darkTheme: AppTheme.dark(faith),
-          themeMode: themeMode,
-          routerConfig: router,
-          // Publishes the same overlay style the AppBarTheme carries, so the
-          // five PageMasthead screens (which have no AppBar, and so no
-          // AnnotatedRegion of their own) stop falling back to a style with
-          // no icon brightness. Without this the platform value changed as
-          // you moved between AppBar and AppBar-less screens, which is what
-          // was flickering the status bar. See `systemOverlayStyleFor`.
-          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
-            value: systemOverlayStyleFor(Theme.of(context).brightness),
-            child: child ?? const SizedBox.shrink(),
+    // All three wrappers are side-effect carriers that render their child
+    // verbatim. ActivityFlushScope sits above the orchestrator so the queue
+    // starts draining on the very first frame, before any screen has
+    // mounted — rows can survive a kill, so there may be events waiting
+    // from a previous run that no lifecycle event will ever announce.
+    // TelemetryScope is outermost only because it needs the same `router`
+    // the MaterialApp is given; it costs one `addListener` and nothing per
+    // frame.
+    return TelemetryScope(
+      router: router,
+      child: ActivityFlushScope(
+        child: NotificationOrchestrator(
+          child: MaterialApp.router(
+            title: 'Siraat',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(faith),
+            darkTheme: AppTheme.dark(faith),
+            themeMode: themeMode,
+            routerConfig: router,
+            // Publishes the same overlay style the AppBarTheme carries, so
+            // the five PageMasthead screens (which have no AppBar, and so no
+            // AnnotatedRegion of their own) stop falling back to a style with
+            // no icon brightness. Without this the platform value changed as
+            // you moved between AppBar and AppBar-less screens, which is what
+            // was flickering the status bar. See `systemOverlayStyleFor`.
+            builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+              value: systemOverlayStyleFor(Theme.of(context).brightness),
+              child: child ?? const SizedBox.shrink(),
+            ),
+            supportedLocales: const [Locale('en')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
           ),
-          supportedLocales: const [Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
         ),
       ),
     );

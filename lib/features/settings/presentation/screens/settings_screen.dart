@@ -15,6 +15,7 @@ import '../../../../core/preferences/notification_preferences.dart';
 import '../../../../core/preferences/selected_faith.dart';
 import '../../../../core/preferences/theme_mode.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/telemetry/telemetry.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/arabic_text.dart';
 import '../../../../core/theme/faith_id.dart';
@@ -52,6 +53,12 @@ class SettingsScreen extends ConsumerWidget {
     final script =
         ref.watch(arabicScriptControllerProvider).valueOrNull ??
         ArabicScript.indoPak;
+    // Defaults to on while the preference is still being read. The switch
+    // reflects the stored choice, not whether anything is being sent right
+    // now — in a debug build nothing is, and a toggle that showed "off"
+    // for that reason would be lying about the setting.
+    final diagnosticsOn =
+        ref.watch(telemetryEnabledProvider).valueOrNull ?? true;
 
     return Scaffold(
       appBar: AppBar(
@@ -192,6 +199,30 @@ class SettingsScreen extends ConsumerWidget {
                 style: theme.textTheme.bodyLarge?.copyWith(color: cs.error),
               ),
               onTap: () => _confirmSignOut(context, ref),
+            ),
+
+            // `const`, unlike its neighbours: the existing section
+            // headers predate the lint and are left as they are rather
+            // than swept into this change.
+            const _SectionHeader(label: 'Privacy'),
+            SwitchListTile.adaptive(
+              value: diagnosticsOn,
+              secondary: const Icon(Icons.bug_report_outlined),
+              title: const Text('Share crash reports'),
+              // Says exactly what is sent and, more importantly, what is
+              // not. The two sentences are the user-facing half of the
+              // rule the code enforces: Siraat already records prayers,
+              // verses and reflections on its own account system, and
+              // none of that is duplicated to anyone else.
+              subtitle: const Text(
+                'Sends crashes and anonymous usage counts so we can fix '
+                'what breaks. Never your reflections, your moods, or which '
+                'faith you follow.',
+              ),
+              onChanged: (v) {
+                HapticFeedback.mediumImpact();
+                ref.read(telemetryEnabledProvider.notifier).set(v);
+              },
             ),
 
             _SectionHeader(label: 'About'),

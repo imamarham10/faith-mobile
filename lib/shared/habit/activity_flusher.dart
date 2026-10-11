@@ -63,6 +63,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/providers.dart';
+import '../../core/telemetry/telemetry.dart';
+import '../../core/telemetry/telemetry_vocabulary.dart';
 import 'activity_event.dart';
 import 'local_event_queue.dart';
 
@@ -172,6 +174,22 @@ class ActivityFlusher {
     return future.whenComplete(() => _inFlight = null);
   }
 
+  /// Reports a local-queue failure: the coarse area to Analytics, the
+  /// exception and stack to Crashlytics. Fire-and-forget, because a flush
+  /// must never be able to fail on account of its own telemetry.
+  void _reportSyncFailure(Object error, StackTrace stack) {
+    unawaited(
+      Telemetry.instance.analytics.appError(AnalyticsErrorArea.activitySync),
+    );
+    unawaited(
+      Telemetry.instance.recordError(
+        error,
+        stack,
+        area: AnalyticsErrorArea.activitySync,
+      ),
+    );
+  }
+
   Future<FlushOutcome> _flush() async {
     final LocalEventQueue queue;
     try {
@@ -183,6 +201,13 @@ class ActivityFlusher {
         error: e,
         stackTrace: st,
       );
+      // A local queue that cannot be opened is silently lost worship
+      // history: the events are already recorded on this device, and the
+      // server will never hear about them, so no amount of looking at
+      // server-side data would show this happening. That is exactly the
+      // kind of client-side failure analytics is here for — and only the
+      // *area*, never the rows.
+      _reportSyncFailure(e, st);
       return const FlushOutcome(retained: true);
     }
 
@@ -204,6 +229,7 @@ class ActivityFlusher {
           error: e,
           stackTrace: st,
         );
+        _reportSyncFailure(e, st);
         return FlushOutcome(
           accepted: accepted,
           duplicates: duplicates,

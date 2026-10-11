@@ -95,6 +95,9 @@ dependencies:
   # a transitive dependency can vanish under a bump of whatever pulled it.
   uuid: ^4.5.1
   connectivity_plus: ^7.3.1
+  firebase_core: ^4.15.0
+  firebase_crashlytics: ^5.4.0
+  firebase_analytics: ^12.6.0
 
 dev_dependencies:
   flutter_test:

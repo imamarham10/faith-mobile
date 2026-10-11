@@ -19,6 +19,34 @@ if (keystorePropertiesFile.exists()) {
 }
 val hasReleaseKeystore = keystorePropertiesFile.exists()
 
+// Firebase config — the same shape of guard as the keystore block above,
+// for the same reason: the file is not in this repository.
+//
+// `google-services.json` identifies a Firebase project, and creating one
+// needs the owner's Google account, so it could not be generated as part
+// of this change. The `com.google.gms.google-services` plugin hard-fails
+// the build when that file is absent, which would make a fresh clone
+// unbuildable — so both Firebase plugins are applied only when it is
+// there. With it absent the app still builds and runs identically; it
+// simply reports nothing (`lib/core/telemetry/telemetry.dart` catches the
+// resulting `Firebase.initializeApp()` failure and leaves collection off).
+//
+// To turn reporting on: create the Firebase project, add an Android app
+// with package `com.faith.companion.faith_mobile`, download
+// `google-services.json`, and drop it at `android/app/google-services.json`.
+// Nothing else changes — no code edit, no flag.
+//
+// Unlike `key.properties` this file is NOT gitignored, and should be
+// committed: on Android it carries no secret (it is embedded in every APK
+// we publish), and committing it is what lets a CI release build upload
+// its mapping file to Crashlytics.
+val googleServicesFile = project.file("google-services.json")
+val hasFirebaseConfig = googleServicesFile.exists()
+if (hasFirebaseConfig) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 android {
     namespace = "com.faith.companion.faith_mobile"
     compileSdk = flutter.compileSdkVersion
@@ -81,6 +109,32 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+
+            // Upload the R8 mapping file so release stack traces are
+            // readable in the Crashlytics console instead of a column of
+            // `a.b.c(Unknown Source)`. Without this, crash reporting in a
+            // release build is technically present and practically useless
+            // — which is the state most apps ship in.
+            //
+            // Guarded twice: the extension only exists when the Crashlytics
+            // plugin was applied, which only happens when
+            // `google-services.json` is present.
+            if (hasFirebaseConfig) {
+                configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                    mappingFileUploadEnabled = true
+                }
+            }
+        }
+        debug {
+            // Belt and braces with `Telemetry.isEligibleBuild`, which stops
+            // debug builds reporting from the Dart side. This stops the
+            // Gradle plugin spending build time uploading a mapping file
+            // for a build that will never produce a crash report.
+            if (hasFirebaseConfig) {
+                configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                    mappingFileUploadEnabled = false
+                }
+            }
         }
     }
 }

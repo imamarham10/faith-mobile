@@ -21,3 +21,10 @@
 
 # Tink (used transitively by flutter_secure_storage on some Android paths).
 -keep class com.google.crypto.tink.** { *; }
+
+# Crashlytics: keep the source file and line numbers in the obfuscated
+# build so an uploaded mapping file can turn a trace back into something a
+# human can read. Without these, R8 strips the line table entirely and no
+# amount of mapping recovers it.
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception

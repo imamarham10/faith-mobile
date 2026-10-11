@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/preferences/selected_faith.dart';
+import '../../../../core/telemetry/telemetry.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/faith_id.dart';
@@ -19,6 +20,15 @@ import 'mood_chip_row.dart';
 /// server, so it is always a slug the server will accept.
 Future<String?> showMoodSheet(BuildContext context) {
   HapticFeedback.lightImpact();
+  // Count the act, never the content.
+  //
+  // This records that someone reached for the feelings flow. It does not
+  // record — and there is no API through which it could record — *which*
+  // emotion they went on to choose. The sheet is also the one place that
+  // can see a dismissal, which is the drop-off worth knowing about and the
+  // one thing the server never learns, since nothing is posted until a
+  // mood is picked.
+  Telemetry.instance.analytics.feelingsOpened();
   final theme = Theme.of(context);
   return showModalBottomSheet<String>(
     context: context,

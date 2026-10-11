@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers.dart';
+import '../../../../core/telemetry/telemetry.dart';
+import '../../../../core/telemetry/telemetry_vocabulary.dart';
 import '../../data/auth_repository.dart';
 import '../../data/dtos/login_request.dart';
 import '../../data/dtos/register_request.dart';
+import '../../domain/auth_failure_code.dart';
 import '../../domain/auth_state.dart';
 
 part 'auth_controller.g.dart';
@@ -27,26 +31,53 @@ class AuthController extends _$AuthController {
   }
 
   /// Email + password sign in. Persists tokens and flips state on success.
+  ///
+  /// The three analytics calls here are the only auth measurement there
+  /// is, and they exist because the backend sees one third of this: it
+  /// learns about successful logins and nothing about the attempts that
+  /// never became one. Neither the address nor the server's message is
+  /// sent — see [classifyAuthFailure].
   Future<void> signIn({required String email, required String password}) async {
+    final analytics = ref.read(analyticsProvider);
+    unawaited(analytics.authStarted(AnalyticsAuthMethod.signIn));
     state = const AsyncValue.loading();
     try {
-      final repo = ref.read(authRepositoryProvider);
-      final res = await repo.login(
-        LoginRequest(email: email, password: password),
-      );
-      await ref
-          .read(secureStorageProvider)
-          .writeTokens(
-            accessToken: res.accessToken,
-            refreshToken: res.refreshToken,
-          );
-      state = AsyncValue.data(
-        AuthAuthenticated(accessToken: res.accessToken, email: res.email),
-      );
+      await _authenticate(email: email, password: password);
+      unawaited(analytics.authSucceeded(AnalyticsAuthMethod.signIn));
     } catch (e, st) {
+      unawaited(
+        analytics.authFailed(
+          AnalyticsAuthMethod.signIn,
+          classifyAuthFailure(e),
+        ),
+      );
       state = AsyncValue.error(e, st);
       rethrow;
     }
+  }
+
+  /// The token exchange itself, without the measurement.
+  ///
+  /// Extracted so [signUp] can reuse it: calling [signIn] from [signUp]
+  /// would log a `sign_in` attempt for every registration and make the
+  /// two funnels read each other's numbers.
+  Future<void> _authenticate({
+    required String email,
+    required String password,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    final res = await repo.login(
+      LoginRequest(email: email, password: password),
+    );
+    await ref
+        .read(secureStorageProvider)
+        .writeTokens(
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+        );
+    state = AsyncValue.data(
+      AuthAuthenticated(accessToken: res.accessToken, email: res.email),
+    );
   }
 
   /// Create a new account, then immediately sign the user in.
@@ -57,6 +88,8 @@ class AuthController extends _$AuthController {
     required String lastName,
     required String phone,
   }) async {
+    final analytics = ref.read(analyticsProvider);
+    unawaited(analytics.authStarted(AnalyticsAuthMethod.signUp));
     state = const AsyncValue.loading();
     try {
       final repo = ref.read(authRepositoryProvider);
@@ -69,8 +102,15 @@ class AuthController extends _$AuthController {
           phone: phone,
         ),
       );
-      await signIn(email: email, password: password);
+      await _authenticate(email: email, password: password);
+      unawaited(analytics.authSucceeded(AnalyticsAuthMethod.signUp));
     } catch (e, st) {
+      unawaited(
+        analytics.authFailed(
+          AnalyticsAuthMethod.signUp,
+          classifyAuthFailure(e),
+        ),
+      );
       state = AsyncValue.error(e, st);
       rethrow;
     }

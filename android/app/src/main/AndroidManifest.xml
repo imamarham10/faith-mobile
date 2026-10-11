@@ -72,6 +72,41 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- Firebase Analytics: automatic screen reporting is OFF.
+
+             Left on, the SDK names every screen after the Activity or route
+             that produced it. One of this app's routes is
+             `/reflect/feelings/:mood`, so a user who picks an emotion would
+             send `screen_name = "/reflect/feelings/grieving"` to Google —
+             their emotional state, automatically, through a path nobody
+             reviews. Religion and emotional state are the two things this
+             app knows about a person and the two the DPDP Act treats as
+             sensitive; neither leaves the device.
+
+             Screens are logged manually instead, from the closed allowlist
+             in `lib/core/telemetry/telemetry_vocabulary.dart`, which maps a
+             path to a constant and never echoes its input.
+             `test/core/telemetry/forbidden_data_test.dart` asserts this
+             flag is still false. -->
+        <meta-data
+            android:name="google_analytics_automatic_screen_reporting_enabled"
+            android:value="false" />
+
+        <!-- Crashlytics and Analytics both start collecting only after
+             `Telemetry` has read the user's preference and called
+             `setCrashlyticsCollectionEnabled` /
+             `setAnalyticsCollectionEnabled`. Without these two flags the
+             native SDKs would begin collecting the moment the process
+             starts — before the kill switch has had a chance to say no,
+             which would make the Play Data Safety answer "users can turn
+             this off" untrue for the first seconds of every launch. -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+
         <!-- audio_service: Quran recitation runs in a real foreground service so
              the OS knows media is playing and the process is not culled
              mid-surah. Both components are `exported` because the platform
