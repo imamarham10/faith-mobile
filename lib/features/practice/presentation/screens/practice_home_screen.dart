@@ -15,6 +15,7 @@ import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/page_masthead.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_icon.dart';
+import '../../../collections/presentation/widgets/collections_list.dart';
 import '../../../quran/presentation/widgets/often_read_row.dart';
 
 /// Practice tab home.
@@ -76,8 +77,11 @@ class _IslamPracticeContent extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) =>
-      const _PracticeScaffold(tiles: _tiles, oftenRead: true);
+  Widget build(BuildContext context) => const _PracticeScaffold(
+    tiles: _tiles,
+    faith: FaithId.islam,
+    oftenRead: true,
+  );
 }
 
 /// A calm hub linking to Japa, Stotras, and Temples. Mirrors
@@ -110,16 +114,27 @@ class _HinduPracticeContent extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => const _PracticeScaffold(tiles: _tiles);
+  Widget build(BuildContext context) =>
+      const _PracticeScaffold(tiles: _tiles, faith: FaithId.hindu);
 }
 
 /// The shared chrome both faiths render. Only the tile list differs, so the
 /// masthead, grid delegate and scroll physics live here once rather than
 /// being kept in sync by hand in two places.
 class _PracticeScaffold extends StatelessWidget {
-  const _PracticeScaffold({required this.tiles, this.oftenRead = false});
+  const _PracticeScaffold({
+    required this.tiles,
+    required this.faith,
+    this.oftenRead = false,
+  });
 
   final List<_PracticeTileData> tiles;
+
+  /// Which vertical's collections to offer. Passed in rather than read
+  /// from `selectedFaithProvider` here: the two callers above already
+  /// *are* the faith branch, so re-deriving it would be a second source of
+  /// the same truth inside the widget they chose.
+  final FaithId faith;
 
   /// Whether to offer the Qur'an shortcut row under the grid. Islam only —
   /// the row is seven surahs, and the Hindu branch of this tab has no
@@ -171,6 +186,20 @@ class _PracticeScaffold extends StatelessWidget {
                   child: _PracticeTile(data: tiles[i]),
                 ),
               ),
+            ),
+            // Collections above the Qur'an shortcuts and below the grid.
+            // Both faiths, and the *whole* list rather than the featured
+            // few: this is the browsing surface, so a collection the
+            // dashboard does not promote is still found here. Draws
+            // nothing at all when the faith has none.
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenEdge,
+                0,
+                AppSpacing.screenEdge,
+                AppSpacing.xxl,
+              ),
+              sliver: SliverToBoxAdapter(child: CollectionsList(faith: faith)),
             ),
             // Between the grid and the tailpiece, in the space the grid
             // leaves — not after the colophon, which is the deliberate end

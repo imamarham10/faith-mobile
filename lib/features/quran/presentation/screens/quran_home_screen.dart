@@ -16,13 +16,13 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../../core/theme/faith_id.dart';
+import '../../../collections/presentation/widgets/collections_list.dart';
 import '../../data/dtos/surah.dart';
-import '../../domain/recitation_collection.dart';
 import '../controllers/juz_controller.dart';
 import '../controllers/quran_home_controller.dart';
 import '../widgets/juz_list_tile.dart';
 import '../widgets/often_read_row.dart';
-import '../widgets/recitation_collection_card.dart';
 import '../widgets/surah_list_tile.dart';
 
 /// `/quran` — surah index with search + last-read resume + bookmarks shortcut.
@@ -90,10 +90,10 @@ class _QuranHomeScreenState extends ConsumerState<QuranHomeScreen> {
                   child: OftenReadRow(),
                 ),
               ),
-              // The nightly set's permanent home. It is promoted onto
-              // Today only in the evening; here it is always findable,
-              // which is what lets the dashboard promotion be time-bound
-              // without the feature ever disappearing.
+              // Every collection, not only the featured ones. The
+              // dashboard shows what the database has promoted; this is
+              // where the rest stay findable, which is what lets featuring
+              // be a decision about prominence rather than existence.
               const SliverPadding(
                 padding: EdgeInsets.fromLTRB(
                   AppSpacing.screenEdge,
@@ -102,9 +102,7 @@ class _QuranHomeScreenState extends ConsumerState<QuranHomeScreen> {
                   AppSpacing.base,
                 ),
                 sliver: SliverToBoxAdapter(
-                  child: RecitationCollectionCard(
-                    collection: kNightlyRecitation,
-                  ),
+                  child: CollectionsList(faith: FaithId.islam),
                 ),
               ),
             ],

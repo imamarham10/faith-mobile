@@ -11,6 +11,8 @@ import 'package:faith_mobile/features/hindu_stories/data/dtos/hindu_story.dart';
 import 'package:faith_mobile/features/hindu_stories/presentation/controllers/daily_katha_controller.dart';
 import 'package:faith_mobile/features/today/domain/daily_verse.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/daily_verse_controller.dart';
+import 'package:faith_mobile/features/collections/data/dtos/curated_collection.dart';
+import 'package:faith_mobile/features/collections/presentation/controllers/collections_controller.dart';
 import 'package:faith_mobile/features/feelings/data/dtos/emotion.dart';
 import 'package:faith_mobile/features/feelings/presentation/controllers/emotions_controller.dart';
 import 'package:faith_mobile/features/today/presentation/screens/today_screen.dart';
@@ -84,6 +86,15 @@ void main() {
           dailyKathaProvider.overrideWith(
             (ref) => Completer<HinduStory?>().future,
           ),
+          // Collections are server-driven and gated below the fold, so
+          // they would otherwise start a real dio read the moment the
+          // habit loop paints. Empty is also what these assertions have
+          // always rendered against: this file predates the rail, and an
+          // empty list draws nothing at all.
+          for (final f in FaithId.values)
+            collectionsProvider(f).overrideWith(
+              (ref) async => const <CuratedCollection>[],
+            ),
           // The mood chooser is server-driven now, so the sheet renders
           // whatever this returns and nothing else.
           emotionsProvider.overrideWith(

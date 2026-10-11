@@ -14,10 +14,10 @@ import '../../../../shared/widgets/poppy_icon.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../calendar/presentation/controllers/calendar_controller.dart';
+import '../../../collections/presentation/widgets/collections_rail.dart';
 import '../../../hindu_panchang/presentation/controllers/panchang_today_controller.dart';
 import '../../../hindu_puja_times/presentation/widgets/puja_countdown_card.dart';
 import '../../../quran/presentation/widgets/often_read_row.dart';
-import '../../../quran/presentation/widgets/recitation_collection_card.dart';
 import '../widgets/below_fold.dart';
 import '../widgets/daily_hadith_card.dart';
 import '../widgets/daily_katha_card.dart';
@@ -87,6 +87,10 @@ class _IslamTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
+                  // Whatever the database has featured, above the goal
+                  // card. See `_FeaturedCollections` for why it is gated
+                  // and why it draws nothing until it has something.
+                  const _FeaturedCollections(faith: FaithId.islam),
                   // The loop first: what you did this week, what today's
                   // goal is, and what is left of it. Everything above the
                   // fold is now state that changed because of yesterday.
@@ -95,11 +99,6 @@ class _IslamTodayContent extends ConsumerWidget {
                   PrayerCountdownCard(
                     onTap: () => context.push('/today/prayers'),
                   ),
-                  // Directly under the countdown, which is this screen's
-                  // "what is happening now" region — and only while it is
-                  // actually night. Costs nothing when hidden and nothing
-                  // when shown: the collection is a constant.
-                  const NightlyRecitationSlot(),
                   const Gap(32),
                   const SectionLabel('Verse for today'),
                   const Gap(16),
@@ -184,6 +183,7 @@ class _HinduTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
+                  const _FeaturedCollections(faith: FaithId.hindu),
                   const TodayProgressSection(),
                   const Gap(AppSpacing.xxl),
                   PujaCountdownCard(
@@ -217,6 +217,47 @@ class _HinduTodayContent extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The featured-collections rail, held back until the habit loop has drawn.
+///
+/// ## Why it is gated at all, sitting where it does
+///
+/// This is the first block on the screen, so it is tempting to let it
+/// fetch immediately. It must not. Today's cold start was measured going
+/// bad under exactly this pressure: eight concurrent requests on a
+/// `max: 10` serverless pool turned a 0.99s read into 3.49s. The
+/// collections list is one more request on a screen that currently makes
+/// none for it, so it waits behind the same gate as the verse and the
+/// hadith — the habit loop is what the user is actually waiting for, and
+/// nothing above it in the queue may be something they did not ask for.
+///
+/// The gate is session-scoped and one-way, so only the first cold start
+/// pays it; every later visit to Today has both the gate open and the
+/// list already cached, and the rail is there in the first frame.
+///
+/// ## Why the placeholder is nothing
+///
+/// [BelowFold]'s own doc argues for a matching skeleton, and for the verse
+/// and hadith that is right — those are always there, so a silhouette is a
+/// true promise. A featured collection may legitimately not exist. A
+/// skeleton that resolves to nothing would be a lie told directly above
+/// the goal card, and reserving height for it would push the goal down the
+/// screen for a thing that may never arrive. So nothing is drawn until
+/// there is something to draw, and the rail makes the same choice
+/// internally for its loading, error and empty states.
+class _FeaturedCollections extends StatelessWidget {
+  const _FeaturedCollections({required this.faith});
+
+  final FaithId faith;
+
+  @override
+  Widget build(BuildContext context) {
+    return BelowFold(
+      placeholder: const SizedBox.shrink(),
+      child: CollectionsRail(faith: faith),
     );
   }
 }

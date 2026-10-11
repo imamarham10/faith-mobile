@@ -32,3 +32,24 @@ String chapterReadingRoute(
       verse == null || verse <= 1 ? '$base/verses' : '$base/verses?from=$verse',
   };
 }
+
+/// A bounded span of one chapter, read one verse at a time.
+///
+/// The peer of the Qur'an's `surahSpanRoute`, and it takes no [ReadingMode]
+/// for the same reason that one does not: the scrolling reader can only be
+/// *pointed at* a verse, never fenced to a span, so asking it for Gita
+/// 12.1–20 would drop the reader into a chapter with no sign of where the
+/// passage ends and an invitation to read on past it. The pager fences
+/// exactly, so every ranged destination resolves here whatever the reader's
+/// remembered preference says — honouring the preference would honour it
+/// into a worse reading.
+///
+/// A span of one ([from] == [to]) is legal and meaningful: Next is inert on
+/// arrival, which is the honest statement that the item *is* that verse.
+String chapterSpanRoute(
+  String textSlug,
+  int chapterNumber, {
+  required int from,
+  required int to,
+}) =>
+    '/quran/hindu-scripture/$textSlug/$chapterNumber/verses?from=$from&to=$to';

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:faith_mobile/core/preferences/selected_faith.dart';
 import 'package:faith_mobile/core/theme/app_theme.dart';
 import 'package:faith_mobile/core/theme/faith_id.dart';
+import 'package:faith_mobile/features/collections/data/dtos/curated_collection.dart';
+import 'package:faith_mobile/features/collections/presentation/controllers/collections_controller.dart';
 import 'package:faith_mobile/features/hadiths/data/dtos/hadith.dart';
 import 'package:faith_mobile/features/hadiths/presentation/controllers/daily_hadith_controller.dart';
 import 'package:faith_mobile/features/hindu_scriptures/data/dtos/scripture_verse.dart';
@@ -35,6 +37,12 @@ class _Fetches {
   int shloka = 0;
   int katha = 0;
   int habitLoop = 0;
+
+  /// The curated-collections list. Unlike the four above it is read by a
+  /// rail that sits *above* the goal card, which is exactly why it is
+  /// tracked here: the most visible block on the screen is the one most
+  /// likely to be fetched first by someone who forgets the gate.
+  int collections = 0;
 }
 
 void main() {
@@ -110,6 +118,11 @@ void main() {
             fetches.katha++;
             return Completer<HinduStory?>().future;
           }),
+          for (final f in FaithId.values)
+            collectionsProvider(f).overrideWith((ref) async {
+              fetches.collections++;
+              return const <CuratedCollection>[];
+            }),
         ],
         child: MaterialApp(
           theme: AppTheme.light(faith),
@@ -163,6 +176,13 @@ void main() {
       expect(gateOf(tester), isFalse);
       expect(fetches.verse, 0);
       expect(fetches.hadith, 0);
+      expect(
+        fetches.collections,
+        0,
+        reason:
+            'the collections rail is the first block on the screen, and '
+            'is still not allowed ahead of the habit loop',
+      );
 
       habitLoop.complete(FakeTodayDashboard.islam());
       await settle(tester);
@@ -179,6 +199,7 @@ void main() {
       expect(gateOf(tester), isFalse);
       expect(fetches.shloka, 0);
       expect(fetches.katha, 0);
+      expect(fetches.collections, 0);
 
       habitLoop.complete(FakeTodayDashboard.hindu());
       await settle(tester);
@@ -225,6 +246,11 @@ void main() {
 
       expect(gateOf(tester), isTrue);
       expect(fetches.verse, 1);
+      expect(
+        fetches.collections,
+        1,
+        reason: 'a deferral that never fires is worse than the request it saved',
+      );
     });
 
     testWidgets('on the deadline, when the loop never settles at all', (

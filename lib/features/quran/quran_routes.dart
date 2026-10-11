@@ -5,11 +5,11 @@ import '../hindu_scriptures/hindu_scriptures_routes.dart';
 import '../hindu_scriptures/presentation/screens/bookmarks_screen.dart'
     as hindu_scriptures;
 import '../hindu_scriptures/presentation/screens/hindu_scriptures_home_screen.dart';
+import '../collections/presentation/screens/collection_screen.dart';
 import '../shell/faith_tab_router.dart';
 import 'presentation/screens/bookmarks_screen.dart';
 import 'presentation/screens/juz_reader_screen.dart';
 import 'presentation/screens/quran_home_screen.dart';
-import 'presentation/screens/recitation_collection_screen.dart';
 import 'presentation/screens/surah_reader_screen.dart';
 import 'presentation/screens/surah_verse_reader_screen.dart';
 
@@ -27,7 +27,9 @@ import 'presentation/screens/surah_verse_reader_screen.dart';
 ///   fences the reader to a span, which is how a curated passage like
 ///   2:285-286 is read. Which of the two surah readers a tap opens is the
 ///   user's remembered [ReadingMode].
-/// * `/quran/collection/:id` — a curated recitation set, e.g. `nightly`.
+/// * `/quran/collection/:slug` — a curated set, e.g. `nightly-recitation`
+///   (Islam) or `gita-daily` (Hindu). Faith-neutral: the screen resolves
+///   the vertical from the selected faith, the way `/quran` itself does.
 /// * `/quran/juz/:number` — the juz reader: one verse at a time, back and
 ///   forward across surah boundaries. Islam only; the Hindu branch of this
 ///   tab never links to it.
@@ -71,10 +73,9 @@ final quranRoutes = <RouteBase>[
         ],
       ),
       GoRoute(
-        path: 'collection/:id',
-        builder: (_, state) => RecitationCollectionScreen(
-          collectionId: state.pathParameters['id'] ?? '',
-        ),
+        path: 'collection/:slug',
+        builder: (_, state) =>
+            CollectionScreen(slug: state.pathParameters['slug'] ?? ''),
       ),
       GoRoute(
         path: 'juz/:number',

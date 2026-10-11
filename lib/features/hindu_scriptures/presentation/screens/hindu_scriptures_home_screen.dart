@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/art/artwork.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/faith_id.dart';
 import '../../../../shared/reader/reading_mode_controller.dart';
 import '../../../../shared/widgets/gap.dart';
 import '../../../../shared/widgets/illustrated_empty_state.dart';
@@ -17,6 +18,7 @@ import '../../../../shared/widgets/poppy_button.dart';
 import '../../../../shared/widgets/poppy_card.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
+import '../../../collections/presentation/widgets/collections_list.dart';
 import '../../domain/chapter_reading_route.dart';
 import '../controllers/hindu_scriptures_home_controller.dart';
 import '../widgets/text_card.dart';
@@ -77,6 +79,19 @@ class _HinduScripturesHomeScreenState
                   controller: _searchCtrl,
                   onChanged: _onSearchChanged,
                 ),
+              ),
+            ),
+            // The Qur'an tab's peer slot: every Hindu collection, always
+            // findable, whether or not the dashboard features it.
+            const SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenEdge,
+                0,
+                AppSpacing.screenEdge,
+                AppSpacing.base,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: CollectionsList(faith: FaithId.hindu),
               ),
             ),
             const SliverToBoxAdapter(child: _ContinueReadingCard()),

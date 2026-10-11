@@ -15,7 +15,6 @@ import 'package:faith_mobile/features/practice/presentation/screens/practice_hom
 import 'package:faith_mobile/features/quran/data/dtos/surah.dart';
 import 'package:faith_mobile/features/quran/presentation/controllers/quran_home_controller.dart';
 import 'package:faith_mobile/features/quran/presentation/widgets/often_read_row.dart';
-import 'package:faith_mobile/features/quran/presentation/widgets/recitation_collection_card.dart';
 import 'package:faith_mobile/features/today/domain/daily_verse.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/daily_verse_controller.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/today_dashboard_controller.dart';
@@ -262,37 +261,12 @@ void main() {
     });
   });
 
-  group('the nightly recitation card', () {
-    Widget slotAt(int hour) => host(
-      Scaffold(body: NightlyRecitationSlot(now: DateTime(2026, 1, 1, hour))),
-      commonOverrides(FaithId.islam),
-      FaithId.islam,
-    );
-
-    testWidgets('is offered in the evening', (tester) async {
-      await tester.pumpWidget(slotAt(21));
-      await settle(tester);
-
-      expect(find.text('Nightly recitation'), findsOneWidget);
-      expect(find.text('6 readings  ·  Read before sleep.'), findsOneWidget);
-    });
-
-    testWidgets('is not offered at midday', (tester) async {
-      await tester.pumpWidget(slotAt(12));
-      await settle(tester);
-
-      expect(find.text('Nightly recitation'), findsNothing);
-    });
-
-    testWidgets('opens the collection, not any one surah in it', (
-      tester,
-    ) async {
-      await tester.pumpWidget(slotAt(21));
-      await settle(tester);
-      await tester.tap(find.text('Nightly recitation'));
-      await tester.pumpAndSettle();
-
-      expect(location, '/quran/collection/nightly');
-    });
-  });
+  // The nightly recitation card used to be asserted here: offered at
+  // 21:00, absent at midday, opening `/quran/collection/nightly`. That
+  // card and its client-side clock (`isNightlyHour`, 19:00-03:59) are
+  // gone — `Collection.showOnHome` in the database decides now. Its
+  // successor, the collections rail, is covered in
+  // `test/features/collections/collections_surfaces_test.dart`, including
+  // the inverted form of the two hour assertions: the hour must no longer
+  // change what the dashboard shows.
 }
