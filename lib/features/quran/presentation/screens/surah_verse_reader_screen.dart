@@ -105,9 +105,17 @@ class _SurahVerseReaderScreenState
     _lastReadDebounce?.cancel();
     _lastReadDebounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
+      // Already watched by this screen's `build` — see the twin comment in
+      // `surah_reader_screen.dart` for why the name and length ride along.
+      final surah = ref.read(surahDetailProvider(widget.surahId)).valueOrNull;
       ref
           .read(lastReadControllerProvider.notifier)
-          .save(surahId: widget.surahId, verseNumber: verseNumber);
+          .save(
+            surahId: widget.surahId,
+            verseNumber: verseNumber,
+            surahName: surah?.nameEnglish,
+            verseCount: surah?.verses.length,
+          );
     });
   }
 

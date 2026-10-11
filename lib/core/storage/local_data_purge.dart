@@ -74,6 +74,12 @@ class LocalDataPurge {
     'quran.bookmarks.v1',
     'quran.lastRead.surah',
     'quran.lastRead.verse',
+    // The display context the Today screen's continue-reading card reads
+    // without a network call. Written beside the pointer, so cleared with
+    // it — leaving a name behind for a pointer that is gone would let the
+    // next account's empty card inherit the last one's surah.
+    'quran.lastRead.surahName',
+    'quran.lastRead.verseCount',
     // `NameFavoritesController` keys on `NamesKind.slug`, so this pair has
     // to be spelled out; the test pins them against the enum.
     'names.allah.favorites.v1',
@@ -86,6 +92,8 @@ class LocalDataPurge {
     'hinduScriptures.lastRead.slug',
     'hinduScriptures.lastRead.chapter',
     'hinduScriptures.lastRead.verse',
+    'hinduScriptures.lastRead.textName',
+    'hinduScriptures.lastRead.chapterVerseCount',
   ];
 
   final Ref _ref;

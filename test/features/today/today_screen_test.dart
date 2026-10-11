@@ -171,7 +171,11 @@ void main() {
       expect(find.text('How are you feeling?'), findsOneWidget);
     });
 
-    testWidgets('leads with the progress section', (tester) async {
+    // Presence, not position: continue-reading leads this screen now, and
+    // the order of the first three blocks is asserted in
+    // `continue_reading_test.dart` where it is the subject rather than a
+    // by-product.
+    testWidgets('carries the shared progress section', (tester) async {
       await pump(tester, FaithId.islam);
 
       expect(find.byType(TodayProgressSection), findsOneWidget);
@@ -246,7 +250,7 @@ void main() {
       expect(find.text('Temples'), findsOneWidget);
     });
 
-    testWidgets('leads with the same progress section as Islam', (
+    testWidgets('carries the same progress section as Islam', (
       tester,
     ) async {
       await pump(tester, FaithId.hindu);

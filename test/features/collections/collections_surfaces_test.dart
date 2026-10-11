@@ -8,7 +8,7 @@ import 'package:faith_mobile/features/collections/data/dtos/curated_collection.d
 import 'package:faith_mobile/features/collections/presentation/controllers/collections_controller.dart';
 import 'package:faith_mobile/features/collections/presentation/widgets/collection_card.dart';
 import 'package:faith_mobile/features/collections/presentation/widgets/collections_list.dart';
-import 'package:faith_mobile/features/collections/presentation/widgets/collections_rail.dart';
+import 'package:faith_mobile/features/collections/presentation/widgets/featured_collection_card.dart';
 import 'package:faith_mobile/features/feelings/data/dtos/emotion.dart';
 import 'package:faith_mobile/features/feelings/presentation/controllers/emotions_controller.dart';
 import 'package:faith_mobile/features/hadiths/data/dtos/hadith.dart';
@@ -45,9 +45,9 @@ import '../../helpers/fake_today_dashboard.dart';
 /// * **Nothing is nothing.** An unfeatured, empty or failed list on the
 ///   dashboard draws zero pixels — no card, no skeleton, no heading left
 ///   over above an empty list.
-/// * **The database decides.** The rail renders what `showOnHome` says, in
-///   `sortOrder`, at any hour. The client's old 19:00–03:59 rule is gone
-///   and nothing re-sorts or re-filters behind the server's back.
+/// * **The database decides.** The dashboard renders what `showOnHome`
+///   says, in `sortOrder`, at any hour. The client's old 19:00–03:59 rule
+///   is gone and nothing re-sorts or re-filters behind the server's back.
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -138,7 +138,7 @@ void main() {
       );
       await settle(tester);
 
-      expect(find.byType(CollectionsRail), findsOneWidget);
+      expect(find.byType(FeaturedCollectionCard), findsOneWidget);
       expect(find.text('Nightly Recitation'), findsOneWidget);
       expect(find.text('COLLECTIONS'), findsOneWidget);
     });
@@ -160,8 +160,11 @@ void main() {
       );
       await settle(tester);
 
+      expect(find.byType(FeaturedCollectionCard), findsOneWidget);
       expect(find.text('Daily Gita'), findsOneWidget);
-      expect(find.text('1 reading'), findsOneWidget);
+      // The full-width card has room for the whole meta line, where the
+      // old compact tile only had room for the count.
+      expect(find.textContaining('1 reading'), findsOneWidget);
     });
 
     testWidgets('sits above the goal card', (tester) async {
@@ -182,17 +185,20 @@ void main() {
       await settle(tester);
 
       expect(
-        tester.getTopLeft(find.byType(CollectionsRail)).dy,
+        tester.getTopLeft(find.byType(FeaturedCollectionCard)).dy,
         lessThan(tester.getTopLeft(find.byType(GoalCard)).dy),
       );
     });
 
-    testWidgets('four featured collections do not push the goal off-screen', (
+    testWidgets('four featured collections still cost one card', (
       tester,
     ) async {
-      // The rail is horizontal precisely so its height is independent of
-      // how many collections the database features. More collections are
-      // being written; the layout has to hold before they arrive.
+      // The dashboard promotes one set, whatever the database flags. The
+      // old horizontal rail held its height by scrolling sideways; the
+      // full-width card holds it by showing the first in `sortOrder` and
+      // leaving the rest to the browsing surfaces. Either way the goal
+      // card must not move when an eleventh collection is featured — ten
+      // more are staged, so this is near-term, not hypothetical.
       tallScreen(tester);
       await tester.pumpWidget(
         host(
@@ -230,14 +236,15 @@ void main() {
       expect(
         goalTop,
         lessThan(tester.view.physicalSize.height),
-        reason: 'the goal card must survive a full rail',
+        reason: 'the goal card must survive a fully featured database',
       );
-      // One rail, one row — the extras are reached sideways.
-      expect(find.byType(CollectionsRail), findsOneWidget);
-      expect(
-        tester.getSize(find.byType(CollectionTile).first).height,
-        CollectionTile.baseHeight,
-      );
+      // One card, the first in the server's order. The other three are
+      // not on the dashboard and are not meant to be.
+      expect(find.byType(FeaturedCollectionCard), findsOneWidget);
+      expect(find.text('Nightly Recitation'), findsOneWidget);
+      expect(find.text('Morning Adhkar'), findsNothing);
+      expect(find.text('Friday Sunnah'), findsNothing);
+      expect(find.text('Travel Duas'), findsNothing);
     });
 
     testWidgets('renders the server order, not an order of its own', (
@@ -270,9 +277,13 @@ void main() {
       );
       await settle(tester);
 
+      // With one slot, "the server's order" means "the server picks which
+      // one". Nothing here sorts alphabetically, by title, or by anything
+      // else: `sortOrder` 10 wins because the database said so.
+      expect(find.text('Zuhr Set'), findsOneWidget);
       expect(
-        tester.getTopLeft(find.text('Zuhr Set')).dx,
-        lessThan(tester.getTopLeft(find.text('Adhkar')).dx),
+        find.text('Adhkar'),
+        findsNothing,
         reason: 'sortOrder is the server\'s call and is obeyed as given',
       );
     });
@@ -302,6 +313,10 @@ void main() {
         findsNothing,
         reason: 'no heading may outlive the list under it',
       );
+      expect(
+        tester.getSize(find.byType(FeaturedCollectionCard)).height,
+        0,
+      );
     });
 
     testWidgets('an empty list renders nothing at all, not an empty box', (
@@ -324,12 +339,18 @@ void main() {
       await settle(tester);
 
       expect(find.text('COLLECTIONS'), findsNothing);
-      expect(find.byType(CollectionTile), findsNothing);
-      // Stronger than zero height: a sliver collects a leading child of
-      // zero extent, so an empty rail is not merely invisible — it is not
-      // in the tree. Its own zero-size contract is asserted directly in
-      // 'the rail on its own' below, outside a sliver that can collect it.
-      expect(find.byType(CollectionsRail), findsNothing);
+      expect(find.text('Nightly Recitation'), findsNothing);
+      // The widget is in the tree and occupies no pixels — nothing is
+      // drawn, nothing is reserved, and the habit loop below sits exactly
+      // where it would if collections did not exist. (It used to be absent
+      // from the tree entirely, because a `SliverList` collects a *leading*
+      // child of zero extent and this block used to be the leading child.
+      // Continue-reading leads now, so the collapse is observable as zero
+      // height rather than as absence.)
+      expect(
+        tester.getSize(find.byType(FeaturedCollectionCard)).height,
+        0,
+      );
     });
 
     testWidgets('a failed list renders nothing, and no error chrome', (
@@ -352,7 +373,10 @@ void main() {
       await settle(tester);
 
       expect(find.text('COLLECTIONS'), findsNothing);
-      expect(find.byType(CollectionTile), findsNothing);
+      expect(
+        tester.getSize(find.byType(FeaturedCollectionCard)).height,
+        0,
+      );
       expect(
         find.text('Retry'),
         findsNothing,
@@ -387,14 +411,14 @@ void main() {
     });
   });
 
-  /// The rail's own contract, outside any sliver.
+  /// The dashboard card's own contract, outside any sliver.
   ///
-  /// The dashboard tests above prove the rail is not *seen*; these prove it
-  /// costs nothing, which is the part that keeps the goal card where it is.
-  /// A `SliverList` collects a leading child of zero extent, so the two
-  /// have to be asserted separately — inside a sliver "absent" and "zero
-  /// height" are indistinguishable.
-  group('the rail on its own', () {
+  /// The dashboard tests above prove it is not *seen*; these prove it costs
+  /// nothing, which is the part that keeps the goal card where it is. A
+  /// `SliverList` collects a leading child of zero extent, so the two have
+  /// to be asserted separately — inside a sliver "absent" and "zero height"
+  /// are indistinguishable.
+  group('the dashboard card on its own', () {
     Widget bare(List<Override> overrides) => ProviderScope(
       overrides: overrides,
       child: MaterialApp(
@@ -402,7 +426,7 @@ void main() {
         home: const Scaffold(
           body: Align(
             alignment: Alignment.topLeft,
-            child: CollectionsRail(faith: FaithId.islam),
+            child: FeaturedCollectionCard(faith: FaithId.islam),
           ),
         ),
       ),
@@ -414,7 +438,7 @@ void main() {
       );
       await settle(tester);
 
-      expect(tester.getSize(find.byType(CollectionsRail)).height, 0);
+      expect(tester.getSize(find.byType(FeaturedCollectionCard)).height, 0);
     });
 
     testWidgets('a failed list is zero pixels tall', (tester) async {
@@ -427,7 +451,7 @@ void main() {
       );
       await settle(tester);
 
-      expect(tester.getSize(find.byType(CollectionsRail)).height, 0);
+      expect(tester.getSize(find.byType(FeaturedCollectionCard)).height, 0);
     });
 
     testWidgets('a list still loading is zero pixels tall — no skeleton', (
@@ -445,36 +469,44 @@ void main() {
       );
       await settle(tester);
 
-      expect(tester.getSize(find.byType(CollectionsRail)).height, 0);
+      expect(tester.getSize(find.byType(FeaturedCollectionCard)).height, 0);
     });
 
-    testWidgets('a populated list is one tile tall, not one per tile', (
+    testWidgets('three featured collections are exactly as tall as one', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        bare(collectionOverrides(FaithId.islam, () => [
-          FakeCollections.nightly(sortOrder: 10),
-          FakeCollections.extra(
-            'morning-adhkar',
-            title: 'Morning Adhkar',
-            faithId: 'islam',
-            sortOrder: 20,
-          ),
-          FakeCollections.extra(
-            'friday-sunnah',
-            title: 'Friday Sunnah',
-            faithId: 'islam',
-            sortOrder: 30,
-          ),
-        ])),
-      );
-      await settle(tester);
+      Future<double> heightWith(List<CuratedCollection> featured) async {
+        await tester.pumpWidget(
+          bare(collectionOverrides(FaithId.islam, () => featured)),
+        );
+        await settle(tester);
+        return tester.getSize(find.byType(FeaturedCollectionCard)).height;
+      }
 
-      final railHeight = tester.getSize(find.byType(CollectionsRail)).height;
+      final one = await heightWith([FakeCollections.nightly(sortOrder: 10)]);
+      final three = await heightWith([
+        FakeCollections.nightly(sortOrder: 10),
+        FakeCollections.extra(
+          'morning-adhkar',
+          title: 'Morning Adhkar',
+          faithId: 'islam',
+          sortOrder: 20,
+        ),
+        FakeCollections.extra(
+          'friday-sunnah',
+          title: 'Friday Sunnah',
+          faithId: 'islam',
+          sortOrder: 30,
+        ),
+      ]);
+
+      expect(one, greaterThan(0));
       expect(
-        railHeight,
-        lessThan(CollectionTile.baseHeight * 2),
-        reason: 'three collections must not cost three rows of dashboard',
+        three,
+        one,
+        reason:
+            'the goal card below must not move when the database features '
+            'a second or a tenth collection',
       );
     });
   });

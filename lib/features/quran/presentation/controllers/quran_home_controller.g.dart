@@ -45,7 +45,7 @@ final filteredSurahsProvider = AutoDisposeProvider<List<Surah>>.internal(
 // ignore: unused_element
 typedef FilteredSurahsRef = AutoDisposeProviderRef<List<Surah>>;
 String _$lastReadControllerHash() =>
-    r'2b3cde1db26c70a9090b4ccd44709c2e8df5c3da';
+    r'8eaf91062bfd7693c9d3208d04a41826eeaf2b44';
 
 /// Persists / reads the last-read pointer. Updated by the reader on
 /// scroll-stop; surfaced on the home screen as a "Continue reading" card.

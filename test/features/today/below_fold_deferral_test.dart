@@ -7,10 +7,16 @@ import 'package:faith_mobile/features/collections/data/dtos/curated_collection.d
 import 'package:faith_mobile/features/collections/presentation/controllers/collections_controller.dart';
 import 'package:faith_mobile/features/hadiths/data/dtos/hadith.dart';
 import 'package:faith_mobile/features/hadiths/presentation/controllers/daily_hadith_controller.dart';
+import 'package:faith_mobile/features/hindu_scriptures/data/dtos/scripture_text.dart';
 import 'package:faith_mobile/features/hindu_scriptures/data/dtos/scripture_verse.dart';
 import 'package:faith_mobile/features/hindu_scriptures/presentation/controllers/daily_shloka_controller.dart';
+import 'package:faith_mobile/features/hindu_scriptures/presentation/controllers/hindu_scriptures_home_controller.dart';
 import 'package:faith_mobile/features/hindu_stories/data/dtos/hindu_story.dart';
 import 'package:faith_mobile/features/hindu_stories/presentation/controllers/daily_katha_controller.dart';
+import 'package:faith_mobile/features/quran/data/dtos/juz.dart';
+import 'package:faith_mobile/features/quran/data/dtos/surah.dart';
+import 'package:faith_mobile/features/quran/presentation/controllers/juz_controller.dart';
+import 'package:faith_mobile/features/quran/presentation/controllers/quran_home_controller.dart';
 import 'package:faith_mobile/features/today/domain/daily_verse.dart';
 import 'package:faith_mobile/features/today/domain/today_dashboard.dart';
 import 'package:faith_mobile/features/today/presentation/controllers/below_fold_gate.dart';
@@ -39,10 +45,27 @@ class _Fetches {
   int habitLoop = 0;
 
   /// The curated-collections list. Unlike the four above it is read by a
-  /// rail that sits *above* the goal card, which is exactly why it is
+  /// card that sits *above* the goal card, which is exactly why it is
   /// tracked here: the most visible block on the screen is the one most
   /// likely to be fetched first by someone who forgets the gate.
   int collections = 0;
+
+  /// The three indexes the continue-reading card could plausibly be
+  /// rewritten to consult, and must not.
+  ///
+  /// That card is now the *first* thing on Today and is not gated at all:
+  /// it renders from `shared_preferences` alone, which is what earns it
+  /// that position. Resolving a surah name through `GET /surahs`, a book
+  /// name through `GET /texts`, or a juz label through `GET /juz` would put
+  /// a request ahead of the two activity reads the habit loop waits on —
+  /// the exact pressure this gate exists to relieve — and would do it in
+  /// the most prominent widget on the screen.
+  ///
+  /// Nothing reads these today. They are counted so that the day someone
+  /// reaches for the surah index to spell "Al-Baqarah", this file says no.
+  int surahIndex = 0;
+  int scriptureIndex = 0;
+  int juzIndex = 0;
 }
 
 void main() {
@@ -123,6 +146,18 @@ void main() {
               fetches.collections++;
               return const <CuratedCollection>[];
             }),
+          surahListProvider.overrideWith((ref) async {
+            fetches.surahIndex++;
+            return const <Surah>[];
+          }),
+          scriptureTextListProvider.overrideWith((ref) async {
+            fetches.scriptureIndex++;
+            return const <ScriptureText>[];
+          }),
+          juzIndexProvider.overrideWith((ref) async {
+            fetches.juzIndex++;
+            return const <JuzSummary>[];
+          }),
         ],
         child: MaterialApp(
           theme: AppTheme.light(faith),
@@ -180,9 +215,17 @@ void main() {
         fetches.collections,
         0,
         reason:
-            'the collections rail is the first block on the screen, and '
-            'is still not allowed ahead of the habit loop',
+            'the featured collection sits above the goal card, and is '
+            'still not allowed ahead of the habit loop',
       );
+      expect(
+        fetches.surahIndex,
+        0,
+        reason:
+            'continue-reading leads this screen and is ungated — it pays '
+            'for that by reading prefs and nothing else',
+      );
+      expect(fetches.juzIndex, 0);
 
       habitLoop.complete(FakeTodayDashboard.islam());
       await settle(tester);
@@ -200,6 +243,12 @@ void main() {
       expect(fetches.shloka, 0);
       expect(fetches.katha, 0);
       expect(fetches.collections, 0);
+      expect(
+        fetches.scriptureIndex,
+        0,
+        reason: 'the Hindu continue-reading card reads prefs and nothing '
+            'else, exactly as its Islam twin does',
+      );
 
       habitLoop.complete(FakeTodayDashboard.hindu());
       await settle(tester);

@@ -110,12 +110,22 @@ class _ChapterVerseReaderScreenState
     _lastReadDebounce?.cancel();
     _lastReadDebounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
+      // Already watched by this screen's `build` — see the twin comment in
+      // `chapter_reader_screen.dart`.
+      final text = ref
+          .read(scriptureTextDetailProvider(widget.textSlug))
+          .valueOrNull;
+      final chapter = ref
+          .read(chapterDetailProvider(widget.textSlug, widget.chapterNumber))
+          .valueOrNull;
       ref
           .read(scriptureLastReadControllerProvider.notifier)
           .save(
             textSlug: widget.textSlug,
             chapterNumber: widget.chapterNumber,
             verseNumber: verseNumber,
+            textName: text?.nameEnglish,
+            chapterVerseCount: chapter?.verses.length,
           );
     });
   }

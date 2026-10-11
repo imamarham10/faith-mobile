@@ -77,9 +77,21 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
     final ayah = _topMostVisibleAyah();
     if (ayah == null) return;
     _visibleAyah = ayah;
+    // Read, not watch, and never a fetch: this screen's own `build` already
+    // watches `surahDetailProvider(widget.surahId)`, and the only way to
+    // reach here is to have scrolled the verses it returned. The name and
+    // length travel with the pointer so the Today screen's continue-reading
+    // card can name the passage without a network read above the habit
+    // loop — see [LastRead].
+    final surah = ref.read(surahDetailProvider(widget.surahId)).valueOrNull;
     ref
         .read(lastReadControllerProvider.notifier)
-        .save(surahId: widget.surahId, verseNumber: ayah);
+        .save(
+          surahId: widget.surahId,
+          verseNumber: ayah,
+          surahName: surah?.nameEnglish,
+          verseCount: surah?.verses.length,
+        );
     _recordAyah(ayah);
   }
 

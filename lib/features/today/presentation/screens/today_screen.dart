@@ -14,11 +14,12 @@ import '../../../../shared/widgets/poppy_icon.dart';
 import '../../../../shared/widgets/poppy_skeleton.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../../calendar/presentation/controllers/calendar_controller.dart';
-import '../../../collections/presentation/widgets/collections_rail.dart';
+import '../../../collections/presentation/widgets/featured_collection_card.dart';
 import '../../../hindu_panchang/presentation/controllers/panchang_today_controller.dart';
 import '../../../hindu_puja_times/presentation/widgets/puja_countdown_card.dart';
 import '../../../quran/presentation/widgets/often_read_row.dart';
 import '../widgets/below_fold.dart';
+import '../widgets/continue_reading_card.dart';
 import '../widgets/daily_hadith_card.dart';
 import '../widgets/daily_katha_card.dart';
 import '../widgets/daily_shloka_card.dart';
@@ -37,6 +38,30 @@ import '../widgets/today_progress_section.dart';
 /// Hindu's own build-out (`_HinduTodayContent`) mirrors its shape with the
 /// Hindu equivalents built in Part C — panchang in place of the Hijri
 /// calendar, sandhya countdown in place of prayer countdown.
+///
+/// ## The order of the first three blocks
+///
+/// Greeting → continue-reading → featured collection → habit loop, in both
+/// faiths, through the same widgets.
+///
+/// Reading comes first because it is the act the app exists to support:
+/// every other block on this screen *reports on* a practice, and this one
+/// is the practice. For a returning reader the highest-value thing on the
+/// dashboard is one tap back to the verse they stopped on.
+///
+/// The habit loop — [TodayProgressSection] — stays whole and moves down
+/// behind it. That section is week strip, goal card, checklist and stat
+/// tiles as a single unit, built once for both faiths, and it owns the
+/// release of the below-the-fold gate. Interleaving continue-reading
+/// between its strip and its goal card would mean splitting a deliberate
+/// unit into fragments and giving one of them the gate, which is a real
+/// cost paid for a cosmetic resemblance to a reference screenshot. The
+/// greeting still carries the streak chip, so the "how am I doing" signal
+/// is above the fold regardless.
+///
+/// Neither of the two new blocks adds a request to the launch path: the
+/// continue-reading card reads only `shared_preferences`, and the featured
+/// collection waits behind the same below-the-fold gate it always did.
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
 
@@ -87,13 +112,16 @@ class _IslamTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
-                  // Whatever the database has featured, above the goal
-                  // card. See `_FeaturedCollections` for why it is gated
-                  // and why it draws nothing until it has something.
+                  // Reading leads — see this file's class doc for the
+                  // argument, and `continue_reading_card.dart` for why
+                  // putting it here costs the habit loop nothing.
+                  const ContinueReadingCard(faith: FaithId.islam),
+                  // Then whatever the database has promoted, full width.
+                  // See `_FeaturedCollections` for why it is gated and why
+                  // it draws nothing until it has something.
                   const _FeaturedCollections(faith: FaithId.islam),
-                  // The loop first: what you did this week, what today's
-                  // goal is, and what is left of it. Everything above the
-                  // fold is now state that changed because of yesterday.
+                  // Then the loop: what you did this week, what today's
+                  // goal is, and what is left of it.
                   const TodayProgressSection(),
                   const Gap(AppSpacing.xxl),
                   PrayerCountdownCard(
@@ -183,6 +211,9 @@ class _HinduTodayContent extends ConsumerWidget {
               ),
               sliver: SliverList.list(
                 children: [
+                  // Identical treatment to Islam's, in the same order,
+                  // through the same two widgets.
+                  const ContinueReadingCard(faith: FaithId.hindu),
                   const _FeaturedCollections(faith: FaithId.hindu),
                   const TodayProgressSection(),
                   const Gap(AppSpacing.xxl),
@@ -257,7 +288,7 @@ class _FeaturedCollections extends StatelessWidget {
   Widget build(BuildContext context) {
     return BelowFold(
       placeholder: const SizedBox.shrink(),
-      child: CollectionsRail(faith: faith),
+      child: FeaturedCollectionCard(faith: faith),
     );
   }
 }

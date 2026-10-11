@@ -48,7 +48,7 @@ final filteredScriptureTextsProvider =
 // ignore: unused_element
 typedef FilteredScriptureTextsRef = AutoDisposeProviderRef<List<ScriptureText>>;
 String _$scriptureLastReadControllerHash() =>
-    r'8dbcd6942936fa562a788e3c71ca6e15b40ccc1b';
+    r'ca158cfe96226bc062ffad73ee347e992b45508b';
 
 /// See also [ScriptureLastReadController].
 @ProviderFor(ScriptureLastReadController)

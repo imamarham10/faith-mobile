@@ -84,12 +84,25 @@ class _ChapterReaderScreenState extends ConsumerState<ChapterReaderScreen> {
     final verse = _topMostVisibleVerse();
     if (verse == null) return;
     _visibleVerse = verse;
+    // The Islam reader's twin, for the reason given there: the book's name
+    // and the chapter's length travel with the pointer so Today's
+    // continue-reading card needs no network read above the habit loop.
+    // Both providers are already watched by the body this scroll came
+    // from, so these are reads of resolved state, not fetches.
+    final text = ref
+        .read(scriptureTextDetailProvider(widget.textSlug))
+        .valueOrNull;
+    final chapter = ref
+        .read(chapterDetailProvider(widget.textSlug, widget.chapterNumber))
+        .valueOrNull;
     ref
         .read(scriptureLastReadControllerProvider.notifier)
         .save(
           textSlug: widget.textSlug,
           chapterNumber: widget.chapterNumber,
           verseNumber: verse,
+          textName: text?.nameEnglish,
+          chapterVerseCount: chapter?.verses.length,
         );
     _recordVerse(verse);
   }

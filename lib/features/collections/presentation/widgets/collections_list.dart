@@ -14,7 +14,8 @@ import 'collection_card.dart';
 /// Every collection a faith has, as a column of cards.
 ///
 /// The browsing surface — the Qur'an tab, the Scripture tab and Practice —
-/// as against [CollectionsRail], which is the dashboard's featured few.
+/// as against `FeaturedCollectionCard`, which is the dashboard's single
+/// featured set.
 ///
 /// ## Why this list is not filtered by `showOnHome`
 ///
@@ -26,7 +27,7 @@ import 'collection_card.dart';
 ///
 /// ## States
 ///
-/// All four, unlike the rail. This screen was opened on purpose, so a
+/// All four, unlike the dashboard card. This screen was opened on purpose, so a
 /// shimmer is an honest "it is coming" and a failure is worth a retry —
 /// neither is noise here the way both would be above the goal card. Empty
 /// still draws nothing at all, heading included: a faith with no
